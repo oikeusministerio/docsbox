@@ -26,7 +26,7 @@ SUPPORTED_FORMATS = {
     }
 }
 
-GENERATE_THUMBNAILS = False
+GENERATE_THUMBNAILS = False # If True enables the option of thumbnails generation
 
 DOCUMENT_EXPORT_FORMATS = ["pdf", "txt", "html"]
 SPREADSHEET_EXPORT_FORMATS = ["pdf", "csv", "html"]
