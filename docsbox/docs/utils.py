@@ -24,6 +24,9 @@ def make_zip_archive(uuid, tmp_dir):
 
 
 def make_thumbnails(image, tmp_dir, size):
+    """ 
+    This method is not called while GENERATE_THUMBNAILS in settings.py is false
+    """
     thumbnails_folder = os.path.join(tmp_dir, "thumbnails/")
     os.mkdir(thumbnails_folder)
     (width, height) = size

@@ -62,8 +62,10 @@ class DocumentCreateView(Resource):
                             if not supported:
                                 message = "'{0}' mimetype can't be converted to '{1}'"
                                 return abort(400, message=message.format(mimetype, fmt))
+
+                    # check for thumbnails options on request and if they are valid
                     thumbnails = options.get("thumbnails", None)
-                    if thumbnails:
+                    if app.config["GENERATE_THUMBNAILS"] and thumbnails: # GENERATE_THUMBNAILS is configured as False
                         if not isinstance(thumbnails, dict):
                             return abort(400, message="Invalid 'thumbnails' value")
                         else:
@@ -77,6 +79,7 @@ class DocumentCreateView(Resource):
                                     return abort(400, message="Invalid 'size' value")
                                 else:
                                     options["thumbnails"]["size"] = (width, height)
+
                 else:
                     if mimetype == "application/pdf":
                         options = {

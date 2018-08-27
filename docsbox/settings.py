@@ -26,6 +26,8 @@ SUPPORTED_FORMATS = {
     }
 }
 
+GENERATE_THUMBNAILS = False
+
 DOCUMENT_EXPORT_FORMATS = ["pdf", "txt", "html"]
 SPREADSHEET_EXPORT_FORMATS = ["pdf", "csv", "html"]
 PRESENTATION_EXPORT_FORMATS = ["pdf", "html"]

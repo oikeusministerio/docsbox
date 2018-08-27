@@ -32,7 +32,9 @@ def process_document(path, options, meta):
                     current_format = app.config["SUPPORTED_FORMATS"][fmt]
                     output_path = os.path.join(tmp_dir, current_format["path"])
                     original_document.saveAs(output_path, fmt=current_format["fmt"])
-                if options.get("thumbnails", None):
+                
+                # generate thumbnails
+                if app.config["GENERATE_THUMBNAILS"] and options.get("thumbnails", None):
                     is_created = False
                     if meta["mimetype"] == "application/pdf":
                         pdf_path = path
@@ -48,6 +50,7 @@ def process_document(path, options, meta):
                     if is_created:
                         pdf_tmp_file.close()
                     thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
+ 
                 result_path, result_url = make_zip_archive(current_task.id, tmp_dir)
         remove_file.schedule(
             datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]),
