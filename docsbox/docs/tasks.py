@@ -21,9 +21,25 @@ def remove_file(path):
     """
     return os.remove(path)
 
+def create_temp_file(original_file):
+    with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
+        original_file.save(tmp_file)
+        tmp_file.flush()
+        tmp_file.close()
+        remove_file.schedule(
+            datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"])
+            , tmp_file.name)
+        return tmp_file
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
-def process_document(path, options, meta):
+def upload_document(path, original_fmt):
+    with Office(app.config["LIBREOFFICE_PATH"]) as office: # acquire libreoffice lock
+        with office.documentLoad(path) as original_document: # open original document
+            original_document.saveAs(path, fmt=original_fmt) # saves file with original format
+
+
+@rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
+def process_document_convertion(path, options, meta):
     current_task = get_current_job()
     with Office(app.config["LIBREOFFICE_PATH"]) as office: # acquire libreoffice lock
         with office.documentLoad(path) as original_document: # open original document
@@ -57,3 +73,5 @@ def process_document(path, options, meta):
             result_path
         )
     return result_url
+
+

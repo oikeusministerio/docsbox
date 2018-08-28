@@ -23,10 +23,11 @@ Settings(app, rules={
 api = Api(app)
 rq = RQ(app)
 
-from docsbox.docs.views import DocumentView, DocumentCreateView
+from docsbox.docs.views import DocumentStateView, DocumentConvertView, DocumentUploadView
     
-api.add_resource(DocumentView, "/api/v1/<task_id>")
-api.add_resource(DocumentCreateView, "/api/v1/")
+api.add_resource(DocumentStateView, "/api/document/<task_id>")
+api.add_resource(DocumentConvertView, "/api/document/convert/")
+api.add_resource(DocumentUploadView, "/api/document/upload/")
 
 if __name__ == "__main__":
     app.run()
