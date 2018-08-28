@@ -33,9 +33,18 @@ def create_temp_file(original_file):
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def upload_document(path, original_fmt):
+    current_task = get_current_job()
     with Office(app.config["LIBREOFFICE_PATH"]) as office: # acquire libreoffice lock
         with office.documentLoad(path) as original_document: # open original document
-            original_document.saveAs(path, fmt=original_fmt) # saves file with original format
+            with TemporaryDirectory() as tmp_dir: # create temp dir where output'll be stored
+                output_path = os.path.join(tmp_dir, original_fmt)
+                original_document.saveAs(output_path, fmt=original_fmt) # saves file with original format
+                result_path, result_url = make_zip_archive(current_task.id, tmp_dir)
+        remove_file.schedule(
+            datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]),
+            result_path
+        )
+    return result_url
 
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
