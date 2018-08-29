@@ -15,6 +15,7 @@ $ docker-compose up
 # Test
 
 Uploading File:
+
 ```bash
 $ curl -X POST -F "file=@test.odt" http://localhost/api/document/upload
 {"status": "queued", "id": "32982f1d-6b23-4360-b1aa-c324b538ac4c"}
@@ -24,12 +25,14 @@ $ curl -X POST -F "file=@test.docx" http://localhost/api/document/upload
 ```
 
 Checking File Type:
-bash```
+
+```bash
 $ curl -X GET -F "file=@test.odt" http://localhost/api/document
 {"mimetype": "application/vnd.oasis.opendocument.text"}
 ```
 
 Converting and Retrieving a File:
+
 ```bash
 $ curl -X POST -F "file=@test.docx" http://localhost/api/document/convert
 {"status": "queued", "id": "146faa45-893b-4e3f-9251-d5f6dbeb5934"}
@@ -43,11 +46,11 @@ $ curl -X GET -O http://localhost/api/document/download/146faa45-893b-4e3f-9251-
 
 # Supported Filetypes for conversion
 
-| Type         | Format                    |
-| -------------|---------------------------| 
-| Document     | `doc` `docx` `odt` `rtf`  | 
-| Presentation | `ppt` `pptx` `odp`        |
-| Spreadsheet  | `xls` `xlsx` `ods`        | 
+| Type         | Format                                                |
+| -------------|-------------------------------------------------------| 
+| Document     | `doc` `docx` `odt` `rtf`                              | 
+| Presentation | `ppt` `pptx` `odp`                                    |
+| Spreadsheet  | `xls` `xlsx` `ods`                                    | 
 | XML          | `sxw` `stw` `sxc` `stc` `sxi` `sti` `sxd` `std` `sxm` |
 
 
