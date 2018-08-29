@@ -15,8 +15,8 @@ def make_zip_archive(uuid, tmp_dir):
     zipname = "{0}.zip".format(uuid)
     result_path = os.path.join(app.config["MEDIA_PATH"],
                                zipname)
-    result_url = os.path.join(app.config["MEDIA_URL"],
-                              zipname)
+    result_url = zipname
+
     with zipfile.ZipFile(result_path, "w") as output:
         for dirname, subdirs, files in os.walk(tmp_dir):
             for filename in files:

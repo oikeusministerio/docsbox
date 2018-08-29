@@ -1,7 +1,7 @@
 import ujson
 import datetime
 
-from flask import request
+from flask import request, send_from_directory
 from flask_restful import Resource, abort
 
 from docsbox import app, rq
@@ -20,13 +20,12 @@ class DocumentStateView(Resource):
             return {
                 "id": task.id,
                 "status": task.status,
-                "result_url": task.result
             }
         else:
             return abort(404, message="Unknown task_id")
 
 
-class DocumentConvertView(Resource):
+class DocumentTypeView(Resource):
 
     def get(self):
         """
@@ -41,6 +40,8 @@ class DocumentConvertView(Resource):
                 "mimetype": mimetype
             }
 
+
+class DocumentConvertView(Resource):
 
     def post(self):
         """
@@ -125,7 +126,19 @@ class DocumentUploadView(Resource):
             "status": task.status
         }
 
-        
 
+class DocumentDownloadView(Resource):
 
-
+    def get(self, task_id):
+        """
+            Returns the Converted File
+        """
+        queue = rq.get_queue()
+        task = queue.fetch_job(task_id)
+        if task:
+            if task.status == "finished":
+                return send_from_directory(app.config["MEDIA_PATH"],task.result, as_attachment=True)
+            else:
+                return abort(400, message="Task is still queued")
+        else:
+            return abort(404, message="Unknown task_id")
