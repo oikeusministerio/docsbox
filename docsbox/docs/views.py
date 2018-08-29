@@ -19,7 +19,7 @@ class DocumentStateView(Resource):
         if task:
             return {
                 "id": task.id,
-                "status": task.status,
+                "status": task.status
             }
         else:
             return abort(404, message="Unknown task_id")
@@ -106,7 +106,7 @@ class DocumentUploadView(Resource):
 
     def post(self):
         """
-            Recieves file and options, checks file mimetype and saves original document
+            Recieves file, checks file mimetype and saves original document
         """
         if "file" not in request.files:
             return abort(400, message="file field is required")
@@ -137,7 +137,7 @@ class DocumentDownloadView(Resource):
         task = queue.fetch_job(task_id)
         if task:
             if task.status == "finished":
-                return send_from_directory(app.config["MEDIA_PATH"],task.result, as_attachment=True)
+                return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment=True)
             else:
                 return abort(400, message="Task is still queued")
         else:
