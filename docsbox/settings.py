@@ -26,12 +26,57 @@ SUPPORTED_FORMATS = {
     }
 }
 
-DOCUMENT_EXPORT_FORMATS = ["pdf", "txt", "html"]
-SPREADSHEET_EXPORT_FORMATS = ["pdf", "csv", "html"]
-PRESENTATION_EXPORT_FORMATS = ["pdf", "html"]
-PDF_EXPORT_FORMATS = ["html"]
+GENERATE_THUMBNAILS = False # If True enables the option of thumbnails generation
 
-SUPPORTED_MIMETYPES = {
+DOCUMENT_EXPORT_FORMATS = ["pdf", "txt"]
+SPREADSHEET_EXPORT_FORMATS = ["pdf", "csv"]
+PRESENTATION_EXPORT_FORMATS = ["pdf"]
+IMAGE_EXPORT_FORMATS = ["jpeg", "png"]
+PDF_EXPORT_FORMATS = ["pdf"]
+
+ACCEPTED_MIMETYPES = {
+    # LibreOffice Writer
+    "application/vnd.oasis.opendocument.text": {
+        "format": "odt",
+    },
+
+    # LibreOffice Calc
+    "application/vnd.oasis.opendocument.spreadsheet": {
+        "format": "ods",
+    },
+
+    # LibreOffice Impress
+    "application/vnd.oasis.opendocument.presentation": {
+        "format": "odp",
+    },
+
+    # LibreOffice Draw
+    "application/vnd.oasis.opendocument.graphics": {
+        "format": "odg",
+    },
+
+    # LibreOffice Math
+    "application/vnd.oasis.opendocument.formula": {
+        "format": "odf",
+    },
+
+    # Comma Seperated Values
+    "text/scv": {
+        "format": "csv",
+    },
+
+    # Portable Document Format
+    "application/pdf": {
+        "format": "pdf",
+    }
+
+    # EPUB
+    # Free Lossless Audio Codec
+    # Joint Photographic Group
+    # Portable Network Graphics
+}
+
+CONVERTABLE_MIMETYPES = {
     # Microsoft Word 2003
     "application/msword": {
         "formats": DOCUMENT_EXPORT_FORMATS,
