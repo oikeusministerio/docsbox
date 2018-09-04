@@ -13,6 +13,8 @@ How to run the tests ?
 5 - Folder Inputs to input files for conversion
 6 - Folder outputs to output of converted files
 '''
+
+# SetUp/EndPoints
 class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -76,7 +78,7 @@ class DocumentUUIDTestCase(BaseTestCase):
 
 # Group of tests that tested if file it's available to uploading
 class DocumentUploadAvailableTestCase(BaseTestCase):
-    def test_upload_available_file_without_need_convert(self):
+    def test_upload_without_need_convert(self):
         filename = os.path.join(self.inputs, "test6.odt")
         
         response = self.upload_file(filename)
@@ -85,7 +87,7 @@ class DocumentUploadAvailableTestCase(BaseTestCase):
         self.assertTrue(json.get("id"))
         self.assertEqual(json.get("status"), "queued")
 
-    def test_upload_unavailable_file_need_convert(self):
+    def test_upload_need_convert(self):
         filename = os.path.join(self.inputs, "test8.docx")
         
         response = self.upload_file(filename)
@@ -144,7 +146,7 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
 
     def test_detection_convert_not_required(self):
         arrFilenames = ["test6.odt+application/vnd.oasis.opendocument.text", "test4.odp+application/vnd.oasis.opendocument.presentation",
-        "test9.png+image/png", "test7.pdf+application/pdf"]
+        "test9.png+image/png", "test7.pdf+application/pdf", "test11.txt+text/plain", "test12.csv+text/plain"]
         for file in arrFilenames:
             splitValue = file.split("+")
             filename = os.path.join(self.inputs, splitValue[0])
@@ -166,9 +168,11 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
             })
     
     def test_detection_convert_required(self):
-        arrFilenames = ["test1.xlsx+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+        arrFilenames = [
+        "test1.xlsx+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
         "test5.doc+application/msword", "test8.docx+application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "test10.pptx+application/vnd.openxmlformats-officedocument.presentationml.presentation"]
+        "test10.pptx+application/vnd.openxmlformats-officedocument.presentationml.presentation", "test13.rtf+text/rtf"
+        ]
         for file in arrFilenames:
             splitValue = file.split("+")
             filename = os.path.join(self.inputs, splitValue[0])
