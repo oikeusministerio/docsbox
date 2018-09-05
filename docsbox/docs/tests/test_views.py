@@ -50,7 +50,7 @@ class BaseTestCase(unittest.TestCase):
             print(response)
         return response
 
-# Group of tests that tested valid or unvalid UUID
+# Group of tests that tested valid or invalid UUID
 class DocumentUUIDTestCase(BaseTestCase):
 
     def test_get_task_by_valid_uuid(self):
@@ -145,10 +145,34 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
         })
 
     def test_detection_convert_not_required(self):
-        arrFilenames = ["test6.odt+application/vnd.oasis.opendocument.text", "test4.odp+application/vnd.oasis.opendocument.presentation",
-        "test9.png+image/png", "test7.pdf+application/pdf", "test11.txt+text/plain", "test12.csv+text/plain"]
+        arrFilenames = [
+            #.ODT
+            "test6.odt*application/vnd.oasis.opendocument.text",
+            #.ODP
+            "test4.odp*application/vnd.oasis.opendocument.presentation",
+            #.ODG
+            "test18.odg*application/vnd.oasis.opendocument.graphics",
+            #.ODF
+            "test19.odf*application/vnd.oasis.opendocument.formula",
+            #.ODS
+            "test20.ods*application/vnd.oasis.opendocument.spreadsheet",
+            #.PNG
+            "test9.png*image/png", 
+            #.PDF
+            "test7.pdf*application/pdf",
+            #.TXT
+            "test11.txt*text/plain",
+            #.CSV
+            "test12.csv*text/plain",
+            #.EPUB
+            "test14.epub*application/epub+zip",
+            #.MP4
+            "test15.mp4*video/mp4",
+            #.JPG
+            "test17.jpg*image/jpeg"
+            ]
         for file in arrFilenames:
-            splitValue = file.split("+")
+            splitValue = file.split("*")
             filename = os.path.join(self.inputs, splitValue[0])
             
             # Detection file type
@@ -169,12 +193,25 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
     
     def test_detection_convert_required(self):
         arrFilenames = [
-        "test1.xlsx+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-        "test5.doc+application/msword", "test8.docx+application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "test10.pptx+application/vnd.openxmlformats-officedocument.presentationml.presentation", "test13.rtf+text/rtf"
+        #.XLSX
+        "test1.xlsx*application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+        #.DOC
+        "test5.doc*application/msword",
+        #.DOCX
+        "test8.docx*application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        #.PPTX
+        "test10.pptx*application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+        #.RTF
+        "test13.rtf*text/rtf",
+        #.PPT
+        "test2.ppt*application/vnd.ms-powerpoint",
+        #.XLS
+        "test22.xls*application/vnd.ms-office",
+		#.STW
+        "test21.stw*application/octet-stream"
         ]
         for file in arrFilenames:
-            splitValue = file.split("+")
+            splitValue = file.split("*")
             filename = os.path.join(self.inputs, splitValue[0])
             
             # Detection file type
