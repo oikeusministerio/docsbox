@@ -54,7 +54,7 @@ def process_document_convertion(path, options, meta):
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
                 for fmt in options["formats"]: # iterate over requested formats
                     output_path = os.path.join(tmp_dir, fmt)
-                    original_document.saveAs(output_path, fmt=fmt)
+                    original_document.saveAs(output_path, fmt=fmt, options="-eSelectPdfVersion=1")
 
                 # generate thumbnails
                 if app.config["GENERATE_THUMBNAILS"] and options.get("thumbnails", None):

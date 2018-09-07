@@ -53,8 +53,8 @@ ACCEPTED_MIMETYPES = {
         "format": "csv",
     },
 
-    # Portable Document Format
-    "application/pdf": {
+    # Portable Document Format for Archive
+    "application/pdf-a": {
         "format": "pdf",
     },
 
@@ -174,6 +174,11 @@ CONVERTABLE_MIMETYPES = {
     #Apple Pages
     "application/vnd.apple.pages":{
         "formats": DOCUMENT_EXPORT_FORMATS,
+    },
+
+    # Portable Document Format
+    "application/pdf": {
+        "format": "pdf",
     },
 }
 

@@ -3,7 +3,7 @@ import zipfile
 
 from wand.image import Image
 
-from magic import Magic
+import magic
 
 from docsbox import app
 
@@ -44,5 +44,9 @@ def make_thumbnails(image, tmp_dir, size):
 
 
 def get_file_mimetype(file):
-    with Magic() as magic:  # detect mimetype
-        return magic.from_file(file.name)
+    mimetype = magic.from_file(file.name, mime=True)    
+    if mimetype == "application/pdf":
+        version = magic.from_file(file.name, mime=False)
+        if version == "PDF document, version 1.4":
+            return "application/pdf-a"
+    return mimetype
