@@ -7,7 +7,6 @@ RUN apt-get install software-properties-common -y
 RUN add-apt-repository ppa:libreoffice/ppa
 RUN apt update
 RUN apt install libreoffice -y libreoffice libreofficekit-dev -y
-# RUN apt-get install -y libreoffice libreofficekit-dev
 RUN apt-get install -y python3-dev python3-pip git
 
 RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8
