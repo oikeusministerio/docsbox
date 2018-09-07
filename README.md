@@ -91,6 +91,17 @@ $ docker-compose scale web=4 rqworker=8
 ```
 For multi-host deployment you'll need to create global syncronized volume (e.g. with flocker), global redis-server and mount it at `docker-compose.yml` file.
 
+
+# Run tests (Ubuntu)
+```
+1 - cd docsbox/docsbox/docs/tests
+2 - docker-compose build
+3 - docker-compose up
+4 - The tests are run on the docker container and the run result is returned on the console
+5 - Folder Inputs to input files for conversion
+6 - Folder Outputs to output of converted files
+```
+
 # Supported filetypes
 
 

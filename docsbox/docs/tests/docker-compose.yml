@@ -1,18 +1,18 @@
 web:
   restart: always
-  build: ./docsbox
+  build: ../../../docsbox
   expose:
     - "8000"
   links:
     - redis:redis
   volumes:
-    - ./docsbox:/home/docsbox
+    - ../../../docsbox:/home/docsbox
     - /tmp/media:/home/docsbox/media
   command: gunicorn -b :8000 docsbox:app
 
 rqworker:
   restart: always
-  build: ./docsbox
+  build: ../../../docsbox
   links:
     - redis:redis
   volumes_from:
@@ -21,7 +21,7 @@ rqworker:
 
 rqscheduler:
   restart: always
-  build: ./docsbox
+  build: ../../../docsbox
   links:
     - redis:redis
   volumes_from:
@@ -30,7 +30,7 @@ rqscheduler:
 
 nginx:
   restart: always
-  build: ./nginx/
+  build: ../../../nginx/
   ports:
     - "80:80"
   volumes_from:
@@ -45,3 +45,12 @@ redis:
     - "6379"
   volumes:
     - redisdata:/data
+
+test:
+  build: ../../../docsbox
+  volumes_from:
+    - web
+  links:
+    - web:web
+    - redis:redis
+  command: nosetests
