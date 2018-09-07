@@ -25,11 +25,12 @@ rq = RQ(app)
 
 from docsbox.docs.views import *
     
-api.add_resource(DocumentStateView, "/api/document/<task_id>")
-api.add_resource(DocumentTypeView, "/api/document")
-api.add_resource(DocumentConvertView, "/api/document/convert")
-api.add_resource(DocumentUploadView, "/api/document/upload")
+api.add_resource(DocumentTypeView, "/api/document/type/<file_id>")
+api.add_resource(DocumentConvertView, "/api/document/convert/<file_id>")
+api.add_resource(DocumentStatusView, "/api/document/status/<task_id>")
 api.add_resource(DocumentDownloadView, "/api/document/download/<task_id>")
+
+# api.add_resource(DocumentUploadView, "/api/document/upload")
 
 
 if __name__ == "__main__":

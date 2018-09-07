@@ -21,9 +21,9 @@ def remove_file(path):
     return os.remove(path)
 
 
-def create_temp_file(original_file):
+def create_temp_file(original_file_data):
     with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
-        original_file.save(tmp_file)
+        tmp_file.write(original_file_data)
         tmp_file.flush()
         tmp_file.close()
         remove_file.schedule(

@@ -1,6 +1,7 @@
 import os
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+VIA_URL=""
 RQ_REDIS_URL = REDIS_URL
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 

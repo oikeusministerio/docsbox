@@ -46,3 +46,5 @@ docs/_build
 /example.db
 /_
 /.cache
+
+.vscode
