@@ -137,7 +137,7 @@ class DocumentDownloadView(Resource):
         task = queue.fetch_job(task_id)
         if task:
             if task.status == "finished":
-                return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment=True)
+                return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment = True, attachment_filename = task.result)
             else:
                 return abort(400, message="Task is still queued")
         else:

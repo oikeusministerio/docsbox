@@ -46,3 +46,6 @@ docs/_build
 /example.db
 /_
 /.cache
+
+.vscode
+/__pycache__.py

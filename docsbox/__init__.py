@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
+from flask_cors import CORS
 from flask_env_settings import Settings
 
 
@@ -22,6 +23,7 @@ Settings(app, rules={
 
 api = Api(app)
 rq = RQ(app)
+cors = CORS(app, resourses={r"/api/*": {"origins":"*"}})
 
 from docsbox.docs.views import *
     
