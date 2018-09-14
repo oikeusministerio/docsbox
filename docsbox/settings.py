@@ -1,8 +1,12 @@
 import os
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
-VIA_URL=""
 RQ_REDIS_URL = REDIS_URL
+
+VIA_URL="https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
+KEYSTORE_PATH="/home/docsbox/sampo_testi.jks"
+KEYSTORE_PASS="changeit"
+KEYSTORE_ALIAS="sampotesti"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
 MEDIA_PATH = os.path.join(BASE_DIR, "media/")

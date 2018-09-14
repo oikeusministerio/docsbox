@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
+from flask_cors import CORS
 from flask_env_settings import Settings
 
 
@@ -22,13 +23,14 @@ Settings(app, rules={
 
 api = Api(app)
 rq = RQ(app)
+cors = CORS(app, resourses={r"/api/*": {"origins":"*"}})
 
 from docsbox.docs.views import *
     
-api.add_resource(DocumentTypeView, "/api/document/type/<file_id>")
-api.add_resource(DocumentConvertView, "/api/document/convert/<file_id>")
-api.add_resource(DocumentStatusView, "/api/document/status/<task_id>")
-api.add_resource(DocumentDownloadView, "/api/document/download/<task_id>")
+api.add_resource(DocumentTypeView, "/conversion-service/get-file-type/<file_id>")
+api.add_resource(DocumentConvertView, "/conversion-service/convert/<file_id>")
+api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")
+api.add_resource(DocumentDownloadView, "/conversion-service/get-converted-file/<task_id>")
 
 # api.add_resource(DocumentUploadView, "/api/document/upload")
 

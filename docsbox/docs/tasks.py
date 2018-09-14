@@ -23,7 +23,8 @@ def remove_file(path):
 
 def create_temp_file(original_file_data):
     with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
-        tmp_file.write(original_file_data)
+        for chunk in original_file_data:
+            tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
         remove_file.schedule(

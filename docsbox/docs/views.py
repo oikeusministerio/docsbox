@@ -7,9 +7,11 @@ from flask_restful import Resource, abort
 
 from docsbox import app, rq
 from docsbox.docs.tasks import process_document_convertion, upload_document, create_temp_file
-from docsbox.docs.utils import get_file_mimetype
+from docsbox.docs.utils import get_file_mimetype, jksfile2pem
 
-def set_options(options):
+pem_file_path = jksfile2pem(app.config["KEYSTORE_PATH"], app.config["KEYSTORE_PASS"])
+
+def set_options(options, mimetype):
     """
     Validates options
     """
@@ -54,7 +56,7 @@ class DocumentStatusView(Resource):
         task = queue.fetch_job(task_id)
         if task:
             return {
-                "task_id": task.id,
+                "taskId": task.id,
                 "status": task.status
             }
         else:
@@ -68,14 +70,16 @@ class DocumentTypeView(Resource):
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
         """
-        file_data = requests.get(app.config["VIA_URL"]+"/"+file_id)
+        return { "isConvertable": True, "mimetype": "mimetype" }
+        r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id), stream=True)
         
-        if file_data:
-            tmp_file = create_temp_file(file_data)
+        if r.status_code == 200:
+            tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
-            return { "mimetype": mimetype }
-        else:
-            return abort(404, message="file id does not exist")
+            isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
+            return { "isConvertable": isConvertable, "mimetype": mimetype }
+        else: 
+            return abort(r.status_code, message=r.json().message)
 
 
 class DocumentConvertView(Resource):
@@ -85,22 +89,24 @@ class DocumentConvertView(Resource):
             Requests from VIA fileservice the file with given id.
             Checks file mimetype and creates converting task.
         """
-        file_data = requests.get(app.config["VIA_URL"]+"/"+file_id)
-        
-        if file_data:
-            tmp_file = create_temp_file(file_data)
+
+        # r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=pem_file_path)
+        r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id))
+
+        if r.status_code == 200:
+            tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                 return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
 
-            options = set_options(request.form.get("options", None))
+            options = set_options(request.form.get("options", None), mimetype)
                 
             task = process_document_convertion.queue(tmp_file.name, options, {"mimetype": mimetype})
-            return { "task_id": task.id, "status": task.status}
+            return { "taskId": task.id, "status": task.status}
         else: 
-            return abort(400, message="file field is required")
+            return abort(r.status_code, message=r.json()["message"])
 
 
 class DocumentUploadView(Resource):
@@ -139,9 +145,9 @@ class DocumentDownloadView(Resource):
         task = queue.fetch_job(task_id)
         if task:
             if task.status == "finished":
-                converted_file = open(app.config["MEDIA_PATH"]+ "/"+ task.result))
-                file_id = requests.post(app.config["VIA_URL"]+"/saveFile", files=converted_file)
-                return {"file_id": file_id}
+                converted_file = open(app.config["MEDIA_PATH"]+ "/"+ task.result)
+                file_id = requests.post(app.config["VIA_URL"], files=converted_file)
+                return {"convertedFileId": file_id}
                 # return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment=True)
             else:
                 return abort(400, message="Task is still queued")
