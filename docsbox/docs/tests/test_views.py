@@ -3,10 +3,10 @@ import ujson
 import unittest
 import docsbox
 import time
+import test_dependencies as dep
 
 # SetUp/EndPoints
 class BaseTestCase(unittest.TestCase):
-
     def setUp(self):
         self.app = docsbox.app
         self.app.config["TESTING"] = True
@@ -17,7 +17,16 @@ class BaseTestCase(unittest.TestCase):
         )
         self.client = docsbox.app.test_client()
 
-    def convert_file(self, filename, options):
+    # Checking File Type
+    def detection_file(self, filename):
+        with open(filename, "rb") as source:
+            response = self.client.get("/api/document", data={
+                "file": source,
+            })
+        return response
+
+    # Converting and Retrieving a File
+    def convert_file_status_queued(self, filename, options):
         with open(filename, "rb") as source:
             response = self.client.post("/api/document/convert", data={
                 "file": source,
@@ -25,40 +34,33 @@ class BaseTestCase(unittest.TestCase):
             })
         return response
 
-    def detection_file(self, filename):
-        with open(filename, "rb") as source:
-            response = self.client.get("/api/document", data={
-                "file": source,
-            })
-        return response
-    
-    def upload_file(self, filename):
-        with open(filename, "rb") as source:
-            response = self.client.post("/api/document/upload", data={
-                "file": source,
-            })
-            print(response)
-        return response
+    def convert_file_status_finished(self, fileId):
+        return self.client.get("/api/document/{0}".format(fileId))
+
+    def retrieve_file_pdf(self, fileId):
+        return self.client.get("/api/document/download/"+fileId)
 
 # Group of tests that test valid or invalid UUID
 class DocumentUUIDTestCase(BaseTestCase):
-
     def test_get_task_by_valid_uuid(self):
         filename = os.path.join(self.inputs, "test8.docx")
-        response = self.convert_file(filename, {
-            "formats": ["txt"]
+        response = self.convert_file_status_queued(filename, {
+            "formats": ["pdf"]
         })
         json = ujson.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(json.get("id"))
         self.assertEqual(json.get("status"), "queued")
-        response = self.client.get("/api/document/{0}".format(json.get("id")))
+        
+        time.sleep(3)
+        
+        response = self.convert_file_status_finished(json.get("id"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ujson.loads(response.data), {
             "id": json.get("id"),
-            "status": "queued"
+            "status": "finished"
         })
-
+        
     def test_get_task_by_invalid_uuid(self):
         response = self.client.get("/api/document/uuid-with-ponies")
         self.assertEqual(response.status_code, 404)
@@ -66,30 +68,9 @@ class DocumentUUIDTestCase(BaseTestCase):
             "message": "Unknown task_id. You have requested this URI [/api/document/uuid-with-ponies] but did you mean /api/document/upload or /api/document/convert or /api/document/download/<task_id> ?"
         })
 
-# Group of tests that test if file it's available to uploading
-class DocumentUploadAvailableTestCase(BaseTestCase):
-    def test_upload_without_need_convert(self):
-        filename = os.path.join(self.inputs, "test6.odt")
-        
-        response = self.upload_file(filename)
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(json.get("id"))
-        self.assertEqual(json.get("status"), "queued")
-
-    def test_upload_need_convert(self):
-        filename = os.path.join(self.inputs, "test8.docx")
-        
-        response = self.upload_file(filename)
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json, {
-            "message": "File cannot be uploaded needs to be converted"
-        })
-        
+ 
 # Group of tests that test detection of type file and check if it's possible to convert
 class DocumentDetectionAndConvertTestCase(BaseTestCase):
-
     def test_convert_without_file(self):
         response = self.client.post("/api/document/convert", data={
             "options": ujson.dumps(["pdf"])
@@ -101,18 +82,19 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
         })
 
     def test_convert_invalid_mimetype(self):
-        response = self.convert_file("/bin/sh", {
+        filename = os.path.join(self.inputs, "test35.sh")
+        response = self.convert_file_status_queued(filename, {
             "formats": ["pdf"],
         })
         json = ujson.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(json, {
-            "message": "Not supported mimetype: 'application/x-sharedlib'"
+            "message": "Not supported mimetype: 'text/x-shellscript'"
         })
 
     def test_convert_empty_formats(self):
         filename = os.path.join(self.inputs, "test8.docx")
-        response = self.convert_file(filename, {
+        response = self.convert_file_status_queued(filename, {
             "formats": []
         })
         json = ujson.loads(response.data)
@@ -123,7 +105,7 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
 
     def test_convert_invalid_formats(self):
         filename = os.path.join(self.inputs, "test8.docx")
-        response = self.convert_file(filename, {
+        response = self.convert_file_status_queued(filename, {
             "formats": ["csv"]
         })
         json = ujson.loads(response.data)
@@ -133,135 +115,105 @@ class DocumentDetectionAndConvertTestCase(BaseTestCase):
                        "cedocument.wordprocessingml.document'"
                        " mimetype can't be converted to 'csv'"
         })
-
-    def test_detection_convert_not_required(self):
-        arrFilenames = [
-            #.ODT
-            "test6.odt*application/vnd.oasis.opendocument.text",
-            #.ODP
-            "test4.odp*application/vnd.oasis.opendocument.presentation",
-            #.ODG
-            "test18.odg*application/vnd.oasis.opendocument.graphics",
-            #.ODF
-            "test19.odf*application/vnd.oasis.opendocument.formula",
-            #.ODS
-            "test20.ods*application/vnd.oasis.opendocument.spreadsheet",
-            #.PNG
-            "test9.png*image/png", 
-            #.PDF
-            "test7.pdf*application/pdf",
-            #.TXT
-            "test11.txt*text/plain",
-            #.CSV
-            "test12.csv*text/plain",
-            #.EPUB
-            "test14.epub*application/epub+zip",
-            #.MP4
-            "test15.mp4*video/mp4",
-            #.JPG
-            "test17.jpg*image/jpeg"
-            ]
-        for file in arrFilenames:
-            splitValue = file.split("*")
-            filename = os.path.join(self.inputs, splitValue[0])
+  
+    def test_detect_convert_file_not_required(self):
+        for file in dep.listFilesConvertNotRequired:
+            filename = os.path.join(self.inputs, file)
             
-            # Detection file type
-            response_detection = self.detection_file(filename)
-            json = ujson.loads(response_detection.data)
-            self.assertEqual(response_detection.status_code, 200)
+            # Detect file type   
+            response = self.detection_file(filename)
+            json = ujson.loads(response.data)    
+            self.assertEqual(response.status_code, 200)
             self.assertEqual(json, {
-                "mimetype": splitValue[1]
-            })
-            time.sleep(5)
+                "mimetype": json.get("mimetype")
+            }) 
 
             # Convert file 
-            response = self.convert_file(filename, {"formats": ["pdf"]})
+            response = self.convert_file_status_queued(filename, {"formats": ["pdf"]})
             json = ujson.loads(response.data)
+            self.assertEqual(response.status_code, 200)
             self.assertEqual(json, {
                 'message': 'File does not need to be converted.'
             })
-    
-    def test_detection_convert_required(self):
-        arrFilenames = [
-        #.XLSX
-        "test1.xlsx*application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-        #.DOC
-        "test5.doc*application/msword",
-        #.DOCX
-        "test8.docx*application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        #.PPTX
-        "test10.pptx*application/vnd.openxmlformats-officedocument.presentationml.presentation", 
-        #.RTF
-        "test13.rtf*text/rtf",
-        #.PPT
-        "test2.ppt*application/vnd.ms-powerpoint",
-        #.XLS
-        "test22.xls*application/vnd.ms-office",
-		#.STW
-        "test21.stw*application/octet-stream"
-        ]
-        for file in arrFilenames:
-            splitValue = file.split("*")
-            filename = os.path.join(self.inputs, splitValue[0])
+
+    def test_detect_convert_file_required(self):
+         for file in dep.listFilesConvertRequired:
+            filename = os.path.join(self.inputs, file)
             
-            # Detection file type
-            response_detection = self.detection_file(filename)
-            json = ujson.loads(response_detection.data)
-            self.assertEqual(response_detection.status_code, 200)
+            # Detect file type   
+            response = self.detection_file(filename)
+            json = ujson.loads(response.data)    
+            self.assertEqual(response.status_code, 200)
             self.assertEqual(json, {
-                "mimetype": splitValue[1]
+                "mimetype": json.get("mimetype")
             })
-            time.sleep(5)
 
             # Convert file 
-            response = self.convert_file(filename, {"formats": ["pdf"]})
+            response = self.convert_file_status_queued(filename, {"formats": ["pdf"]})
             json = ujson.loads(response.data)
+            self.assertEqual(response.status_code, 200)
             self.assertTrue(json.get("id"))
             self.assertEqual(json.get("status"), "queued")
+            
+            time.sleep(3)
+            
+            response = self.convert_file_status_finished(json.get("id"))
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(ujson.loads(response.data), {
+                "id": json.get("id"),
+                "status": "finished"
+            })
 
 
-# Group of tests that test all process: detection, convert and retrieve file for a specific folder
-class DocumentDetectionConvertAndRetrieveTestCase(BaseTestCase):
+# Test that tests all process, detect, convert and retrieve file for output folder
+class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
+    def test_detect_convert_retrieve_file(self):
+        mergeLists = dep.listFilesConvertRequired + dep.listFilesUnknown + dep.listFilesConvertNotRequired
+        for file in mergeLists:
+            filename = os.path.join(self.inputs, file)
+            
+            # Detect file type   
+            response = self.detection_file(filename)
+            json = ujson.loads(response.data)    
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(json, {
+                "mimetype": json.get("mimetype")
+            }) 
 
-    def test_detection_convert_and_retrieving_valid_formats(self):
-        filename = os.path.join(self.inputs, "test5.doc")
+            # Convert file 
+            response = self.convert_file_status_queued(filename, {"formats": ["pdf"]})
+            json = ujson.loads(response.data)
+            
+            if response.status_code == 200:
+                if json.get("id") == None:
+                    self.assertEqual(json, {
+                        'message': 'File does not need to be converted.'
+                    })
+                else:
+                    self.assertTrue(json.get("id"))
+                    self.assertEqual(json.get("status"), "queued")
+                    
+                    time.sleep(3)
+                    
+                    response = self.convert_file_status_finished(json.get("id"))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(ujson.loads(response.data), {
+                        "id": json.get("id"),
+                        "status": "finished"
+                    })
 
-        # Detection file type
-        response_detection = self.detection_file(filename)
-        json = ujson.loads(response_detection.data)
-        self.assertEqual(response_detection.status_code, 200)
-        self.assertEqual(json, {
-            "mimetype": 'application/msword'
-        })
-
-        # Check if need to be converted
-        response_checkConverter = self.upload_file(filename)
-        json = ujson.loads(response_checkConverter.data)
-        self.assertEqual(response_checkConverter.status_code, 200)
-        self.assertEqual(json, {
-            "message": "File cannot be uploaded needs to be converted"
-        })
-        
-        # Convert file 
-        response = self.convert_file(filename, {"formats": ["pdf"]})
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(json.get("id"))
-        self.assertEqual(json.get("status"), "queued")
-        time.sleep(10)
-        response = self.client.get("/api/document/{0}".format(json.get("id")))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(ujson.loads(response.data), {
-            "id": json.get("id"),
-            "status": "finished"
-        })
-        time.sleep(10)
-        base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
-        file_dir = os.path.join(base_dir, json.get("id")+".pdf")
-        response = self.client.get("/api/document/download/"+json.get("id"))
-        self.assertEqual(response.status_code, 200)
-        with open(file_dir, "wb") as file:
-            file.write(response.data)
-        existFile = os.path.exists(file_dir)
-        self.assertEqual(existFile, True)
-        self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                    base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
+                    file_dir = os.path.join(base_dir, json.get("id")+".pdf")
+                    response = self.retrieve_file_pdf(json.get("id"))      
+                    self.assertEqual(response.status_code, 200)
+                    with open(file_dir, "wb") as file:
+                        file.write(response.data)
+                    existFile = os.path.exists(file_dir)
+                    self.assertEqual(existFile, True)
+                    self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+            else:
+                self.assertEqual(response.status_code, 400)
+                split_mimetype = json.get("message").split(":")
+                self.assertEqual(json, {
+                    "message": "Not supported mimetype:"+split_mimetype[1]
+                })

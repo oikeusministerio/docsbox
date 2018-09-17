@@ -64,7 +64,7 @@ ACCEPTED_MIMETYPES = {
     },
 
     # Free Lossless Audio Codec
-    "audio/flac": {
+    "audio/x-flac": {
         "format": "flac"
     },
 
@@ -127,7 +127,7 @@ CONVERTABLE_MIMETYPES = {
 
     #XML OpenOffice
     # sxw
-    "application/vnd.sun.xml.writer": {
+    "application/octet-stream": {
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
 
@@ -137,42 +137,52 @@ CONVERTABLE_MIMETYPES = {
     },
 
     # sxc
-    "application/vnd.sun.xml.calc": {
+    "application/octet-stream": {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    # sxd
-    "application/vnd.sun.xml.draw": {
-        "formats": PRESENTATION_EXPORT_FORMATS,
+    # stc
+    "application/octet-stream": {
+        "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
     # sxi
-    "application/vnd.sun.xml.impress": {
+    "application/octet-stream": {
+        "formats": PRESENTATION_EXPORT_FORMATS,
+    },
+
+    # sti
+    "application/octet-stream": {
+        "formats": PRESENTATION_EXPORT_FORMATS,
+    },
+
+    # sxd
+    "application/octet-stream": {
+        "formats": PRESENTATION_EXPORT_FORMATS,
+    },
+
+    # std
+    "application/octet-stream": {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
     # sxm
-    "application/vnd.sun.xml.math": {
+    "application/CDFV2-unknown": {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    # sxg
-    "application/vnd.sun.xml.writer.global": {
-        "formats": DOCUMENT_EXPORT_FORMATS,
-    },
-
     #Apple Keynote
-    "application/vnd.apple.keynote":{
+    "inode/x-empty":{
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
     #Apple Numbers
-    "application/vnd.apple.numbers":{
+    "inode/x-empty":{
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
     #Apple Pages
-    "application/vnd.apple.pages":{
+    "inode/x-empty":{
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
 }
