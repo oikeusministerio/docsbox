@@ -70,7 +70,7 @@ class DocumentUUIDTestCase(BaseTestCase):
 
  
 # Group of tests that test detection of type file and check if it's possible to convert
-class DocumentDetectionAndConvertTestCase(BaseTestCase):
+class DocumentDetectAndConvertTestCase(BaseTestCase):
     def test_convert_without_file(self):
         response = self.client.post("/api/document/convert", data={
             "options": ujson.dumps(["pdf"])
