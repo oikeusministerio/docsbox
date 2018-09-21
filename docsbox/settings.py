@@ -171,18 +171,23 @@ CONVERTABLE_MIMETYPES = {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    #Apple Keynote
+    #Apple Keynote .kth
     "inode/x-empty":{
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
+    #Apple Keynote .key
+    "application/octet-stream":{
+        "formats": PRESENTATION_EXPORT_FORMATS,
+    },
+
     #Apple Numbers
-    "inode/x-empty":{
+    "application/octet-stream":{
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
     #Apple Pages
-    "inode/x-empty":{
+    "application/octet-stream":{
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
 }

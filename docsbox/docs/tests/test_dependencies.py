@@ -58,14 +58,14 @@ listFilesConvertRequired = [
     "test32.std",
     #.SXM
     "test33.sxm",     
-    #.KTH
-    "test23.kth",
-    #.KE
-    "test24.ke",
+    #.KEY
+    "test24.key",
     #.NUMBERS
     "test34.numbers",
     #.PAGES
-    "test25.pages"
+    "test25.pages",
+    #.KTH
+    "test23.kth",
 ]
 
 listFilesUnknown = [
