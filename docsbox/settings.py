@@ -172,7 +172,7 @@ CONVERTABLE_MIMETYPES = {
     },
 
     #Apple Keynote .kth
-    "inode/x-empty":{
+    "application/octet-stream":{
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
