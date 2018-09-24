@@ -139,7 +139,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
     def test_detect_convert_file_required(self):
          for file in dep.listFilesConvertRequired:
             filename = os.path.join(self.inputs, file)
-            
+
             # Detect file type   
             response = self.detection_file(filename)
             json = ujson.loads(response.data)    
@@ -163,7 +163,6 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
                 "id": json.get("id"),
                 "status": "finished"
             })
-
 
 # Test that tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
