@@ -48,3 +48,4 @@ docs/_build
 /.cache
 
 .vscode
+/__pycache__.py
