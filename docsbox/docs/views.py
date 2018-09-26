@@ -1,15 +1,13 @@
 import ujson
 import datetime
-import requests
+from requests import get, post
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort
 
 from docsbox import app, rq
 from docsbox.docs.tasks import process_document_convertion, upload_document, create_temp_file
-from docsbox.docs.utils import get_file_mimetype, jksfile2pem
-
-pem_file_path = jksfile2pem(app.config["KEYSTORE_PATH"], app.config["KEYSTORE_PASS"])
+from docsbox.docs.utils import get_file_mimetype 
 
 def set_options(options, mimetype):
     """
@@ -55,10 +53,17 @@ class DocumentStatusView(Resource):
         queue = rq.get_queue()
         task = queue.fetch_job(task_id)
         if task:
-            return {
-                "taskId": task.id,
-                "status": task.status
-            }
+            if task.result:
+                return {
+                    "taskId": task.id,
+                    "status": task.status,
+                    "fileType": task.result["fileType"]
+                }
+            else: 
+                return {
+                    "taskId": task.id,
+                    "status": task.status
+                }
         else:
             return abort(404, message="Unknown task_id")
 
@@ -70,16 +75,16 @@ class DocumentTypeView(Resource):
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
         """
-        return { "isConvertable": True, "mimetype": "mimetype" }
-        r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id), stream=True)
-        
+
+        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
+
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
             isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
-            return { "isConvertable": isConvertable, "mimetype": mimetype }
+            return { "convertable": isConvertable, "fileType": mimetype }
         else: 
-            return abort(r.status_code, message=r.json().message)
+            return abort(r.status_code, message=r.json()["message"])
 
 
 class DocumentConvertView(Resource):
@@ -90,8 +95,7 @@ class DocumentConvertView(Resource):
             Checks file mimetype and creates converting task.
         """
 
-        # r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=pem_file_path)
-        r = requests.get("{0}/{1}".format(app.config["VIA_URL"], file_id))
+        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
 
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
@@ -109,31 +113,6 @@ class DocumentConvertView(Resource):
             return abort(r.status_code, message=r.json()["message"])
 
 
-class DocumentUploadView(Resource):
-
-    def post(self):
-        """
-            Recieves file, checks file mimetype and saves original document
-        """
-        if "file" not in request.files:
-            return abort(400, message="file field is required")
-        else:
-            tmp_file = create_temp_file(request.files["file"])
-            mimetype = get_file_mimetype(tmp_file)
-            if mimetype not in app.config["ACCEPTED_MIMETYPES"]:
-                if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                    return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
-                return {
-                    "message": "File cannot be uploaded needs to be converted"
-                }
-                
-            task = upload_document.queue(tmp_file.name, app.config["ACCEPTED_MIMETYPES"][mimetype]["format"])
-        return {
-            "id": task.id,
-            "status": task.status
-        }
-
-
 class DocumentDownloadView(Resource):
 
     def get(self, task_id):
@@ -145,10 +124,20 @@ class DocumentDownloadView(Resource):
         task = queue.fetch_job(task_id)
         if task:
             if task.status == "finished":
-                converted_file = open(app.config["MEDIA_PATH"]+ "/"+ task.result)
-                file_id = requests.post(app.config["VIA_URL"], files=converted_file)
-                return {"convertedFileId": file_id}
-                # return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment=True)
+                data = open(app.config["MEDIA_PATH"]+ "/"+ task.result["fileName"], "rb")
+                headers = {'VIA_ALLOWED_USERS': app.config["VIA_ALLOWED_USERS"], 'Content-type': task.result["fileType"]}
+                r = post(app.config["VIA_URL"], data=data, headers=headers)
+
+                if r.status_code == 201:
+                    return { 
+                        "taskId": task.id,
+                        "status": task.status,
+                        "convertable": True,
+                        "fileId": r.headers.get("Document-id"),
+                        "fileType": task.result["fileType"]
+                    }
+                else:
+                    return abort(r.status_code, message=r.json()["message"])
             else:
                 return abort(400, message="Task is still queued")
         else:

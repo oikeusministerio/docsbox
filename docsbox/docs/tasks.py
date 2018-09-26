@@ -23,7 +23,7 @@ def remove_file(path):
 
 def create_temp_file(original_file_data):
     with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
-        for chunk in original_file_data:
+        for chunk in original_file_data.iter_content(chunk_size=128):
             tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
@@ -76,5 +76,5 @@ def process_document_convertion(path, options, meta):
                     output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
         remove_file.schedule(datetime.timedelta(
             seconds=app.config["RESULT_FILE_TTL"]), output_path)
-    return file_name
+    return {"fileName": file_name, "fileType": options["content-type"] }
 
