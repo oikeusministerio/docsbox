@@ -21,9 +21,10 @@ def remove_file(path):
     return os.remove(path)
 
 
-def create_temp_file(original_file):
+def create_temp_file(original_file_data):
     with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
-        original_file.save(tmp_file)
+        for chunk in original_file_data.iter_content(chunk_size=128):
+            tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
         remove_file.schedule(
@@ -53,11 +54,11 @@ def process_document_convertion(path, options, meta):
         with office.documentLoad(path) as original_document:  # open original document
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
                 for fmt in options["formats"]: # iterate over requested formats
-                    output_path = os.path.join(tmp_dir, fmt)
-                    original_document.saveAs(output_path, fmt=fmt)
-
-                # generate thumbnails
-                if app.config["GENERATE_THUMBNAILS"] and options.get("thumbnails", None):
+                    file_name = "{0}.{1}".format(current_task.id, fmt)
+                    output_path = os.path.join(app.config["MEDIA_PATH"], file_name)
+                    original_document.saveAs(output_path, fmt=fmt, options="-eSelectPdfVersion=1")
+                    
+                if app.config["GENERATE_THUMBNAILS"] and options.get("thumbnails", None): # generate thumbnails
                     is_created = False
                     if meta["mimetype"] == "application/pdf":
                         pdf_path = path
@@ -68,13 +69,12 @@ def process_document_convertion(path, options, meta):
                         pdf_path = pdf_tmp_file.name
                         original_document.saveAs(pdf_tmp_file.name, fmt="pdf")
                         is_created = True
-                        image = Image(filename=pdf_path,
-                                    resolution=app.config["THUMBNAILS_DPI"])
-                        if is_created:
-                            pdf_tmp_file.close()
-                            thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
-
-                result_path, result = make_zip_archive(current_task.id, tmp_dir)
+                    image = Image(filename=pdf_path, resolution=app.config["THUMBNAILS_DPI"])
+                    if is_created:
+                        pdf_tmp_file.close()
+                    thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
+                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
         remove_file.schedule(datetime.timedelta(
-            seconds=app.config["RESULT_FILE_TTL"]), result_path)
-    return result
+            seconds=app.config["RESULT_FILE_TTL"]), output_path)
+    return {"fileName": file_name, "fileType": options["content-type"] }
+

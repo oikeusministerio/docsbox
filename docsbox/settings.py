@@ -3,6 +3,10 @@ import os
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 RQ_REDIS_URL = REDIS_URL
 
+VIA_URL="https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
+SSL_CERT_PATH="/home/docsbox/sampotesti.pem"
+VIA_ALLOWED_USERS="vakuutusoikeusbe"
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
 MEDIA_PATH = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = "/media/"
@@ -115,11 +119,6 @@ CONVERTABLE_MIMETYPES = {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    # Microsoft Office 2003
-    "application/vnd.ms-office": {
-        "formats": SPREADSHEET_EXPORT_FORMATS,
-    },
-
     # Rich Text Format
     "text/rtf": {
         "formats": DOCUMENT_EXPORT_FORMATS,
@@ -128,11 +127,6 @@ CONVERTABLE_MIMETYPES = {
     #XML OpenOffice
     # sxw
     "application/vnd.sun.xml.writer": {
-        "formats": DOCUMENT_EXPORT_FORMATS,
-    },
-
-     # stw
-    "application/octet-stream": {
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
 
@@ -178,5 +172,6 @@ CONVERTABLE_MIMETYPES = {
 }
 
 DEFAULT_OPTIONS = {
-    "formats": ["pdf"]
+    "formats": ["pdf"],
+    "content-type": "application/pdf"
 }
