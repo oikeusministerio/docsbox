@@ -46,3 +46,4 @@ def make_thumbnails(image, tmp_dir, size):
 def get_file_mimetype(file):
     with Magic() as magic:  # detect mimetype
         return magic.from_file(file.name)
+
