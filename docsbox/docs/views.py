@@ -77,10 +77,9 @@ class DocumentTypeView(Resource):
         """
 
         r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
-
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
-            mimetype = get_file_mimetype(tmp_file)
+            mimetype = get_file_mimetype(tmp_file, r.headers.get('Content-type'))
             isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
             return { "convertable": isConvertable, "fileType": mimetype }
         else: 
@@ -96,14 +95,13 @@ class DocumentConvertView(Resource):
         """
 
         r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
-
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
-            mimetype = get_file_mimetype(tmp_file)
+            mimetype = get_file_mimetype(tmp_file, r.headers.get('Content-type'))
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
+                return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
 
             options = set_options(request.form.get("options", None), mimetype)
                 

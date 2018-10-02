@@ -2,11 +2,8 @@ import os
 import zipfile
 
 from wand.image import Image
-
 from magic import Magic
-
 from docsbox import app
-
 
 def make_zip_archive(uuid, tmp_dir):
     """
@@ -43,7 +40,12 @@ def make_thumbnails(image, tmp_dir, size):
     return index
 
 
-def get_file_mimetype(file):
-    with Magic() as magic:  # detect mimetype
-        return magic.from_file(file.name)
-
+def get_file_mimetype(file, originalType = None):
+    listMimeTypes = ["application/octet-stream", "text/plain"]
+    with Magic() as magic: # detect mimetype
+        mimetype = magic.from_file(file.name)
+    
+    if (any(x in mimetype for x in listMimeTypes)):
+        return originalType
+    else:
+        return mimetype

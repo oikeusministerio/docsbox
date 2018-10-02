@@ -1,74 +1,74 @@
 listFilesConvertNotRequired = [
     #.ODT
-    "test6.odt",
+    "test6.odt*application/vnd.oasis.opendocument.text*221615f4-569a-4a07-adc8-71b1b060493e",
     #.ODP
-    "test4.odp",
+    "test4.odp*application/vnd.oasis.opendocument.presentation*7206dd5f-ada2-4087-8c71-c08f87cae24b",
     #.ODG
-    "test18.odg",
+    "test18.odg*application/vnd.oasis.opendocument.graphics*126b3151-51e5-46bb-a6a9-ae100aa107b7",
     #.ODF
-    "test19.odf",
+    "test19.odf*application/vnd.oasis.opendocument.formula*1e2abbfd-b314-4d21-9cde-c83843315511",
     #.ODS
-    "test20.ods",
+    "test20.ods*application/vnd.oasis.opendocument.spreadsheet*1ae618a4-b49e-4fad-942c-1745e8e5b7ba",
     #.PNG
-    "test9.png", 
+    "test9.png*image/png*886ca730-b5e5-4d98-b4e3-b22bafc21f6a", 
     #.TXT
-    "test11.txt",
+    "test11.txt*text/plain*ff100dcd-efb2-4ff8-b97b-331e2204115e",
     #.CSV
-    "test12.csv",
+    #"test12.csv*text/csv",
     #.EPUB
-    "test14.epub",
+    #"test14.epub*application/epub+zip",
     #.MP4
-    "test15.mp4",
+    "test15.mp4*video/mp4*c346294c-e3e3-4f98-83a1-292dcf61c40a",
     #.JPG
-    "test17.jpg",
+    "test17.jpg*image/jpeg*3d02bf4b-40a4-43b0-a90c-692e0a1a457d",
     #.FLAC
-    "test16.flac"
+    #"test16.flac*audio/x-flac"
 ]
 
 listFilesConvertRequired = [
-    #.XLSX
-    "test1.xlsx", 
     #.DOC
-    "test5.doc",
+    "test5.doc*application/msword*43ffd356-9c7a-455a-97e1-23f6edb4c62b",
+    #.XLSX
+    "test1.xlsx*application/vnd.openxmlformats-officedocument.spreadsheetml.sheet*efe0b626-bfcf-496e-9305-8d880f236c6f", 
     #.DOCX
-    "test8.docx",
+    "test8.docx*application/vnd.openxmlformats-officedocument.wordprocessingml.document*ecef5477-9cef-42d4-add8-a555b774f435",
     #.PPTX
-    "test10.pptx", 
+    "test10.pptx*application/vnd.openxmlformats-officedocument.presentationml.presentation*b227afda-47f8-4234-b6e5-9c0baab8a326", 
     #.RTF
-    "test13.rtf",
+    #"test13.rtf*text/rtf",
     #.PPT
-    "test2.ppt",
+    "test2.ppt*application/vnd.ms-powerpoint*48dd7819-fdb0-451b-91e5-ba8488c0def5",
     #.XLS
-    "test22.xls",
+    "test22.xls*application/vnd.ms-excel*58e9b2f9-51b8-4626-951b-8d41046bd4e8",
 	#.STW
-    "test21.stw",
+    #"test21.stw*application/vnd.sun.xml.writer.template",
     #.SXW
-    "test26.sxw",
+    "test26.sxw*application/vnd.sun.xml.writer*cc9929fa-6684-4e8f-9cc3-a32513fb65dd",
     #.SXC
-    "test27.sxc",
+    #"test27.sxc*application/vnd.sun.xml.calc",
     #.STC
-    "test28.stc",
+    #"test28.stc*application/vnd.sun.xml.calc.template",
     #.SXI
-    "test29.sxi",
+    #"test29.sxi*application/vnd.sun.xml.impress",
     #.STI
-    "test30.sti",
+    #"test30.sti*application/vnd.sun.xml.impress.template",
     #.SXD
-    "test31.sxd",
+    #"test31.sxd*application/vnd.sun.xml.draw",
     #.STD
-    "test32.std",
+    #"test32.std*application/vnd.sun.xml.draw.template",
     #.SXM
-    "test33.sxm",     
+    #"test33.sxm*application/vnd.sun.xml.math",     
     #.KEY
-    "test24.key",
+    "test24.key*application/octet-stream*d13ef36f-229e-461e-b4de-6c498cb1b4b8",
     #.NUMBERS
-    "test34.numbers",
+    "test34.numbers*application/octet-stream*4761c163-8395-4f8a-9129-07aa581972b9",
     #.PAGES
-    "test25.pages",
+    "test25.pages*application/octet-stream*5a9c9db0-b632-49e3-9b4d-58716913400a",
     #.KTH
-    "test23.kth",
+    "test23.kth*application/octet-stream*7ed03bab-4107-4d02-891d-6cb5d963ab33",
 ]
 
 listFilesUnknown = [
-    #.SH
-    "test35.sh"
+    #.JSON
+    "test35.json*application/json*5d0e0d15-6a24-4497-9452-897f3ccfb919"
 ]

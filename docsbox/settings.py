@@ -47,13 +47,13 @@ ACCEPTED_MIMETYPES = {
         "format": "odf",
     },
 
-    # Comma Seperated Values
+    # Text Value
     "text/plain": {
         "format": "txt",
     },
 
     # Comma Seperated Values
-    "text/scv": {
+    "text/csv": {
         "format": "csv",
     },
 
@@ -125,62 +125,72 @@ CONVERTABLE_MIMETYPES = {
     },
 
     #XML OpenOffice
-    # sxw
-    "application/octet-stream": {
+    # sxw 
+    "application/vnd.sun.xml.writer": {
+        "formats": DOCUMENT_EXPORT_FORMATS,
+    },
+    
+    # stw 
+    "application/vnd.sun.xml.writer.template": {
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
 
-    # sxc
-    "application/octet-stream": {
+    # sxc 
+    "application/vnd.sun.xml.calc": {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    # stc
-    "application/octet-stream": {
+    # stc 
+    "application/vnd.sun.xml.calc.template": {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    # sxi
-    "application/octet-stream": {
+    # sxi 
+    "application/vnd.sun.xml.impress": {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    # sti
-    "application/octet-stream": {
+    # sti 
+    "application/vnd.sun.xml.impress.template": {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    # sxd
-    "application/octet-stream": {
+    # sxd 
+    "application/vnd.sun.xml.draw": {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    # std
-    "application/octet-stream": {
+    # std 
+    "application/vnd.sun.xml.draw.template": {
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    # sxm
-    "application/CDFV2-unknown": {
+    # sxm 
+    "application/vnd.sun.xml.math": {
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    #Apple Keynote .kth
-    "application/octet-stream":{
+    #Apple Keynote .kth 
+    "application/vnd.apple.keynote":{
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    #Apple Keynote .key
-    "application/octet-stream":{
+    #Apple Keynote .key 
+    "application/vnd.apple.keynote":{
         "formats": PRESENTATION_EXPORT_FORMATS,
     },
 
-    #Apple Numbers
-    "application/octet-stream":{
+    #Apple Numbers 
+    "application/vnd.apple.numbers":{
         "formats": SPREADSHEET_EXPORT_FORMATS,
     },
 
-    #Apple Pages
+    #Apple Pages 
+    "application/vnd.apple.pages":{
+        "formats": DOCUMENT_EXPORT_FORMATS,
+    },
+
+     #Binary
     "application/octet-stream":{
         "formats": DOCUMENT_EXPORT_FORMATS,
     },
