@@ -98,7 +98,7 @@ class DocumentConvertView(Resource):
         r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["VIA_CERT_PATH"], stream=True)
 
         if r.status_code == 200:
-            tmp_file, del_orig_job = create_temp_file(r)
+            tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")

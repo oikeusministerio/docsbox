@@ -27,9 +27,9 @@ def create_temp_file(original_file_data):
             tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
-        job = remove_file.schedule(
+        remove_file.schedule(
             datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
-        return tmp_file, job
+        return tmp_file
 
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
