@@ -13,7 +13,7 @@ MEDIA_URL = "/media/"
 
 SUPPORTED_FORMATS = { "pdf", "txt", "csv", "jpeg", "png" }
 
-GENERATE_THUMBNAILS = False # If True enables the option of thumbnails generation
+THUMBNAILS_GENERATE = False # If True enables the option of thumbnails generation
 
 DOCUMENT_EXPORT_FORMATS = ["pdf", "txt"]
 SPREADSHEET_EXPORT_FORMATS = ["pdf", "csv"]

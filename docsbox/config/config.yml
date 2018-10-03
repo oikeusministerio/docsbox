@@ -89,7 +89,7 @@ COMMON: &common
       formats: DOCUMENT_EXPORT_FORMATS
 
   DEFAULT_OPTIONS:
-    formats: "pdf"
+    formats: ["pdf"]
     content-type: "application/pdf"
 
 DEVELOPMENT: &development
