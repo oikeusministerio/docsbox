@@ -4,7 +4,7 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 RQ_REDIS_URL = REDIS_URL
 
 VIA_URL="https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
-SSL_CERT_PATH="/home/docsbox/sampotesti.pem"
+VIA_CERT_PATH="/home/docsbox/sampotesti.pem"
 VIA_ALLOWED_USERS="vakuutusoikeusbe"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 

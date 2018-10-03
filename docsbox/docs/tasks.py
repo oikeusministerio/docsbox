@@ -27,9 +27,9 @@ def create_temp_file(original_file_data):
             tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
-        remove_file.schedule(
+        job = remove_file.schedule(
             datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
-        return tmp_file
+        return tmp_file, job
 
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
@@ -74,7 +74,9 @@ def process_document_convertion(path, options, meta):
                         pdf_tmp_file.close()
                     thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
                     output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
-        remove_file.schedule(datetime.timedelta(
+        file_remove_task = remove_file.schedule(datetime.timedelta(
             seconds=app.config["RESULT_FILE_TTL"]), output_path)
+        current_task.meta["tmp_file_remove_task"] = file_remove_task.id
+        current_task.save_meta()
     return {"fileName": file_name, "fileType": options["content-type"] }
 

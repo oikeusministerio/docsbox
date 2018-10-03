@@ -76,7 +76,7 @@ class DocumentTypeView(Resource):
         Returns the File Mimetype
         """
 
-        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
+        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["VIA_CERT_PATH"], stream=True)
 
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
@@ -95,15 +95,15 @@ class DocumentConvertView(Resource):
             Checks file mimetype and creates converting task.
         """
 
-        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["SSL_CERT_PATH"], stream=True)
+        r = get("{0}/{1}".format(app.config["VIA_URL"], file_id), cert=app.config["VIA_CERT_PATH"], stream=True)
 
         if r.status_code == 200:
-            tmp_file = create_temp_file(r)
+            tmp_file, del_orig_job = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
+                return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
 
             options = set_options(request.form.get("options", None), mimetype)
                 
@@ -140,5 +140,23 @@ class DocumentDownloadView(Resource):
                     return abort(r.status_code, message=r.json()["message"])
             else:
                 return abort(400, message="Task is still queued")
+        else:
+            return abort(404, message="Unknown task_id")
+
+
+class DeleteTmpFiles(Resource):
+
+    def delete(self, task_id):
+        """
+            If task with given id is finished get the task if
+            for deleting the temp file.
+        """
+        queue = rq.get_queue()
+        task = queue.fetch_job(task_id)
+        if task and task.status == "finished":
+            id = task.meta["tmp_file_remove_task"]
+            tmptask = queue.fetch_job(id)
+            tmptask = queue.run_job(tmptask)
+            return tmptask.status
         else:
             return abort(404, message="Unknown task_id")
