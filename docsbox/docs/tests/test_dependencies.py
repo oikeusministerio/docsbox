@@ -1,74 +1,206 @@
-listFilesConvertNotRequired = [
-    #.ODT
-    "test6.odt*application/vnd.oasis.opendocument.text*221615f4-569a-4a07-adc8-71b1b060493e",
-    #.ODP
-    "test4.odp*application/vnd.oasis.opendocument.presentation*7206dd5f-ada2-4087-8c71-c08f87cae24b",
-    #.ODG
-    "test18.odg*application/vnd.oasis.opendocument.graphics*126b3151-51e5-46bb-a6a9-ae100aa107b7",
-    #.ODF
-    "test19.odf*application/vnd.oasis.opendocument.formula*1e2abbfd-b314-4d21-9cde-c83843315511",
-    #.ODS
-    "test20.ods*application/vnd.oasis.opendocument.spreadsheet*1ae618a4-b49e-4fad-942c-1745e8e5b7ba",
-    #.PNG
-    "test9.png*image/png*886ca730-b5e5-4d98-b4e3-b22bafc21f6a", 
-    #.TXT
-    "test11.txt*text/plain*ff100dcd-efb2-4ff8-b97b-331e2204115e",
-    #.CSV
-    #"test12.csv*text/csv",
-    #.EPUB
-    #"test14.epub*application/epub+zip",
-    #.MP4
-    "test15.mp4*video/mp4*c346294c-e3e3-4f98-83a1-292dcf61c40a",
-    #.JPG
-    "test17.jpg*image/jpeg*3d02bf4b-40a4-43b0-a90c-692e0a1a457d",
-    #.FLAC
-    #"test16.flac*audio/x-flac"
+filesNotConvertable = [
+    {
+    "fileExt": ".ODT",
+    "fileName": "test6.odt",
+    "fileType": "application/vnd.oasis.opendocument.text",
+    "fileId": "08125dee-9588-407c-894c-4d8eeb86255d"
+    },
+    {
+    "fileExt": ".ODP",
+    "fileName": "test4.odp",
+    "fileType": "application/vnd.oasis.opendocument.presentation",
+    "fileId": "77c48d01-289d-4707-821c-9dfc809f0256"
+    },
+    {
+    "fileExt": ".ODG",
+    "fileName": "test18.odg",
+    "fileType": "application/vnd.oasis.opendocument.graphics",
+    "fileId": "9d28dfa9-ccb0-45db-b412-75848dde810d"
+    },
+    {
+    "fileExt": ".ODF",
+    "fileName": "test19.odf",
+    "fileType": "application/vnd.oasis.opendocument.formula",
+    "fileId": "331c5614-76f7-44e0-a781-fd802dad0f80"
+    },
+    {
+    "fileExt": ".ODS",
+    "fileName": "test20.ods",
+    "fileType": "application/vnd.oasis.opendocument.spreadsheet",
+    "fileId": "406485e5-260e-470e-b105-75d1df78d5a2"
+    },
+    {
+    "fileExt": ".PNG",
+    "fileName": "test9.png",
+    "fileType":  "image/png",
+    "fileId": "72a788a0-2847-4833-8495-8fae2bf214a7"
+    },
+    {
+    "fileExt": ".TXT",
+    "fileName": "test11.txt",
+    "fileType": "text/plain",
+    "fileId": "ec2f3ba0-de54-4d53-b912-60b3c13b495c"
+    },
+    {
+    "fileExt": ".EPUB",
+    "fileName": "test14.epub",
+    "fileType": "application/epub+zip",
+    "fileId": "3b3e6e93-841e-44a5-a10e-cb246ef5ea40"
+    },
+    {
+    "fileExt": ".MP4",
+    "fileName": "test15.mp4",
+    "fileType": "video/mp4",
+    "fileId": "56f0b696-379c-4214-b2d3-35f9744e35ed"
+    },
+    {
+    "fileExt": ".JPG",
+    "fileName": "test17.jpg",
+    "fileType": "image/jpeg",
+    "fileId": "683580cd-f416-44d8-96af-331d82cb5ef6"
+    }
+    # {
+    # "fileExt": ".CSV",
+    # "fileName": "test12.csv",
+    # "fileType": "text/csv",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".FLAC",
+    # "fileName": "test16.flac",
+    # "fileType": "audio/x-flac",
+    # "fileId": ""
+    # }
 ]
 
-listFilesConvertRequired = [
-    #.DOC
-    "test5.doc*application/msword*43ffd356-9c7a-455a-97e1-23f6edb4c62b",
-    #.XLSX
-    "test1.xlsx*application/vnd.openxmlformats-officedocument.spreadsheetml.sheet*efe0b626-bfcf-496e-9305-8d880f236c6f", 
-    #.DOCX
-    "test8.docx*application/vnd.openxmlformats-officedocument.wordprocessingml.document*ecef5477-9cef-42d4-add8-a555b774f435",
-    #.PPTX
-    "test10.pptx*application/vnd.openxmlformats-officedocument.presentationml.presentation*b227afda-47f8-4234-b6e5-9c0baab8a326", 
-    #.RTF
-    #"test13.rtf*text/rtf",
-    #.PPT
-    "test2.ppt*application/vnd.ms-powerpoint*48dd7819-fdb0-451b-91e5-ba8488c0def5",
-    #.XLS
-    "test22.xls*application/vnd.ms-excel*58e9b2f9-51b8-4626-951b-8d41046bd4e8",
-	#.STW
-    #"test21.stw*application/vnd.sun.xml.writer.template",
-    #.SXW
-    "test26.sxw*application/vnd.sun.xml.writer*cc9929fa-6684-4e8f-9cc3-a32513fb65dd",
-    #.SXC
-    #"test27.sxc*application/vnd.sun.xml.calc",
-    #.STC
-    #"test28.stc*application/vnd.sun.xml.calc.template",
-    #.SXI
-    #"test29.sxi*application/vnd.sun.xml.impress",
-    #.STI
-    #"test30.sti*application/vnd.sun.xml.impress.template",
-    #.SXD
-    #"test31.sxd*application/vnd.sun.xml.draw",
-    #.STD
-    #"test32.std*application/vnd.sun.xml.draw.template",
-    #.SXM
-    #"test33.sxm*application/vnd.sun.xml.math",     
-    #.KEY
-    "test24.key*application/octet-stream*d13ef36f-229e-461e-b4de-6c498cb1b4b8",
-    #.NUMBERS
-    "test34.numbers*application/octet-stream*4761c163-8395-4f8a-9129-07aa581972b9",
-    #.PAGES
-    "test25.pages*application/octet-stream*5a9c9db0-b632-49e3-9b4d-58716913400a",
-    #.KTH
-    "test23.kth*application/octet-stream*7ed03bab-4107-4d02-891d-6cb5d963ab33",
+filesConvertable = [
+    {
+    "fileExt": ".DOC",
+    "fileName": "test5.doc",
+    "fileType": "application/msword",
+    "fileId": "06f809e9-d03f-43ca-bf10-0de3f45e622d"
+    },
+    {
+    "fileExt": ".XLSX",
+    "fileName": "test1.xlsx",
+    "fileType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "fileId": "ab44389d-68ec-4529-8f43-1055f796a7ad"
+    },
+    {
+    "fileExt": ".DOCX",
+    "fileName": "test8.docx",
+    "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "fileId": "b58e4e52-466d-4284-a393-794048845251"
+    },
+    {
+    "fileExt": ".PPTX",
+    "fileName": "test10.pptx",
+    "fileType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "fileId": "d04c03af-ad8e-4fc6-8ac9-d03516c6e3b9"
+    },
+    {
+    "fileExt": ".PPT",
+    "fileName": "test2.ppt",
+    "fileType": "application/vnd.ms-powerpoint",
+    "fileId": "ba312318-3bf8-40c1-a274-9de286517148"
+    },
+    {
+    "fileExt": ".XLS",
+    "fileName": "test22.xls",
+    "fileType": "application/vnd.ms-excel",
+    "fileId": "a204d2ca-5195-4e0a-971f-ed864280b0d9"
+    },
+    {
+    "fileExt": ".SXW",
+    "fileName": "test26.sxw",
+    "fileType": "application/vnd.sun.xml.writer",
+    "fileId": "3af6ec35-012f-4ae6-81fd-0c1e599f9845"
+    },
+    {
+    "fileExt": ".KEY",
+    "fileName": "test24.key",
+    "fileType": "application/octet-stream",
+    "fileId": "8cd8e14c-2916-4223-badc-587dcd3cc467"
+    },
+    {
+    "fileExt": ".NUMBERS",
+    "fileName": "test34.numbers",
+    "fileType": "application/octet-stream",
+    "fileId": "bb5d15e4-2a92-4620-ae3c-6ea02b52a83e"
+    },
+    {
+    "fileExt": ".PAGES",
+    "fileName": "test25.pages",
+    "fileType": "application/octet-stream",
+    "fileId": "5d73191d-d7f0-4479-8849-9af7151314af"
+    },
+    {
+    "fileExt": ".KTH",
+    "fileName": "test23.kth",
+    "fileType": "application/octet-stream",
+    "fileId": "c5472d25-c59a-406e-85db-a77c69e101bb"
+    },
+    # {
+    # "fileExt": ".RTF",
+    # "fileName": "test13.rtf",
+    # "fileType": "text/rtf",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".STW",
+    # "fileName": "test21.stw",
+    # "fileType": "application/vnd.sun.xml.writer.template",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".SXC",
+    # "fileName": "test27.sxc",
+    # "fileType": "application/vnd.sun.xml.calc",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".STC",
+    # "fileName": "test28.stc",
+    # "fileType": "application/vnd.sun.xml.calc.template",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".SXI",
+    # "fileName": "test29.sxi",
+    # "fileType": "application/vnd.sun.xml.impress",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".STI",
+    # "fileName": "test30.sti",
+    # "fileType": "application/vnd.sun.xml.impress.template",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".SXD",
+    # "fileName": "test31.sxd",
+    # "fileType": "application/vnd.sun.xml.draw",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".STD",
+    # "fileName": "test32.std",
+    # "fileType": "application/vnd.sun.xml.draw.template",
+    # "fileId": ""
+    # },
+    # {
+    # "fileExt": ".SXM",
+    # "fileName": "test33.sxm",
+    # "fileType": "application/vnd.sun.xml.math",
+    # "fileId": ""
+    # }  
 ]
 
-listFilesUnknown = [
-    #.JSON
-    "test35.json*application/json*5d0e0d15-6a24-4497-9452-897f3ccfb919"
+filesUnknown = [
+    {
+    "fileExt": ".JSON",
+    "fileName": "test35.json",
+    "fileType": "application/json",
+    "fileId": "d940e012-1b49-4494-8e9a-b4fc3579e041"
+    }
 ]
