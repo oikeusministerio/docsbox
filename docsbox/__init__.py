@@ -1,3 +1,5 @@
+from os import environ
+
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
@@ -11,9 +13,12 @@ ordbok.init_app(app)
 ordbok.load()
 app.config.update(ordbok)
 
-from docsbox.settings import REDIS_URL, RQ_REDIS_URL
+REDIS_URL = environ.get("REDIS_URL", app.config["REDIS_URL"])
 
-app.config.update({"REDIS_URL": REDIS_URL, "RQ_REDIS_URL": RQ_REDIS_URL })
+app.config.update({
+    "REDIS_URL": REDIS_URL,
+    "RQ_REDIS_URL": REDIS_URL
+    })
 
 api = Api(app)
 rq = RQ(app)

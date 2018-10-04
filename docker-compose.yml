@@ -17,7 +17,7 @@ rqworker:
     - redis:redis
   volumes_from:
     - web
-  command: rq worker -c docsbox.settings
+  command: rq worker -c docsbox
 
 rqscheduler:
   restart: always
