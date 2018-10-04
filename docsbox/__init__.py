@@ -1,29 +1,27 @@
+from os import environ
+
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
-# from flask_cors import CORS
-from flask_env_settings import Settings
+from ordbok.flask_helper import FlaskOrdbok
 
 
 app = Flask(__name__)
-app.config.from_object("docsbox.settings")
+ordbok = FlaskOrdbok()
 
-Settings(app, rules={
-    "REDIS_JOB_TIMEOUT": (int, 60 * 10),
-    "ORIGINAL_FILE_TTL": (int, 60),
-    "RESULT_FILE_TTL": (int, 60 * 60 * 24),
+ordbok.init_app(app)
+ordbok.load()
+app.config.update(ordbok)
 
-    "LIBREOFFICE_PATH": (str, "/usr/lib/libreoffice/program/"),
+REDIS_URL = environ.get("REDIS_URL", app.config["REDIS_URL"])
 
-    "THUMBNAILS_DPI": (int, 90),
-    "THUMBNAILS_QUANTIZE": (bool, False),
-    "THUMBNAILS_QUANTIZE_COLORS": (int, 128),
-    "THUMBNAILS_QUANTIZE_COLORSPACE": (str, "rgb"),
-})
+app.config.update({
+    "REDIS_URL": REDIS_URL,
+    "RQ_REDIS_URL": REDIS_URL
+    })
 
 api = Api(app)
 rq = RQ(app)
-# cors = CORS(app, resourses={r"/api/*": {"origins":"*"}})
 
 from docsbox.docs.views import *
     
@@ -35,4 +33,4 @@ api.add_resource(DeleteTmpFiles, "/conversion-service/delete-tmp-file/<task_id>"
 
 
 if __name__ == "__main__":
-    app.run()
+    ordbok.app_run(app)
