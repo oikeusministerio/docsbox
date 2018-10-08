@@ -4,7 +4,7 @@ import ujson
 
 from wand.image import Image
 
-from magic import Magic
+import magic
 
 from flask import current_app as app
 
@@ -79,9 +79,12 @@ def make_thumbnails(image, tmp_dir, size):
 
 
 def get_file_mimetype(file, originalType = None):
+    #Solution1 (doesn't work)
+    #return magic.from_buffer(open(file.name, mode = "rb").read(1024), mime= True)
+
+    #Solution2 (work)
     listMimeTypes = ["application/octet-stream", "text/plain"]
-    with Magic() as magic: # detect mimetype
-        mimetype = magic.from_file(file.name)
+    mimetype = magic.from_file(file.name, mime= True)
 
     if (any(x in mimetype for x in listMimeTypes)):
         return originalType

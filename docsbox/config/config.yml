@@ -38,13 +38,13 @@ COMMON: &common
       format: "odf"
     text/plain: # Plain Text File
       format: "txt"
-    text/scv: # Comma Seperated Values
+    text/csv: # Comma Seperated Values
       format: "csv"
     application/pdf: # Portable Document Format
       format: "pdf"
     application/epub+zip: # EPUB
       format: "epub"
-    audio/flac: # Free Lossless Audio Codec
+    audio/x-flac: # Free Lossless Audio Codec
       format: "flac"
     video/mp4: # Advanced Video Coding
       format: "mp4"
@@ -68,15 +68,25 @@ COMMON: &common
       formats: PRESENTATION_EXPORT_FORMATS
     text/rtf: # Rich Text Format
       formats: DOCUMENT_EXPORT_FORMATS
+    application/octet-stream: # Binary
+      formats: DOCUMENT_EXPORT_FORMATS
     #XML OpenOffice
     application/vnd.sun.xml.writer: # sxw
       formats: DOCUMENT_EXPORT_FORMATS
+    application/vnd.sun.xml.writer.template: # stw
+      formats: DOCUMENT_EXPORT_FORMATS
     application/vnd.sun.xml.calc: # sxc
+      formats: SPREADSHEET_EXPORT_FORMATS
+    application/vnd.sun.xml.calc.template: # stc
       formats: SPREADSHEET_EXPORT_FORMATS
     application/vnd.sun.xml.draw: # sxd
       formats: PRESENTATION_EXPORT_FORMATS
     application/vnd.sun.xml.impress: # sxi
       formats: PRESENTATION_EXPORT_FORMATS
+    application/vnd.sun.xml.impress.template: # sti
+      formats: PRESENTATION_EXPORT_FORMATS
+    application/vnd.sun.xml.draw.template: # std
+      formats: PRESENTATION_EXPORT_FORMATSs
     application/vnd.sun.xml.math: # sxm
       formats: SPREADSHEET_EXPORT_FORMATS
     application/vnd.sun.xml.writer.global: # sxg
