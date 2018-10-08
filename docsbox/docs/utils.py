@@ -1,11 +1,12 @@
 import os
 import zipfile
+import ujson
 
 from wand.image import Image
 
 from magic import Magic
 
-from docsbox import app
+from flask import current_app as app
 
 
 def make_zip_archive(uuid, tmp_dir):
@@ -22,10 +23,44 @@ def make_zip_archive(uuid, tmp_dir):
                 output.write(path, path.split(tmp_dir)[1])
     return result_path, zipname
 
+def set_options(options, mimetype):
+    """
+    Validates options
+    """
+    if options:  # options validation
+        options = ujson.loads(options)
+        formats = options.get("formats", None)
+        if not isinstance(formats, list) or not formats:
+            raise ValueError("Invalid 'formats' value")
+        else:
+            for fmt in formats:
+                supported = (fmt in app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"])
+                if not supported:
+                    message = "'{0}' mimetype can't be converted to '{1}'"
+                    raise ValueError(message.format(mimetype, fmt))
+        thumbnails = options.get("thumbnails", None) # check for thumbnails options on request and if they are valid
+        if app.config["THUMBNAILS_GENERATE"] and thumbnails: # THUMBNAILS_GENERATE is configured as False
+            if not isinstance(thumbnails, dict):
+                raise ValueError("Invalid 'thumbnails' value")
+            else:
+                thumbnails_size = thumbnails.get("size", None)
+                if not isinstance(thumbnails_size, str) or not thumbnails_size:
+                    raise ValueError("Invalid 'size' value")
+                else:
+                    try:
+                        (width, height) = map(
+                            int, thumbnails_size.split("x"))
+                    except ValueError:
+                        raise ValueError("Invalid 'size' value")
+                    else:
+                        options["thumbnails"]["size"] = (width, height)
+    else:
+        options = app.config["DEFAULT_OPTIONS"]
+    return options
 
 def make_thumbnails(image, tmp_dir, size):
     """ 
-    This method is not called while GENERATE_THUMBNAILS in settings.py is false
+    This method is not called while THUMBNAILS_GENERATE in settings.py is false
     """
     thumbnails_folder = os.path.join(tmp_dir, "thumbnails/")
     os.mkdir(thumbnails_folder)
