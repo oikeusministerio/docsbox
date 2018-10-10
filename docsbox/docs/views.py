@@ -6,7 +6,7 @@ from flask_restful import Resource, abort
 
 from docsbox import app
 from docsbox.docs.tasks import process_document_convertion, create_temp_file, get_task, do_task
-from docsbox.docs.utils import get_file_mimetype, set_options
+from docsbox.docs.utils import get_file_mimetype, set_options, remove_extension
 from docsbox.docs.via_controller import get_file_from_via, save_file_on_via  
 
 class DocumentStatusView(Resource):
@@ -58,12 +58,13 @@ class DocumentConvertView(Resource):
             Requests from VIA fileservice the file with given id.
             Checks file mimetype and creates converting task.
         """
-
+       
         r = get_file_from_via(file_id)
 
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
+            filename = remove_extension(request.headers['Content-Disposition'])
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
@@ -73,8 +74,8 @@ class DocumentConvertView(Resource):
             except ValueError as err:
                 return abort(400, message=err.args[0])
                 
-            task = process_document_convertion.queue(tmp_file.name, options, {"mimetype": mimetype})
-            return { "taskId": task.id, "status": task.status}
+            task = process_document_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
+            return { "taskId": task.id, "status": task.status, "filename": filename}
         else: 
             return abort(r.status_code, message=r.json()["message"])
 
@@ -97,7 +98,8 @@ class DocumentDownloadView(Resource):
                         "status": task.status,
                         "convertable": True,
                         "fileId": r.headers.get("Document-id"),
-                        "fileType": task.result["fileType"]
+                        "fileType": task.result["fileType"],
+                        "fileName": task.result["fileName"]
                     }
                 else:
                     return abort(r.status_code, message=r.json()["message"])

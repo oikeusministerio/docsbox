@@ -82,3 +82,5 @@ def get_file_mimetype(file):
     with Magic() as magic:  # detect mimetype
         return magic.from_file(file.name)
 
+def remove_extension(file):
+    return os.path.splitext(file)[0]
