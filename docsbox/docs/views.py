@@ -58,7 +58,7 @@ class DocumentConvertView(Resource):
             Requests from VIA fileservice the file with given id.
             Checks file mimetype and creates converting task.
         """
-       
+
         r = get_file_from_via(file_id)
 
         if r.status_code == 200:
@@ -75,7 +75,7 @@ class DocumentConvertView(Resource):
                 return abort(400, message=err.args[0])
                 
             task = process_document_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
-            return { "taskId": task.id, "status": task.status, "filename": filename}
+            return { "taskId": task.id, "status": task.status}
         else: 
             return abort(r.status_code, message=r.json()["message"])
 
