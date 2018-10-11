@@ -1,10 +1,10 @@
 filesNotConvertable = [
-    {
-    "fileExt": ".ODT",
-    "fileName": "test6.odt",
-    "fileType": "application/vnd.oasis.opendocument.text",
-    "fileId": "917e882e-2140-4e91-a329-d8c5db2d359b"
-    }
+    # {
+    # "fileExt": ".ODT",
+    # "fileName": "test6.odt",
+    # "fileType": "application/vnd.oasis.opendocument.text",
+    # "fileId": "917e882e-2140-4e91-a329-d8c5db2d359b"
+    # },
     # {
     # "fileExt": ".ODP",
     # "fileName": "test4.odp",
@@ -78,7 +78,7 @@ filesConvertable = [
     "fileExt": ".SXW",
     "fileName": "test26.sxw",
     "fileType": "application/vnd.sun.xml.writer",
-    "fileId": "0b8a7582-15f6-4671-951a-1230b532b3da"
+    "fileId": "552aba34-790c-44f3-b17b-e8248ec3180a"
     }
     # {
     # "fileExt": ".DOC",
@@ -197,10 +197,10 @@ filesConvertable = [
 ]
 
 filesUnknown = [
-    {
-    "fileExt": ".JSON",
-    "fileName": "test35.json",
-    "fileType": "application/json",
-    "fileId": "779f7144-d3a3-4fe9-a613-ef8fd29fb103"
-    }
+    # {
+    # "fileExt": ".JSON",
+    # "fileName": "test35.json",
+    # "fileType": "application/json",
+    # "fileId": "779f7144-d3a3-4fe9-a613-ef8fd29fb103"
+    # }
 ]
