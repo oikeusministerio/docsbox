@@ -49,7 +49,7 @@ def process_document_convertion(path, options, meta):
         with office.documentLoad(path) as original_document:  # open original document
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
                 for fmt in options["formats"]: # iterate over requested formats
-                    file_name = "{0}.{1}".format(current_task.id, fmt)
+                    file_name = "{0}.{1}".format(meta["filename"], fmt)
                     output_path = os.path.join(app.config["MEDIA_PATH"], file_name)
                     original_document.saveAs(output_path, fmt=fmt, options="-eSelectPdfVersion=1")
                     

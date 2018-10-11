@@ -90,3 +90,6 @@ def get_file_mimetype(file, originalType = None):
         return originalType
     else:
         return mimetype
+
+def remove_extension(file):
+    return os.path.splitext(file)[0]
