@@ -1,144 +1,125 @@
-import ujson
 import datetime
+from requests import get, post
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort
 
-from docsbox import app, rq
-from docsbox.docs.tasks import process_document_convertion, upload_document, create_temp_file
-from docsbox.docs.utils import get_file_mimetype
+from docsbox import app
+from docsbox.docs.tasks import process_document_convertion, create_temp_file, get_task, do_task
+from docsbox.docs.utils import get_file_mimetype, set_options, remove_extension
+from docsbox.docs.via_controller import get_file_from_via, save_file_on_via  
 
-class DocumentStateView(Resource):
+class DocumentStatusView(Resource):
 
     def get(self, task_id):
         """
         Returns information about task status.
         """
-        queue = rq.get_queue()
-        task = queue.fetch_job(task_id)
+        task = get_task(task_id)
         if task:
-            return {
-                "id": task.id,
-                "status": task.status
-            }
+            if task.result:
+                return {
+                    "taskId": task.id,
+                    "status": task.status,
+                    "fileType": task.result["fileType"]
+                }
+            else: 
+                return {
+                    "taskId": task.id,
+                    "status": task.status
+                }
         else:
             return abort(404, message="Unknown task_id")
 
 
 class DocumentTypeView(Resource):
 
-    def get(self):
+    def get(self, file_id):
         """
-            Returns the File Type
+        Requests from VIA fileservice the file with given id.
+        Returns the File Mimetype
         """
-        if "file" not in request.files:
-            return abort(400, message="file field is required")
-        else:
-            tmp_file = create_temp_file(request.files["file"])
+
+        r = get_file_from_via(file_id)
+
+        if r.status_code == 200:
+            tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
-        return {
-                "mimetype": mimetype
-            }
+            isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
+            return { "convertable": isConvertable, "fileType": mimetype }
+        else: 
+            return abort(r.status_code, message=r.json()["message"])
 
 
 class DocumentConvertView(Resource):
 
-    def post(self):
+    def post(self, file_id):
         """
-            Validates options and creates converting task
+            Requests from VIA fileservice the file with given id.
+            Checks file mimetype and creates converting task.
         """
-        if "file" not in request.files:
-            return abort(400, message="file field is required")
-        else:
-            tmp_file = create_temp_file(request.files["file"])
+
+        r = get_file_from_via(file_id)
+
+        if r.status_code == 200:
+            tmp_file = create_temp_file(r)
             mimetype = get_file_mimetype(tmp_file)
+            filename = remove_extension(request.headers['Content-Disposition'])
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-                return {
-                    "message": "File does not need to be converted."
-                }
-            else:
-                if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                    return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
-
-                options = request.form.get("options", None)
-                if options:  # options validation
-                    options = ujson.loads(options)
-                    formats = options.get("formats", None)
-                    if not isinstance(formats, list) or not formats:
-                        return abort(400, message="Invalid 'formats' value")
-                    else:
-                        for fmt in formats:
-                            supported = (
-                                fmt in app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"])
-                            if not supported:
-                                message = "'{0}' mimetype can't be converted to '{1}'"
-                                return abort(400, message=message.format(mimetype, fmt))
-
-                    thumbnails = options.get("thumbnails", None) # check for thumbnails options on request and if they are valid
-                    if app.config["GENERATE_THUMBNAILS"] and thumbnails: # GENERATE_THUMBNAILS is configured as False
-                        if not isinstance(thumbnails, dict):
-                            return abort(400, message="Invalid 'thumbnails' value")
-                        else:
-                            thumbnails_size = thumbnails.get("size", None)
-                            if not isinstance(thumbnails_size, str) or not thumbnails_size:
-                                return abort(400, message="Invalid 'size' value")
-                            else:
-                                try:
-                                    (width, height) = map(
-                                        int, thumbnails_size.split("x"))
-                                except ValueError:
-                                    return abort(400, message="Invalid 'size' value")
-                                else:
-                                    options["thumbnails"]["size"] = (width, height)
-
-                else:
-                    options = app.config["DEFAULT_OPTIONS"]
-            task = process_document_convertion.queue(tmp_file.name, options, {
-                "mimetype": mimetype,
-            })
-        return {
-            "id": task.id,
-            "status": task.status,
-        }
-
-
-class DocumentUploadView(Resource):
-
-    def post(self):
-        """
-            Recieves file, checks file mimetype and saves original document
-        """
-        if "file" not in request.files:
-            return abort(400, message="file field is required")
-        else:
-            tmp_file = create_temp_file(request.files["file"])
-            mimetype = get_file_mimetype(tmp_file)
-            if mimetype not in app.config["ACCEPTED_MIMETYPES"]:
-                if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                    return abort(400, message="Not supported mimetype: '{0}'".format(mimetype))
-                return {
-                    "message": "File cannot be uploaded needs to be converted"
-                }
+                return abort(400, message="File does not need to be converted.")
+            if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+                return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
+            try:
+                options = set_options(request.form.get("options", None), mimetype)
+            except ValueError as err:
+                return abort(400, message=err.args[0])
                 
-            task = upload_document.queue(tmp_file.name, app.config["ACCEPTED_MIMETYPES"][mimetype]["format"])
-        return {
-            "id": task.id,
-            "status": task.status
-        }
+            task = process_document_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
+            return { "taskId": task.id, "status": task.status}
+        else: 
+            return abort(r.status_code, message=r.json()["message"])
 
 
 class DocumentDownloadView(Resource):
 
     def get(self, task_id):
         """
-            Returns the Converted File
+            If task with given id is finished saves the new converted file to Via fileservice
+            and returns the respective file id
         """
-        queue = rq.get_queue()
-        task = queue.fetch_job(task_id)
+        task = get_task(task_id)
         if task:
             if task.status == "finished":
-                return send_from_directory(app.config["MEDIA_PATH"], task.result, as_attachment=True)
+                r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.result["fileName"], task.result["fileType"])
+
+                if r.status_code == 201:
+                    return { 
+                        "taskId": task.id,
+                        "status": task.status,
+                        "convertable": True,
+                        "fileId": r.headers.get("Document-id"),
+                        "fileType": task.result["fileType"],
+                        "fileName": task.result["fileName"]
+                    }
+                else:
+                    return abort(r.status_code, message=r.json()["message"])
             else:
                 return abort(400, message="Task is still queued")
+        else:
+            return abort(404, message="Unknown task_id")
+
+
+class DeleteTmpFiles(Resource):
+
+    def delete(self, task_id):
+        """
+            If task with given id is finished get the task if
+            for deleting the temp file.
+        """
+        task = get_task(task_id)
+        if task and task.status == "finished":
+            tmp_task_id = task.meta["tmp_file_remove_task"]
+            tmptask = do_task(tmp_task_id)
+            return tmptask.status
         else:
             return abort(404, message="Unknown task_id")

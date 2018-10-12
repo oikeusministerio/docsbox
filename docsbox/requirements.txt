@@ -5,10 +5,12 @@ rq-scheduler==0.7.0
 Flask==0.11.1
 Flask-RESTful==0.3.5
 Flask-RQ2==16.0.2
-flask-env-settings==0.1.0
+requests==2.19.1
 gunicorn==19.6.0
 pylokit==0.8.1
 python-magic==0.4.15
 wand==0.4.3
 ujson==1.35
 nose==1.3.7
+pyjks==18.0.0
+ordbok==0.1.9
