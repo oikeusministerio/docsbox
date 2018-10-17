@@ -44,7 +44,7 @@ class DocumentTypeView(Resource):
 
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
-            mimetype = get_file_mimetype(tmp_file, r.headers.get('Content-type'))
+            mimetype = get_file_mimetype(tmp_file)
             isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
             return { "convertable": isConvertable, "fileType": mimetype }
         else: 
@@ -63,7 +63,7 @@ class DocumentConvertView(Resource):
 
         if r.status_code == 200:
             tmp_file = create_temp_file(r)
-            mimetype = get_file_mimetype(tmp_file, r.headers.get('Content-type'))
+            mimetype = get_file_mimetype(tmp_file)
             filename = remove_extension(request.headers['Content-Disposition'])
             if mimetype in app.config["ACCEPTED_MIMETYPES"]:
                 return abort(400, message="File does not need to be converted.")

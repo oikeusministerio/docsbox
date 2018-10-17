@@ -68,8 +68,6 @@ COMMON: &common
       formats: PRESENTATION_EXPORT_FORMATS
     text/rtf: # Rich Text Format
       formats: DOCUMENT_EXPORT_FORMATS
-    application/octet-stream: # Binary
-      formats: DOCUMENT_EXPORT_FORMATS
     #XML OpenOffice
     application/vnd.sun.xml.writer: # sxw
       formats: DOCUMENT_EXPORT_FORMATS
@@ -86,21 +84,53 @@ COMMON: &common
     application/vnd.sun.xml.impress.template: # sti
       formats: PRESENTATION_EXPORT_FORMATS
     application/vnd.sun.xml.draw.template: # std
-      formats: PRESENTATION_EXPORT_FORMATSs
+      formats: PRESENTATION_EXPORT_FORMATS
     application/vnd.sun.xml.math: # sxm
       formats: SPREADSHEET_EXPORT_FORMATS
     application/vnd.sun.xml.writer.global: # sxg
       formats: DOCUMENT_EXPORT_FORMATS
-    application/vnd.apple.keynote: #Apple Keynote
+    application/applefile: #Apple Keynote
       formats: PRESENTATION_EXPORT_FORMATS
-    application/vnd.apple.numbers: #Apple Numbers
+    application/applefile: #Apple Numbers
       formats: SPREADSHEET_EXPORT_FORMATS
-    application/vnd.apple.pages: #Apple Pages
+    application/applefile: #Apple Pages
       formats: DOCUMENT_EXPORT_FORMATS
 
   DEFAULT_OPTIONS:
     formats: ["pdf"]
     content-type: "application/pdf"
+
+  FILEMIMETYPES: 
+    [
+    "text/csv",
+    "application/applefile",
+    "application/vnd.sun.xml.writer",
+    "application/vnd.sun.xml.calc",
+    "application/vnd.sun.xml.draw",
+    "application/vnd.sun.xml.writer.template",
+    "application/vnd.sun.xml.calc.template",
+    "application/vnd.sun.xml.impress",
+    "application/vnd.sun.xml.impress.template",
+    "application/vnd.sun.xml.draw.template",
+    "application/vnd.sun.xml.math"
+    ]
+  FILEFORMATS: 
+    [
+    "ASCII text, with CR line terminators",
+    "AppleDouble encoded Macintosh file",
+    "OpenOffice.org 1.x Writer document",
+    "OpenOffice.org 1.x Calc spreadsheet",
+    "OpenOffice.org 1.x Draw document",
+    "Open Office.org 1.x Writer Document Template",
+    "OpenOffice.org 1.x Spreadsheet Template",
+    "OpenOffice.org 1.0 Presentation",
+    "OpenOffice.org 1.0 Presentation Template",
+    "OpenOffice.org 1.0 Drawing Template",
+    "OpenOffice.org 1.0 Math"
+    ]
+  
+  LIBMAGIC_MIMETYPES:
+    content-type: ["application/octet-stream", "text/plain"]
 
 DEVELOPMENT: &development
   <<: *common

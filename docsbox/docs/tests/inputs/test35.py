@@ -52,7 +52,7 @@ class BaseTestCase(unittest.TestCase):
     def delete_temporary_file(self, taskId):
         response = self.client.delete("/conversion-service/delete-tmp-file/" + taskId)
         return response
-
+'''
 # Group of tests to test valid or invalid UUID
 class DocumentUUIDTestCase(BaseTestCase):
     def test_get_task_by_valid_uuid(self):
@@ -78,7 +78,8 @@ class DocumentUUIDTestCase(BaseTestCase):
         self.assertEqual(ujson.loads(response.data), {
             "message": "8c286c7f-ce38-4693-1234-e5d2ab3ce595. You have requested this URI [/conversion-service/convert/8c286c7f-ce38-4693-1234-e5d2ab3ce595] but did you mean /conversion-service/convert/<file_id> ?"
         })    
-  
+'''    
+'''
 # Test to test the deletion of temporary files
 class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
     def test_delete_temporary_file(self):
@@ -101,9 +102,10 @@ class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
         self.assertEqual(json_status_file, {
             "message": "Task is finished"
         })       
-
+'''
 # Group of tests to test detection of type file and check if it's possible to convert
 class DocumentDetectAndConvertTestCase(BaseTestCase):   
+    
     def test_convert_invalid_mimetype(self):
         response = self.convert_file(dep.filesUnknown[0]['fileId'], dep.filesUnknown[0]['fileName']) 
         json = ujson.loads(response.data)
@@ -111,7 +113,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
         self.assertEqual(json, {
             "message": "Not supported mimetype: '"+dep.filesUnknown[0]['fileType']+"'"
         })
-    
+    '''
     def test_convert_empty_formats(self):
         response = self.convert_file_with_options(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
             "formats": [],
@@ -131,7 +133,8 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
         self.assertEqual(json, {
             "message": "'application/vnd.sun.xml.writer' mimetype can't be converted to 'csv'"
         })
-    
+    '''
+    '''
     def test_detect_convert_file_not_required(self):
         for file in dep.filesNotConvertable:
             # Detect file type   
@@ -150,7 +153,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             self.assertEqual(json, {
                 'message': 'File does not need to be converted.'
             })
-     
+    
     def test_detect_convert_file_required(self):
          for file in dep.filesConvertable:            
             # Detect file type   
@@ -177,7 +180,8 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
                 "status": "finished",
                 "fileType": "application/pdf"
             })  
-      
+    '''     
+'''
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
@@ -253,3 +257,4 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 self.assertEqual(json, {
                     "message": "Not supported mimetype:"+split_mimetype[1]
                 }) 
+'''
