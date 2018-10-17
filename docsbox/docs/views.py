@@ -119,7 +119,11 @@ class DeleteTmpFiles(Resource):
         task = get_task(task_id)
         if task and task.status == "finished":
             tmp_task_id = task.meta["tmp_file_remove_task"]
-            tmptask = do_task(tmp_task_id)
-            return tmptask.status
+            tmp_tsk = get_task(tmp_task_id)
+            if tmp_tsk.status != "finished":
+                tmptask = do_task(tmp_task_id)
+                return tmptask.status
+            else:
+                return abort(400, message="Task is " + tmp_tsk.status)
         else:
             return abort(404, message="Unknown task_id")
