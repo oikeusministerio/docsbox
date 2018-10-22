@@ -1,6 +1,7 @@
 import os
 import zipfile
 import ujson
+import itertools
 
 from wand.image import Image
 
@@ -77,14 +78,16 @@ def make_thumbnails(image, tmp_dir, size):
         image.close()
     return index
 
-
 def get_file_mimetype(file):
-    mimetype = magic.from_file(file.name, mime=True)    
-    if mimetype == "application/pdf":
-        version = magic.from_file(file.name, mime=False)
-        if version == "PDF document, version 1.4":
-            return "application/pdf-a"
-    return mimetype
+
+    mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
+    documentTypeFile = magic.Magic().id_buffer(open(file.name, mode="rb").read(1024))
+
+    for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
+        if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
+            mimeTypeFile = fileMimetype
+    
+    return mimeTypeFile
 
 def remove_extension(file):
     return os.path.splitext(file)[0]
