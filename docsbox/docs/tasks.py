@@ -1,6 +1,7 @@
 import os
 import shutil
 import datetime
+import subprocess
 
 from pylokit import Office
 from wand.image import Image
@@ -49,10 +50,16 @@ def process_document_convertion(path, options, meta):
         with office.documentLoad(path) as original_document:  # open original document
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
                 for fmt in options["formats"]: # iterate over requested formats
+                    tmp_path=os.path.join(tmp_dir, current_task.id)
+                    original_document.saveAs(tmp_path, fmt=fmt)
+
                     file_name = "{0}.{1}".format(meta["filename"], fmt)
                     output_path = os.path.join(app.config["MEDIA_PATH"], file_name)
-                    original_document.saveAs(output_path, fmt=fmt, options="-eSelectPdfVersion=1")
-                    
+                    try:
+                        subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
+                    except:
+                        original_document.saveAs(output_path, fmt=fmt)
+
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                     is_created = False
                     if meta["mimetype"] == "application/pdf":
@@ -68,7 +75,9 @@ def process_document_convertion(path, options, meta):
                     if is_created:
                         pdf_tmp_file.close()
                     thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
-                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
+                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)
+            remove_file.schedule(datetime.timedelta(
+                seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_path)                                  
         file_remove_task = remove_file.schedule(datetime.timedelta(
             seconds=app.config["RESULT_FILE_TTL"]), output_path)
         current_task.meta["tmp_file_remove_task"] = file_remove_task.id
