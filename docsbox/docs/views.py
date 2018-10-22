@@ -90,7 +90,7 @@ class DocumentDownloadView(Resource):
         task = get_task(task_id)
         if task:
             if task.status == "finished":
-                r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.result["fileName"], task.result["fileType"])
+                r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.id, task.result["fileType"])
 
                 if r.status_code == 201:
                     return { 

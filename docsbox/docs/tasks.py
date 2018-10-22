@@ -54,7 +54,7 @@ def process_document_convertion(path, options, meta):
                     original_document.saveAs(tmp_path, fmt=fmt)
 
                     file_name = "{0}.{1}".format(meta["filename"], fmt)
-                    output_path = os.path.join(app.config["MEDIA_PATH"], file_name)
+                    output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
                     try:
                         subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
                     except:
@@ -75,9 +75,7 @@ def process_document_convertion(path, options, meta):
                     if is_created:
                         pdf_tmp_file.close()
                     thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
-                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)
-            remove_file.schedule(datetime.timedelta(
-                seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_path)                                  
+                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
         file_remove_task = remove_file.schedule(datetime.timedelta(
             seconds=app.config["RESULT_FILE_TTL"]), output_path)
         current_task.meta["tmp_file_remove_task"] = file_remove_task.id
