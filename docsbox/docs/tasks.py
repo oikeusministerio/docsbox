@@ -58,7 +58,8 @@ def process_document_convertion(path, options, meta):
                     try:
                         subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
                     except:
-                        original_document.saveAs(output_path, fmt=fmt)
+                        current_task.cancel()
+                        return
 
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                     is_created = False

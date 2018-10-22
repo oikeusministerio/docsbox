@@ -138,7 +138,7 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
-  GHOSTSCRIPT: ['gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-sColorConversionStrategy=/RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1']
+  GHOSTSCRIPT: ['gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1']
 
 DEVELOPMENT: &development
   <<: *common
