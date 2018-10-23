@@ -40,7 +40,7 @@ COMMON: &common
       format: "txt"
     text/csv: # Comma Seperated Values
       format: "csv"
-    application/pdf: # Portable Document Format
+    application/pdfa: # Portable Document Format Archive
       format: "pdf"
     application/epub+zip: # EPUB
       format: "epub"
@@ -54,6 +54,8 @@ COMMON: &common
       format: "png"
 
   CONVERTABLE_MIMETYPES:
+    application/pdf: # Portable Document Format
+      format: "pdf"
     application/msword: # Microsoft Word 2003
       formats: DOCUMENT_EXPORT_FORMATS
     application/vnd.openxmlformats-officedocument.wordprocessingml.document: # Microsoft Word 2007
@@ -128,9 +130,15 @@ COMMON: &common
     "OpenOffice.org 1.0 Drawing Template",
     "OpenOffice.org 1.0 Math"
     ]
+
+  PDFA:
+    NAMESPACE: "http://www.aiim.org/pdfa/ns/id/"
+    ACCEPTED_VERSIONS: ["1A", "1B", "2A", "2B", "2U", "3A", "3B", "3U"]
   
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
+  
+  GHOSTSCRIPT: ['gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1']
 
 DEVELOPMENT: &development
   <<: *common

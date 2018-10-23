@@ -90,19 +90,22 @@ class DocumentDownloadView(Resource):
         task = get_task(task_id)
         if task:
             if task.status == "finished":
-                r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.result["fileName"], task.result["fileType"])
+                if task.result:
+                    r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.id, task.result["fileType"])
 
-                if r.status_code == 201:
-                    return { 
-                        "taskId": task.id,
-                        "status": task.status,
-                        "convertable": True,
-                        "fileId": r.headers.get("Document-id"),
-                        "fileType": task.result["fileType"],
-                        "fileName": task.result["fileName"]
-                    }
+                    if r.status_code == 201:
+                        return { 
+                            "taskId": task.id,
+                            "status": task.status,
+                            "convertable": True,
+                            "fileId": r.headers.get("Document-id"),
+                            "fileType": task.result["fileType"],
+                            "fileName": task.result["fileName"]
+                        }
+                    else:
+                        return abort(r.status_code, message=r.json()["message"])
                 else:
-                    return abort(r.status_code, message=r.json()["message"])
+                    return abort(404, message="Task with no result")
             else:
                 return abort(400, message="Task is still queued")
         else:

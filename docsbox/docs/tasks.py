@@ -1,6 +1,7 @@
 import os
 import shutil
 import datetime
+import subprocess
 
 from pylokit import Office
 from wand.image import Image
@@ -49,10 +50,17 @@ def process_document_convertion(path, options, meta):
         with office.documentLoad(path) as original_document:  # open original document
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
                 for fmt in options["formats"]: # iterate over requested formats
+                    tmp_path=os.path.join(tmp_dir, current_task.id)
+                    original_document.saveAs(tmp_path, fmt=fmt)
+
                     file_name = "{0}.{1}".format(meta["filename"], fmt)
-                    output_path = os.path.join(app.config["MEDIA_PATH"], file_name)
-                    original_document.saveAs(output_path, fmt=fmt, options="-eSelectPdfVersion=1")
-                    
+                    output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
+                    try:
+                        subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
+                    except:
+                        current_task.cancel()
+                        return
+
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                     is_created = False
                     if meta["mimetype"] == "application/pdf":

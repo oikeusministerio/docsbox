@@ -2,13 +2,13 @@ import os
 import zipfile
 import ujson
 import itertools
+from PyPDF2 import PdfFileReader, xmp
 
 from wand.image import Image
 
 import magic
 
 from flask import current_app as app
-from docsbox import app
 
 
 def make_zip_archive(uuid, tmp_dir):
@@ -79,14 +79,33 @@ def make_thumbnails(image, tmp_dir, size):
         image.close()
     return index
 
+def get_pdfa_version(nodes):
+    part, conformance = "", ""
+    for x in nodes:
+        if x.nodeName == "pdfaid:part":
+            part =  x.firstChild.nodeValue
+        if x.nodeName == "pdfaid:conformance":
+            conformance = x.firstChild.nodeValue
+    return part + conformance
+
 def get_file_mimetype(file):
+    fileData = open(file.name, mode="rb")
 
     mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
-    documentTypeFile = magic.Magic().id_buffer(open(file.name, mode="rb").read(1024))
+    documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
 
-    for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
-        if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
-            mimeTypeFile = fileMimetype
+    if mimeTypeFile == "application/pdf":
+        input = PdfFileReader(fileData)
+        metadata = input.getXmpMetadata()
+        if metadata is not None:
+            pdfa=app.config["PDFA"]
+            nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
+            if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                return "application/pdfa"
+    else:
+        for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
+            if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
+                mimeTypeFile = fileMimetype
     
     return mimeTypeFile
 
