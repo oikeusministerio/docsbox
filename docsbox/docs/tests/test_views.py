@@ -152,7 +152,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             })
      
     def test_detect_convert_file_required(self):
-         for file in dep.filesConvertable:            
+        for file in dep.filesConvertable:            
             # Detect file type   
             response = self.detection_file_type(file['fileId'])
             json = ujson.loads(response.data)  
@@ -167,17 +167,21 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(json.get("taskId"))
             self.assertEqual(json.get("status"), "queued")
-        
-            time.sleep(3)
 
-            response = self.status_file(json.get("taskId"))
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(ujson.loads(response.data), {
-                "taskId": json.get("taskId"),
-                "status": "finished",
-                "fileType": "application/pdf"
-            })  
-      
+            ttl = 10
+            while (ttl > 0):
+                time.sleep(2)
+                response = self.status_file(json.get("taskId"))
+                json = ujson.loads(response.data)
+                self.assertEqual(response.status_code, 200)
+                if (json.get("status") == "finished"):
+                    self.assertEqual(ujson.loads(response.data), {
+                    "taskId": json.get("taskId"),
+                    "status": "finished",
+                    "fileType": "application/pdf"
+                    })
+                    break 
+     
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
@@ -207,15 +211,19 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 self.assertTrue(json.get("taskId"))
                 self.assertEqual(json.get("status"), "queued")
                     
-                time.sleep(3)
-                    
-                response = self.status_file(json.get("taskId"))
-                self.assertEqual(response.status_code, 200)
-                self.assertEqual(ujson.loads(response.data), {
-                    "taskId": json.get("taskId"),
-                    "status": "finished",
-                    "fileType": "application/pdf"
-                })
+                ttl = 10
+                while (ttl > 0):
+                    time.sleep(2)
+                    response = self.status_file(json.get("taskId"))
+                    json = ujson.loads(response.data)
+                    self.assertEqual(response.status_code, 200)
+                    if (json.get("status") == "finished"):
+                        self.assertEqual(ujson.loads(response.data), {
+                        "taskId": json.get("taskId"),
+                        "status": "finished",
+                        "fileType": "application/pdf"
+                        })
+                        break 
 
                 # Download file 
                 response = self.download_file(json.get("taskId"))      

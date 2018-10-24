@@ -50,6 +50,8 @@ test:
   build: ../../../docsbox
   volumes_from:
     - web
+  extra_hosts:
+    - it1.integraatiopalvelu.fi:46.30.128.27
   links:
     - web:web
     - redis:redis
