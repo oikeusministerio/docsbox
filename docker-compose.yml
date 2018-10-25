@@ -8,7 +8,9 @@ web:
   volumes:
     - ./docsbox:/home/docsbox
     - /tmp/media:/home/docsbox/media
-  command: gunicorn -b :8000 docsbox:app
+  extra_hosts:
+    - it1.integraatiopalvelu.fi:46.30.128.27
+  command: gunicorn --config=docsbox/config/gunicorn.conf docsbox:app
 
 rqworker:
   restart: always

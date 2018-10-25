@@ -4,7 +4,7 @@ from requests import get, post
 from flask import request, send_from_directory
 from flask_restful import Resource, abort
 
-from docsbox import app
+from docsbox import app, log
 from docsbox.docs.tasks import process_document_convertion, create_temp_file, get_task, do_task
 from docsbox.docs.utils import get_file_mimetype, set_options, remove_extension
 from docsbox.docs.via_controller import get_file_from_via, save_file_on_via  

@@ -4,7 +4,7 @@ from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
 from ordbok.flask_helper import FlaskOrdbok
-
+import logging
 
 app = Flask(__name__)
 ordbok = FlaskOrdbok()
@@ -22,6 +22,8 @@ app.config.update({
 
 api = Api(app)
 rq = RQ(app)
+
+log = logging.getLogger('gunicorn.access')
 
 from docsbox.docs.views import *
     
