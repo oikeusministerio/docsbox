@@ -4,7 +4,6 @@
 `docsbox` uses **LibreOffice** (via **LibreOfficeKit**) for document converting.
 
 # Install
-
 Currently, installing powered by docker-compose:
 
 ```bash
@@ -26,62 +25,72 @@ f6b55773c71d        docsbox_rqworker      "rq worker -c docsbox"   15 minutes ag
 ```
 
 # Settings (env)
-
 ```
 REDIS_URL - redis-server url (default: redis://redis:6379/0)
-REDIS_JOB_TIMEOUT - job timeout (default: 10 minutes)
-ORIGINAL_FILE_TTL - TTL for uploaded file in seconds (default: 10 minutes)
-RESULT_FILE_TTL - TTL for result file in seconds (default: 24 hours)
-THUMBNAILS_DPI - thumbnails dpi, for bigger thumbnails choice bigger values (default: 90)
-LIBREOFFICE_PATH - path to libreoffice (default: /usr/lib/libreoffice/program/)
 ```
+
+# Configuration
+The service can be configurable through the yml file `docsbox/config/config.yml`.
 
 # Test
-
-Uploading File:
-
-```bash
-$ curl -X POST -F "file=@test.odt" http://localhost/api/document/upload
-{"status": "queued", "id": "32982f1d-6b23-4360-b1aa-c324b538ac4c"}
-
-$ curl -X POST -F "file=@test.docx" http://localhost/api/document/upload
-{"message": "File cannot be uploaded needs to be converted"}
-```
+The conversion service connects with VIA fileservice where requests the file given a file id. To test its nedded some VIA file id
 
 Checking File Type:
-
 ```bash
-$ curl -X GET -F "file=@test.odt" http://localhost/api/document
-{"mimetype": "application/vnd.oasis.opendocument.text"}
+$ curl -X GET http://localhost/conversion-service/get-file-type/02127a06-d078-4935-a6f9-b7cbdbff4959
+{
+    "convertable": true,
+    "fileType": "application/msword"
+}
 ```
 
-Converting and Retrieving a File:
-
+Request conversion & checking conversion status:
 ```bash
-$ curl -X POST -F "file=@test.docx" http://localhost/api/document/convert
-{"status": "queued", "id": "146faa45-893b-4e3f-9251-d5f6dbeb5934"}
-
-$ curl -X GET http://localhost/api/document/146faa45-893b-4e3f-9251-d5f6dbeb5934
-{"status": "finished", "id": "146faa45-893b-4e3f-9251-d5f6dbeb5934"}
-
-$ curl -X GET -O http://localhost/api/document/download/146faa45-893b-4e3f-9251-d5f6dbeb5934
-```
-Download returns converted file (default to pdf)
-
-
-# API
-
-```
-POST (multipart/form-data) /api/document/convert
-file=@test.docx
-options={ # json, optional
-    "formats": ["pdf"] # desired formats to be converted in, optional
-    "thumbnails": { # optional
-        "size": "320x240",
-    } 
+$ curl -X POST --header "Content-Disposition: filename.doc" http://localhost/conversion-service/convert/02127a06-d078-4935-a6f9-b7cbdbff4959
+{
+    "status": "queued",
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
 }
 
-GET /api/document/{task_id}
+$ curl -X GET http://localhost/conversion-service/status/bbf78afd-011c-4815-95da-17b810fa4f5f
+{
+    "fileType": "application/pdf",
+    "status": "finished",
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
+}
+```
+
+The conversion service saves the converted file in VIA fileservice and returns its id.
+Request converted file id:
+```bash
+$ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
+{
+    "convertable": true,
+    "fileId": "92180232-5d1a-456f-80d7-2cbc596afb57",
+    "fileName": "filename.pdf",
+    "fileType": "application/pdf",
+    "status": "finished",
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
+}
+```
+
+Its is possible to request the deletion of the temp converted file as:
+```bash
+$ curl -X DELETE -O http://localhost/conversion-service/delete-tmp-file/bbf78afd-011c-4815-95da-17b810fa4f5f
+"finished"
+```
+
+# API
+```
+GET    /conversion-service/get-file-type/{file_id}
+
+POST   /conversion-service/convert/{file_id}
+
+GET    /conversion-service/status/{task_id}
+
+GET    /conversion-service/get-converted-file/{task_id}
+
+DELETE /conversion-service/delete-tmp-file/{task_id}
 ```
 
 # Scaling
@@ -103,10 +112,9 @@ For multi-host deployment you'll need to create global syncronized volume (e.g. 
 ```
 
 # Supported filetypes
-
-
-| Input                              | Output              | Thumbnails |
-| ---------------------------------- | ------------------- | ---------- |
-| Document `doc` `docx` `odt` `rtf`  | `pdf` `txt` `html`  | `yes`      |
-| Presentation `ppt` `pptx` `odp`    | `pdf` `html`        | `yes`      |
-| Spreadsheet `xls` `xlsx` `ods`     | `pdf` `csv` `html`  | `yes`      |
+| Type           | Format                              | 
+| ---------------|------------------------------------ |
+| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` |
+| Presentation   | `.pptx` `.ppt` `.pages`             |
+| Spreadsheet    | `.xlsx` `.xls` `.numbers`           |
+| OpenOffice XML | `.sxw` `.sxc` `.sxd`                |
