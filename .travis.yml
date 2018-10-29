@@ -1,7 +1,29 @@
 sudo: required
+
 language: python
+
 services:
   - docker
+
+env:
+  global:
+    # DOCKER_USER=...
+    - secret: "<encrypted docker username>"
+    # DOCKER_PASS=...
+    - secret: "<encrypted docker password>"
+    # BACKEND_IMAGE=...
+    - secret: "<encrypted backend image repo>"
+    # PROXY_IMAGE=...
+    - secret: "<encrypted proxy image repo>"
+
+before_install:
+  - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+  - docker pull ${BACKEND_IMAGE}
+  - docker build --no-cache --rm --tag ${BACKEND_IMAGE}:latest ./docsbox
+  - docker push ${BACKEND_IMAGE}:latest
+  - docker pull ${PROXY_IMAGE}
+  - docker build --no-cache --rm --tag ${PROXY_IMAGE}:latest ./nginx
+  - docker push ${PROXY_IMAGE}:latest
 
 script:
   - docker-compose run web nosetests

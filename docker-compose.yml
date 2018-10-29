@@ -1,47 +1,54 @@
-web:
-  restart: always
-  build: ./docsbox
-  expose:
-    - "8000"
-  links:
-    - redis:redis
-  volumes:
-    - ./docsbox:/home/docsbox
-    - /tmp/media:/home/docsbox/media
-  command: gunicorn -b :8000 docsbox:app
+version: "3"
+services:
+  web:
+    # image: <backend_image_repo>:latest
+    build: ./docsbox
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - docsbox:/home/docsbox
+      - media:/home/docsbox/media
+    extra_hosts:
+      - it1.integraatiopalvelu.fi:46.30.128.27
+    command: gunicorn -b :8000 docsbox:app
+ 
+  rqworker:
+    # image: <backend_image_repo>:latest
+    build: ./docsbox
+    depends_on:
+      - redis
+      - web
+    volumes:
+      - docsbox:/home/docsbox
+      - media:/home/docsbox/media
+    command: rq worker -c docsbox
+ 
+  rqscheduler:
+    # image: <backend_image_repo>:latest
+    build: ./docsbox
+    depends_on:
+      - redis
+      - web
+    command: rqscheduler -H redis -p 6379 -d 0
+ 
+  nginx:
+    # image: <proxy_image_repo>:latest
+    build: ./nginx
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+ 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
 
-rqworker:
-  restart: always
-  build: ./docsbox
-  links:
-    - redis:redis
-  volumes_from:
-    - web
-  command: rq worker -c docsbox
-
-rqscheduler:
-  restart: always
-  build: ./docsbox
-  links:
-    - redis:redis
-  volumes_from:
-    - web
-  command: rqscheduler -H redis -p 6379 -d 0
-
-nginx:
-  restart: always
-  build: ./nginx/
-  ports:
-    - "80:80"
-  volumes_from:
-    - web
-  links:
-    - web:web
-
-redis:
-  restart: always
-  image: redis:latest
-  expose:
-    - "6379"
-  volumes:
-    - redisdata:/data
+volumes:
+  docsbox:
+  media:
+  redis-data:
