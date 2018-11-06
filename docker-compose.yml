@@ -1,8 +1,8 @@
 version: "3"
 services:
   web:
-    # image: <backend_image_repo>:latest
     build: ./docsbox
+    image: oikeusministerio/common-conversion:latest
     depends_on:
       - redis
     ports:
@@ -15,8 +15,8 @@ services:
     command: gunicorn -b :8000 docsbox:app
  
   rqworker:
-    # image: <backend_image_repo>:latest
     build: ./docsbox
+    image: oikeusministerio/common-conversion:latest
     depends_on:
       - redis
       - web
@@ -26,15 +26,14 @@ services:
     command: rq worker -c docsbox
  
   rqscheduler:
-    # image: <backend_image_repo>:latest
     build: ./docsbox
+    image: oikeusministerio/common-conversion:latest
     depends_on:
       - redis
       - web
     command: rqscheduler -H redis -p 6379 -d 0
  
   nginx:
-    # image: <proxy_image_repo>:latest
     build: ./nginx
     depends_on:
       - web
