@@ -3,25 +3,26 @@
 `docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into more useful filetypes like PDF, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
 `docsbox` uses **LibreOffice** (via **LibreOfficeKit**) for document converting.
 
-# Install
+# Install and Start
 Currently, installing powered by docker-compose:
 
-```bash
-$ git clone https://github.com/oikeusministerio/docsbox.git && cd docsbox
-$ docker-compose build
-$ docker-compose up
 ```
-
+1 - git clone https://github.com/oikeusministerio/docsbox.git
+2 - cd docsbox
+3 - docker-compose build
+4 - docker-compose up
+```
 
 It'll start this services:
 
 ```bash
-CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                    NAMES
-7ce674173732        docsbox_nginx         "/usr/sbin/nginx"        8 minutes ago       Up 8 minutes        0.0.0.0:80->80/tcp       docsbox_nginx_1
-f6b55773c71d        docsbox_rqworker      "rq worker -c docsbox"   15 minutes ago      Up 8 minutes                                 docsbox_rqworker_1
-662b08daefea        docsbox_rqscheduler   "rqscheduler -H redis"   15 minutes ago      Up 8 minutes                                 docsbox_rqscheduler_1
-0364df126b36        docsbox_web           "gunicorn -b :8000 do"   15 minutes ago      Up 8 minutes        8000/tcp                 docsbox_web_1
-5e8c8481e288        redis:latest          "docker-entrypoint.sh"   9 hours ago         Up 8 minutes        0.0.0.0:6379->6379/tcp   docsbox_redis_1
+$ docker ps
+CONTAINER ID  IMAGE                                      COMMAND                 CREATED             STATUS             PORTS                   NAMES
+f6b55773c71d  oikeusministerio/common-conversion:latest  "rq worker -c docsbox"  About a minute ago  Up About a minute                          docsbox_rqworker_1
+662b08daefea  oikeusministerio/common-conversion:latest  "rqscheduler -H redis"  About a minute ago  Up About a minute                          docsbox_rqscheduler_1
+0364df126b36  oikeusministerio/common-conversion:latest  "gunicorn -b :8000 do"  About a minute ago  Up About a minute  0.0.0.0:8000->8000/tcp  docsbox_web_1
+7ce674173732  docsbox_nginx                              "/usr/sbin/nginx"       About a minute ago  Up About a minute  0.0.0.0:80->80/tcp      docsbox_nginx_1
+5e8c8481e288  redis:latest                               "docker-entrypoint.sh"  About a minute ago  Up About a minute  0.0.0.0:6379->6379/tcp  docsbox_redis_1
 ```
 
 # Settings (env)
@@ -98,14 +99,14 @@ Within a single physical server, docsbox can be scaled by docker-compose:
 ```bash
 $ docker-compose scale web=4 rqworker=8
 ```
-For multi-host deployment you'll need to create global syncronized volume (e.g. with flocker), global redis-server and mount it at `docker-compose.yml` file.
+The Application implements possibility for multi-host deployment using Docker Swarm it will be need the creation of a global syncronized volume (e.g. with flocker), global redis-server and mount it at `docker-compose.yml` file.
 
 
 # Run tests (Ubuntu)
 ```
-1 - cd docsbox/docsbox/docs/tests
+1 - cd docsbox
 2 - docker-compose build
-3 - docker-compose up
+3 - docker-compose run web nosetets
 4 - The tests are run on the docker container and the run result is returned on the console
 5 - Folder Inputs to input files for conversion
 6 - Folder Outputs to output of converted files
