@@ -2,7 +2,7 @@ version: "3"
 services:
   web:
     build: ./docsbox
-    image: oikeusministerio/common-conversion:latest
+    image: oikeusministerio/common-conversion
     depends_on:
       - redis
     ports:
@@ -16,7 +16,7 @@ services:
  
   rqworker:
     build: ./docsbox
-    image: oikeusministerio/common-conversion:latest
+    image: oikeusministerio/common-conversion
     depends_on:
       - redis
       - web
@@ -27,7 +27,7 @@ services:
  
   rqscheduler:
     build: ./docsbox
-    image: oikeusministerio/common-conversion:latest
+    image: oikeusministerio/common-conversion
     depends_on:
       - redis
       - web
