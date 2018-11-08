@@ -1,6 +1,7 @@
 version: "3"
 services:
   web:
+    restart: always
     build: ./docsbox
     image: oikeusministerio/common-conversion
     depends_on:
@@ -8,24 +9,26 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - docsbox:/home/docsbox
-      - media:/home/docsbox/media
+      - ./docsbox:/home/docsbox
+      - /tmp/media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
     command: gunicorn -b :8000 docsbox:app
  
   rqworker:
+    restart: always
     build: ./docsbox
     image: oikeusministerio/common-conversion
     depends_on:
       - redis
       - web
     volumes:
-      - docsbox:/home/docsbox
-      - media:/home/docsbox/media
+      - ./docsbox:/home/docsbox
+      - /tmp/media:/home/docsbox/media
     command: rq worker -c docsbox
  
   rqscheduler:
+    restart: always
     build: ./docsbox
     image: oikeusministerio/common-conversion
     depends_on:
@@ -34,6 +37,7 @@ services:
     command: rqscheduler -H redis -p 6379 -d 0
  
   nginx:
+    restart: always
     build: ./nginx
     depends_on:
       - web
@@ -41,13 +45,12 @@ services:
       - "80:80"
  
   redis:
+    restart: always
     image: redis:latest
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redisdata:/data
 
 volumes:
-  docsbox:
-  media:
-  redis-data:
+  redisdata:

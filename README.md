@@ -106,7 +106,7 @@ The Application implements possibility for multi-host deployment using Docker Sw
 ```
 1 - cd docsbox
 2 - docker-compose build
-3 - docker-compose run web nosetets
+3 - sudo docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 4 - The tests are run on the docker container and the run result is returned on the console
 5 - Folder Inputs to input files for conversion
 6 - Folder Outputs to output of converted files
