@@ -38,11 +38,13 @@ services:
  
   nginx:
     restart: always
-    build: ./nginx
+    image: nginx
     depends_on:
       - web
     ports:
       - "80:80"
+    volumes:
+     - ./nginx.conf:/etc/nginx/nginx.conf:ro
  
   redis:
     restart: always

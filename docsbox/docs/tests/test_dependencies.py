@@ -3,79 +3,79 @@ filesNotConvertable = [
      "fileExt": ".ODT",
      "fileName": "test6",
      "fileType": "application/vnd.oasis.opendocument.text",
-     "fileId": "ed5331d2-1f1b-4849-a4be-a97251c60272"
+     "fileId": "2ca6808c-941c-4e7e-978d-5d9f88dfdd4f"
     },
     {
     "fileExt": ".PDF-A",
     "fileName": "test36",
     "fileType": "application/pdfa",
-    "fileId": "b178e397-b938-4e47-b4cb-07d995c242fd"
+    "fileId": "a5c9416d-b044-4dff-9cf9-983ad592a3ba"
     },
     {
     "fileExt": ".ODP",
     "fileName": "test4",
     "fileType": "application/vnd.oasis.opendocument.presentation",
-    "fileId": "8b607e53-8ad7-49cd-a58c-1d568660dc50"
+    "fileId": "9b4e4fe5-abd8-41e7-a6dd-e081271f6ed9"
     },
     {
     "fileExt": ".ODG",
     "fileName": "test18",
     "fileType": "application/vnd.oasis.opendocument.graphics",
-    "fileId": "18985273-169d-4c2e-8c25-1e0109f1ae0b"
+    "fileId": "eed6ee00-305d-4488-9556-00bcc04fb3d0"
     },
     {
     "fileExt": ".ODF",
     "fileName": "test19",
     "fileType": "application/vnd.oasis.opendocument.formula",
-    "fileId": "61358ea2-767d-4e1d-bddc-25f78ac7a185"
+    "fileId": "7dd765b6-bc52-42dd-8531-3c5cc9a1911d"
     },
     {
     "fileExt": ".ODS",
     "fileName": "test20",
     "fileType": "application/vnd.oasis.opendocument.spreadsheet",
-    "fileId": "99d37fbd-69d5-4395-8986-106fd80495b0"
+    "fileId": "76abc065-9d46-46b2-85a8-d3596d574d9a"
     },
     {
     "fileExt": ".PNG",
     "fileName": "test9",
     "fileType":  "image/png",
-    "fileId": "df72cfa9-da64-48ce-8b74-3688e47cdd43"
+    "fileId": "a8cd8a1e-ec68-4ede-821b-4c8df4944cee"
     },
     {
     "fileExt": ".TXT",
     "fileName": "test11",
     "fileType": "text/plain",
-    "fileId": "1c82389b-5135-4e50-bfbd-34aea3fcab82"
+    "fileId": "3c58bc77-e40f-40f9-b5b2-710c652eac89"
     },
     {
     "fileExt": ".EPUB",
     "fileName": "test14",
     "fileType": "application/epub+zip",
-    "fileId": "3aa6d759-05ca-4f16-87fe-bfce49e6ce12"
+    "fileId": "9106d286-a47a-474a-a472-3e34e01469e6"
     },
     {
     "fileExt": ".MP4",
     "fileName": "test15",
     "fileType": "video/mp4",
-    "fileId": "c042f140-66e4-460e-8a4f-165f03cf93e2"
+    "fileId": "6cd2f270-7821-43ee-b807-fa97d0cb77cc"
     },
     {
     "fileExt": ".JPG",
     "fileName": "test17",
     "fileType": "image/jpeg",
-    "fileId": "120a2f53-ba4d-4faf-9ca4-42cc5829018a"
+    "fileId": "31ace984-fe0c-4447-b441-f91c58c47591"
     },
     {
     "fileExt": ".CSV",
     "fileName": "test12",
     "fileType": "text/csv",
-    "fileId": "017a4648-d90a-411c-91ad-a1d2192226a3"
+    "fileId": "af94093a-bb29-4b86-9605-2f16dd76ed80"
     },
     {
     "fileExt": ".FLAC",
     "fileName": "test16",
     "fileType": "audio/x-flac",
-    "fileId": "a0a86879-392f-4705-a685-1086aabc73f2"
+    "fileId": "d735d56e-e854-4c21-a1fd-5e092016c859"
     }
 ]
 
@@ -84,97 +84,97 @@ filesConvertable = [
     "fileExt": ".SXW",
     "fileName": "test26",
     "fileType": "application/vnd.sun.xml.writer",
-    "fileId": "ec27a53b-40f8-48cf-b020-a8430a565630"
+    "fileId": "4e123e11-cddd-40bb-9a81-8d4c1c494894"
     },
     {
     "fileExt": ".XLSX",
     "fileName": "test1",
     "fileType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "fileId": "f4ced5c0-7701-4fbf-8df7-dd8421f3a49f"
+    "fileId": "f39960e0-8d33-4285-8810-90a183beaeba"
     },
     {
     "fileExt": ".DOC",
     "fileName": "test5",
     "fileType": "application/msword",
-    "fileId": "dcdd6a59-ec1a-4a8c-89da-625a93951414"
+    "fileId": "5afc247a-b214-4634-bc9d-450555c599e8"
     },
     {
     "fileExt": "PDF",
     "fileName": "test7",
     "fileType": "application/pdf",
-    "fileId": "50228005-0759-4846-a63d-6b9775696315"
+    "fileId": "bd38432f-8b8d-483d-b6bc-e5282d0a8798"
     },
     {
     "fileExt": ".DOCX",
     "fileName": "test8",
     "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "fileId": "631c8717-c873-462a-997c-12e90805de5e"
+    "fileId": "c8a2ecab-3862-496a-a33d-a9d65673fee3"
     },
     {
     "fileExt": ".PPTX",
     "fileName": "test10",
     "fileType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "fileId": "4878ef3c-101e-4066-9377-7a4a8e865543"
+    "fileId": "1631f92a-b33c-43af-a946-1a7e7d9258bc"
     },
     {
     "fileExt": ".PPT",
     "fileName": "test2",
     "fileType": "application/vnd.ms-powerpoint",
-    "fileId": "1855c0bc-14c2-4cd7-a913-4dd420d3a9ef"
+    "fileId": "4b20149a-1a87-4a9e-a5e1-dfaeea3f7944"
     },
     {
     "fileExt": ".XLS",
     "fileName": "test22",
     "fileType": "application/vnd.ms-excel",
-    "fileId": "426afd9b-22d8-4dba-b04b-d57dbf375884"
+    "fileId": "bae84e5a-a50f-410b-aa42-31a378a2c6c7"
     },
     {
     "fileExt": ".RTF",
     "fileName": "test13",
     "fileType": "text/rtf",
-    "fileId": "fdf7448c-7966-486e-8a7c-4dff54d12b7e"
+    "fileId": "8f7a7fb8-e188-4e22-9c87-b79cc82403ab"
     },
     {
     "fileExt": ".SXC",
     "fileName": "test27",
     "fileType": "application/vnd.sun.xml.calc",
-    "fileId": "d2406dc4-e1b1-430b-b2d6-952cd4ef308f"
+    "fileId": "49088fb9-824a-4504-ad90-2ac01999762b"
     },
     {
     "fileExt": ".SXD",
     "fileName": "test31",
     "fileType": "application/vnd.sun.xml.draw",
-    "fileId": "2a7f9d8a-6c9f-4751-8f69-5b4887496d77"
+    "fileId": "9bc1538e-5703-4cc2-9ef9-bc8f3040feab"
     },
     {
     "fileExt": ".NUMBERS",
     "fileName": "test34",
     "fileType": "application/applefile",
-    "fileId": "e23a9212-fded-453f-9632-d04ca5d7b843"
+    "fileId": "dc3665f2-3af6-4bae-800b-98427951bbc5"
     },
     {
     "fileExt": ".PAGES",
     "fileName": "test25",
     "fileType": "application/applefile",
-    "fileId": "385ebcf5-d3f9-4178-9eab-c4fa467dd470"
+    "fileId": "57447091-398b-43e9-bb29-916fcdfc1e11"
     },
     {
     "fileExt": ".KTH",
     "fileName": "test23",
     "fileType": "application/applefile",
-    "fileId": "81bc8de7-426a-4f7c-a036-246a3de8b514"
+    "fileId": "dc17903f-c13e-4d2f-b9af-e9fdb3c8d570"
     },
     {
     "fileExt": ".KEY",
     "fileName": "test24",
     "fileType": "application/applefile",
-    "fileId": "8014b5ba-05a0-401b-847e-ed9d88c28588"
+    "fileId": "dcc407b9-d8f4-4120-b32b-23bd76526091"
     },
     {
     "fileExt": ".SXI",
     "fileName": "test29",
     "fileType": "application/vnd.sun.xml.impress",
-    "fileId": "28fe7fd6-06ff-4e5d-919a-710af2f56653"
+    "fileId": "bf25fa1b-bf1c-4ca4-b098-0f3a81ef2ad6"
     }
     # DISCARD SUPPORT TO (.SXM, .STD, .STW, .STC, .STI)
     # {
@@ -214,6 +214,6 @@ filesUnknown = [
     "fileExt": ".PYTHON",
     "fileName": "test35",
     "fileType": "text/x-python",
-    "fileId": "b0881178-17a9-403f-b14f-998c3d2eb15e"
+    "fileId": "2d431c06-6cfe-4f16-ba8d-51c58da502e5"
     }
 ]

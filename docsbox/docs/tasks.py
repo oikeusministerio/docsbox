@@ -44,42 +44,74 @@ def create_temp_file(original_file_data):
 
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
-def process_document_convertion(path, options, meta):
+def process_convertion(path, options, meta):
     current_task = get_current_job()
+    exportFormatType = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
+    if exportFormatType in app.config["DOCUMENT_CONVERTION_FORMATS"]:
+        result= process_document_convertion(path, options, meta, current_task)
+    elif exportFormatType == "IMAGE_EXPORT_FORMATS":
+        result= process_image_convertion(path, options, meta, current_task)
+    elif exportFormatType == "AUDIO_EXPORT_FORMATS":
+        result= process_audio_convertion(path, options, meta, current_task)
+    elif exportFormatType == "VIDEO_EXPORT_FORMATS":
+        result= process_video_convertion(path, options, meta, current_task)
+    return result
+
+
+def process_document_convertion(path, options, meta, current_task):
     with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
         with office.documentLoad(path) as original_document:  # open original document
             with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
-                for fmt in options["formats"]: # iterate over requested formats
+                if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
                     tmp_path=os.path.join(tmp_dir, current_task.id)
-                    original_document.saveAs(tmp_path, fmt=fmt)
-
-                    file_name = "{0}.{1}".format(meta["filename"], fmt)
-                    output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
-                    try:
-                        subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
-                    except:
-                        current_task.cancel()
-                        return
-
-                if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
-                    is_created = False
-                    if meta["mimetype"] == "application/pdf":
-                        pdf_path = path
-                    elif "pdf" in options["formats"]:
-                        pdf_path = os.path.join(tmp_dir, "pdf")
+                    original_document.saveAs(tmp_path, fmt=options["format"])
+                    if options["format"] == "pdf":
+                        file_name = "{0}.{1}".format(meta["filename"], options["format"])
+                        output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
+                        try:
+                            subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
+                        except:
+                            current_task.cancel()
+                            return
+                        fileType="application/pdf"
                     else:
-                        pdf_tmp_file = NamedTemporaryFile()
-                        pdf_path = pdf_tmp_file.name
-                        original_document.saveAs(pdf_tmp_file.name, fmt="pdf")
-                        is_created = True
-                    image = Image(filename=pdf_path, resolution=app.config["THUMBNAILS_DPI"])
-                    if is_created:
-                        pdf_tmp_file.close()
-                    thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
-                    output_path, file_name = make_zip_archive(current_task.id, tmp_dir)                                  
+                        # We checks the config for the mimetype of the converted format expect if its pdf
+                        # Because in the config pdf format is as application/pdfa to diferenciate versions
+                        fileType= (value for value in app.config["ACCEPTED_MIMETYPES"] if value["format"] == options["format"])
+                if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
+                        output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document, tmp_dir)  
         file_remove_task = remove_file.schedule(datetime.timedelta(
             seconds=app.config["RESULT_FILE_TTL"]), output_path)
         current_task.meta["tmp_file_remove_task"] = file_remove_task.id
         current_task.save_meta()
-    return {"fileName": file_name, "fileType": options["content-type"] }
+    return {"fileName": file_name, "fileType": fileType }
 
+
+def process_image_convertion(path, options, meta, current_task):
+    return "NOT IMPLEMENTED"
+
+
+def process_audio_convertion(path, options, meta, current_task):
+    return "NOT IMPLEMENTED"
+
+
+def process_video_convertion(path, options, meta, current_task):
+    return "NOT IMPLEMENTED"
+
+
+def thumbnail_generator(path, options, meta, current_task, original_document, tmp_dir):
+    is_created = False
+    if meta["mimetype"] == "application/pdf":
+        pdf_path = path
+    elif "pdf" in app.config[options["formats"]]:
+        pdf_path = os.path.join(tmp_dir, "pdf")
+    else:
+        pdf_tmp_file = NamedTemporaryFile()
+        pdf_path = pdf_tmp_file.name
+        original_document.saveAs(pdf_tmp_file.name, fmt="pdf")
+        is_created = True
+    image = Image(filename=pdf_path, resolution=app.config["THUMBNAILS_DPI"])
+    if is_created:
+        pdf_tmp_file.close()
+    thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
+    return make_zip_archive(current_task.id, tmp_dir) 
