@@ -36,7 +36,7 @@ def set_options(options, mimetype):
             raise ValueError("Invalid 'formats' value")
         else:
             for fmt in formats:
-                supported = (fmt in app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"])
+                supported = (fmt in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]])
                 if not supported:
                     message = "'{0}' mimetype can't be converted to '{1}'"
                     raise ValueError(message.format(mimetype, fmt))
@@ -57,7 +57,7 @@ def set_options(options, mimetype):
                     else:
                         options["thumbnails"]["size"] = (width, height)
     else:
-        options = app.config["DEFAULT_OPTIONS"]
+        options = app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["default_options"]]
     return options
 
 def make_thumbnails(image, tmp_dir, size):

@@ -5,7 +5,7 @@ from flask import request, send_from_directory
 from flask_restful import Resource, abort
 
 from docsbox import app
-from docsbox.docs.tasks import process_document_convertion, create_temp_file, get_task, do_task
+from docsbox.docs.tasks import process_convertion, create_temp_file, get_task, do_task
 from docsbox.docs.utils import get_file_mimetype, set_options, remove_extension
 from docsbox.docs.via_controller import get_file_from_via, save_file_on_via  
 
@@ -74,7 +74,7 @@ class DocumentConvertView(Resource):
             except ValueError as err:
                 return abort(400, message=err.args[0])
                 
-            task = process_document_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
+            task = process_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
             return { "taskId": task.id, "status": task.status}
         else: 
             return abort(r.status_code, message=r.json()["message"])
