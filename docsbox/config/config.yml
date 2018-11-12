@@ -155,10 +155,10 @@ COMMON: &common
     "OpenOffice.org 1.x Draw document",
     "Open Office.org 1.x Writer Document Template",
     "OpenOffice.org 1.x Spreadsheet Template",
-    "OpenOffice.org 1.0 Presentation",
+    "OpenOffice.org 1.x Impress presentation",
     "OpenOffice.org 1.0 Presentation Template",
     "OpenOffice.org 1.0 Drawing Template",
-    "OpenOffice.org 1.0 Math"
+    "OpenOffice.org 1.x Math document"
     ]
 
   PDFA:
