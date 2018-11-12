@@ -173,8 +173,8 @@ filesConvertable = [
     {
     "fileExt": ".SXI",
     "fileName": "test29",
-    "fileType": "application/vnd.ms-powerpoint",
-    "fileId": "226d0961-eed7-434c-991e-8186ed013a06"
+    "fileType": "application/vnd.sun.xml.impress",
+    "fileId": "28fe7fd6-06ff-4e5d-919a-710af2f56653"
     }
     # DISCARD SUPPORT TO (.SXM, .STD, .STW, .STC, .STI)
     # {
