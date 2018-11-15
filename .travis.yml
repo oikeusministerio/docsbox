@@ -15,7 +15,7 @@ env:
   
 script:
   - docker-compose build
-  # - docker-compose run web nosetests
+  # - sudo docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 
 after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS

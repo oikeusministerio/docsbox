@@ -54,4 +54,4 @@ docs/_build
 /_
 /.cache
 
-sampotesti.pem
+*.pem

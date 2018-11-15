@@ -1,6 +1,6 @@
 COMMON: &common
   DEBUG: True
-  MEDIA_PATH: "/media/"
+  MEDIA_PATH: "/home/docsbox/media/"
 
   LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
   
@@ -10,8 +10,8 @@ COMMON: &common
   RESULT_FILE_TTL: 86400
 
   VIA_URL: "https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
-  VIA_CERT_PATH: 
-  VIA_ALLOWED_USERS: "vakuutusoikeusbe"
+  VIA_CERT_PATH: "/home/docsbox/certificate.pem"
+  VIA_ALLOWED_USERS: "sampotesti"
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
@@ -82,7 +82,6 @@ COMMON: &common
     text/rtf: # Rich Text Format
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    #XML OpenOffice
     application/vnd.sun.xml.writer: # sxw
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
@@ -170,9 +169,8 @@ COMMON: &common
   
   GHOSTSCRIPT: ['gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1']
 
-DEVELOPMENT: &development
+DEVELOPMENT: &dev
   <<: *common
-  MEDIA_PATH: "/home/docsbox/media/"
-  VIA_CERT_PATH: "/home/docsbox/sampotesti.pem"
 
-PRODUCTION:
+PRODUCTION: &prod
+  <<: *common
