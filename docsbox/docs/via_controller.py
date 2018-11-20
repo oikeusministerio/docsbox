@@ -9,5 +9,6 @@ def get_file_from_via(file_id):
 
 def save_file_on_via(file_path, file_type):
     data = open(file_path, "rb")
+    cert=app.config["VIA_CERT_PATH"]
     headers = {'VIA_ALLOWED_USERS': app.config["VIA_ALLOWED_USERS"], 'Content-type': file_type}
-    return post(url=app.config["VIA_URL"], data=data, headers=headers)
+    return post(url=app.config["VIA_URL"], cert=cert, data=data, headers=headers)
