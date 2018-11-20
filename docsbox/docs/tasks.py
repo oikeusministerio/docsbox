@@ -38,8 +38,7 @@ def create_temp_file(original_file_data):
             tmp_file.write(chunk)
         tmp_file.flush()
         tmp_file.close()
-        remove_file.schedule(
-            datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
+        remove_file.schedule(datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
         return tmp_file
 
 
@@ -67,7 +66,7 @@ def process_document_convertion(path, options, meta, current_task):
                     file_name = "{0}.{1}".format(meta["filename"], options["format"])
                     
                     if app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"] == "PRESENTATION_EXPORT_FORMATS" and options["format"] == "pdf":
-                        tmp_path=os.path.join(tmp_dir, current_task.id)
+                        tmp_path = os.path.join(tmp_dir, current_task.id)
                         original_document.saveAs(tmp_path, fmt=options["format"])
                         try:
                             subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
