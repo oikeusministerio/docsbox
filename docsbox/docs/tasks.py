@@ -65,7 +65,7 @@ def process_document_convertion(path, options, meta, current_task):
                 if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
                     file_name = "{0}.{1}".format(meta["filename"], options["format"])
                     
-                    if app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"] == "PRESENTATION_EXPORT_FORMATS" and options["format"] == "pdf":
+                    if options["format"] == "pdf":
                         tmp_path = os.path.join(tmp_dir, current_task.id)
                         original_document.saveAs(tmp_path, fmt=options["format"])
                         try:
