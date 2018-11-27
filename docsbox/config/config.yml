@@ -6,7 +6,7 @@ COMMON: &common
   
   REDIS_URL: "redis://redis:6379/0"
   REDIS_JOB_TIMEOUT: 600
-  ORIGINAL_FILE_TTL: 60
+  ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
   VIA_URL: "https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
@@ -167,7 +167,10 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
-  GHOSTSCRIPT: ['gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1']
+  GHOSTSCRIPT: [
+    'gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-dNOGC', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite',
+    '-dPDFSETTINGS=/screen', '-dNumRenderingThreads=2', '-dBandBufferSpace=500000000', '-dBufferSpace=1000000000', '-dMaxPatternBitmap=1000000', '-dPDFACompatibilityPolicy=1']
+  PDFA_DEF: ['/home/docsbox/pdfa_def/PDFA_def.ps', '-c', '"60000000 setvmthreshold"', '-f']
 
 DEVELOPMENT: &dev
   <<: *common

@@ -1,13 +1,14 @@
 import os
-import shutil
 import datetime
 import subprocess
+
 from pylokit import Office
 from wand.image import Image
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
 from docsbox.docs.utils import make_zip_archive, make_thumbnails
+from docsbox.docs.via_controller import save_file_on_via
 
 
 def get_task(task_id):
@@ -51,6 +52,10 @@ def process_convertion(path, options, meta):
         result= process_audio_convertion(path, options, meta, current_task)
     elif exportFormatType == "VIDEO_EXPORT_FORMATS":
         result= process_video_convertion(path, options, meta, current_task)
+
+    if result:
+        r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + current_task.id, result["fileType"])
+        result['fileId'] = r.headers.get("Document-id")
     return result
 
 def process_document_convertion(path, options, meta, current_task):
@@ -65,7 +70,7 @@ def process_document_convertion(path, options, meta, current_task):
                         tmp_path = os.path.join(tmp_dir, current_task.id)
                         original_document.saveAs(tmp_path, fmt=options["format"])
                         try:
-                            subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
+                            subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path] + app.config['PDFA_DEF'] + [tmp_path])
                         except:
                             current_task.cancel()
                             return

@@ -1,5 +1,5 @@
 from requests import get, post
-from flask import current_app as app
+from docsbox import app
 
 
 def get_file_from_via(file_id):

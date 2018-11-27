@@ -1,11 +1,11 @@
 import datetime
-from requests import get, post
-from flask import request, send_from_directory
+
+from flask import request
 from flask_restful import Resource, abort
 from docsbox import app
 from docsbox.docs.tasks import process_convertion, create_temp_file, get_task, do_task
 from docsbox.docs.utils import get_file_mimetype, remove_extension, set_options
-from docsbox.docs.via_controller import get_file_from_via, save_file_on_via  
+from docsbox.docs.via_controller import get_file_from_via  
 
 class DocumentStatusView(Resource):
 
@@ -31,7 +31,7 @@ class DocumentStatusView(Resource):
 
 class DocumentTypeView(Resource):
 
-    def get(self):
+    def post(self):
         """
         Returns the File Mimetype of the given file
         """
@@ -125,19 +125,14 @@ class DocumentDownloadView(Resource):
         if task:
             if task.status == "finished":
                 if task.result:
-                    r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + task.id, task.result["fileType"])
-
-                    if r.status_code == 201:
-                        return { 
-                            "taskId": task.id,
-                            "status": task.status,
-                            "convertable": True,
-                            "fileId": r.headers.get("Document-id"),
-                            "fileType": task.result["fileType"],
-                            "fileName": task.result["fileName"]
-                        }
-                    else:
-                        return abort(r.status_code, message=r.json()["message"])
+                   return { 
+                        "taskId": task.id,
+                        "status": task.status,
+                        "convertable": True,
+                        "fileId": task.result["fileId"],
+                        "fileType": task.result["fileType"],
+                        "fileName": task.result["fileName"]
+                    }
                 else:
                     return abort(404, message="Task with no result")
             else:

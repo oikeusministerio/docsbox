@@ -3,9 +3,10 @@ import zipfile
 import ujson
 import itertools
 import magic
+
 from PyPDF2 import PdfFileReader, xmp
 from wand.image import Image
-from flask import current_app as app
+from docsbox import app
 
 
 def make_zip_archive(uuid, tmp_dir):
