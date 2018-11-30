@@ -70,11 +70,17 @@ class DocumentConvertView(Resource):
             return abort(400, message="file field is required")
 
         mimetype = get_file_mimetype(tmp_file)
-        via_allowed_users = request.headers['Via-Allowed-Users']
+
         if mimetype in app.config["ACCEPTED_MIMETYPES"]:
             return abort(400, message="File does not need to be converted.")
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
             return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
+
+        if request.headers['Via-Allowed-Users']:
+            via_allowed_users = request.headers['Via-Allowed-Users']
+        else:
+            via_allowed_users = app.config["VIA_ALLOWED_USERS"]
+
         try:
             options = set_options(request.form.get("options", None), mimetype)
         except ValueError as err:
