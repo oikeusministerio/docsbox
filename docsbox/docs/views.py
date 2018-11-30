@@ -29,41 +29,31 @@ class DocumentStatusView(Resource):
         else:
             return abort(404, message="Unknown task_id")
 
-class DocumentTypeView(Resource):
+class DocumentTypeView(Resource):   
 
-    def post(self):
-        """
-        Returns the File Mimetype of the given file
-        """
-        if "file" in request.files:
-            tmp_file = create_temp_file(request.files["file"], False)
-            mimetype = get_file_mimetype(tmp_file)
-            isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
-            return { "convertable": isConvertable, "fileType": mimetype }
-        else:
-            return abort(400, message="file field is required")
-
-class DocumentTypeFromIdView(Resource):        
-
-    def get(self, file_id):
+    def post(self, file_id):
         """
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
         """
+        if "file" in request.files:
+            tmp_file = create_temp_file(request.files["file"], False)
+        elif file_id:
+            r = get_file_from_via(file_id)
 
-        r = get_file_from_via(file_id)
+            if r.status_code == 200:
+                tmp_file = create_temp_file(r, True)
+            else: 
+                return abort(r.status_code, message=r.json()["message"])
+        else:
+            return abort(400, message="file field is required")
+        mimetype = get_file_mimetype(tmp_file)
+        isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
+        return { "convertable": isConvertable, "fileType": mimetype }
 
-        if r.status_code == 200:
-            tmp_file = create_temp_file(r, True)
-            mimetype = get_file_mimetype(tmp_file)
-            isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
-            return { "convertable": isConvertable, "fileType": mimetype }
-        else: 
-            return abort(r.status_code, message=r.json()["message"])     
-    
 class DocumentConvertView(Resource):
 
-    def post(self):
+    def post(self, file_id):
         """
         Checks file mimetype and creates converting task of given file
         """
@@ -71,48 +61,27 @@ class DocumentConvertView(Resource):
         if "file" in request.files:
             tmp_file = create_temp_file(request.files["file"], False)
             filename = remove_extension(request.files["file"].filename)
-            mimetype = get_file_mimetype(tmp_file)
-            if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-                return abort(400, message="File does not need to be converted.")
-            if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
-            try:
-                options = set_options(request.form.get("options", None), mimetype)
-            except ValueError as err:
-                return abort(400, message=err.args[0])
-                        
-            task = process_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
-            return { "taskId": task.id, "status": task.status}
+        elif file_id:
+            r = get_file_from_via(file_id)
+            if r.status_code == 200:
+                tmp_file = create_temp_file(r, True)
+                filename = remove_extension(request.headers['Content-Disposition'])
         else: 
             return abort(400, message="file field is required")
 
-class DocumentConvertFromIdView(Resource):
-
-    def post(self, file_id):
-        """
-        Requests from VIA fileservice the file with given id.
-        Checks file mimetype and creates converting task.
-        """
-
-        r = get_file_from_via(file_id)
-
-        if r.status_code == 200:
-            tmp_file = create_temp_file(r, True)
-            filename = remove_extension(request.headers['Content-Disposition'])
-            mimetype = get_file_mimetype(tmp_file)
-            if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-                return abort(400, message="File does not need to be converted.")
-            if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
-            try:
-                options = set_options(request.form.get("options", None), mimetype)
-            except ValueError as err:
-                return abort(400, message=err.args[0])
-                        
-            task = process_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype})
-            return { "taskId": task.id, "status": task.status}
-        else: 
-            return abort(r.status_code, message=r.json()["message"])
+        mimetype = get_file_mimetype(tmp_file)
+        via_allowed_users = request.headers['Via-Allowed-Users']
+        if mimetype in app.config["ACCEPTED_MIMETYPES"]:
+            return abort(400, message="File does not need to be converted.")
+        if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+            return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
+        try:
+            options = set_options(request.form.get("options", None), mimetype)
+        except ValueError as err:
+            return abort(400, message=err.args[0])
+                    
+        task = process_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype, "via_allowed_users": via_allowed_users})
+        return { "taskId": task.id, "status": task.status}
 
 class DocumentDownloadView(Resource):
 

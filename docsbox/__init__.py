@@ -25,10 +25,8 @@ rq = RQ(app)
 
 from docsbox.docs.views import *
     
-api.add_resource(DocumentTypeView, "/conversion-service/get-file-type")
-api.add_resource(DocumentTypeFromIdView, "/conversion-service/get-file-type/<file_id>")
-api.add_resource(DocumentConvertView, "/conversion-service/convert")
-api.add_resource(DocumentConvertFromIdView, "/conversion-service/convert/<file_id>")
+api.add_resource(DocumentTypeView, "/conversion-service/get-file-type/<file_id>")
+api.add_resource(DocumentConvertView, "/conversion-service/convert/<file_id>")
 api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")
 api.add_resource(DocumentDownloadView, "/conversion-service/get-converted-file/<task_id>")
 api.add_resource(DeleteTmpFiles, "/conversion-service/delete-tmp-file/<task_id>")
