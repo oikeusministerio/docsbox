@@ -54,7 +54,7 @@ def process_convertion(path, options, meta):
         result= process_video_convertion(path, options, meta, current_task)
 
     if result:
-        r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + current_task.id, result["fileType"])
+        r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + current_task.id, result["fileType"], meta["via_allowed_users"])
         result['fileId'] = r.headers.get("Document-id")
     return result
 
