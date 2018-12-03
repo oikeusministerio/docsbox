@@ -81,7 +81,7 @@ def process_document_convertion(path, options, meta, current_task):
                     
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                         output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document) 
-            file_remove_task = remove_file.schedule(datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]), output_path)
+    file_remove_task = remove_file.schedule(datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]), output_path)
     current_task.meta["tmp_file_remove_task"] = file_remove_task.id
     current_task.save_meta()
     return {"fileName": file_name, "fileType": fileType }
