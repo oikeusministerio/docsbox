@@ -3,8 +3,8 @@ import datetime
 from flask import request
 from flask_restful import Resource, abort
 from docsbox import app
-from docsbox.docs.tasks import process_convertion, create_temp_file, get_task, do_task
-from docsbox.docs.utils import get_file_mimetype, remove_extension, set_options
+from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
+from docsbox.docs.utils import remove_extension, set_options
 from docsbox.docs.via_controller import get_file_from_via  
 
 class DocumentStatusView(Resource):
@@ -37,20 +37,20 @@ class DocumentTypeView(Resource):
         Returns the File Mimetype
         """
         if "file" in request.files:
-            tmp_file = create_temp_file(request.files["file"], False)
+            mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None, schedule_file_del=False)['mimetype']
         elif file_id:
             r = get_file_from_via(file_id)
 
             if r.status_code == 200:
-                tmp_file = create_temp_file(r, True)
+                mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True, schedule_file_del=False)['mimetype']
             else: 
                 return abort(r.status_code, message=r.json()["message"])
         else:
             return abort(400, message="file field is required")
-        mimetype = get_file_mimetype(tmp_file)
+
         isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
         return { "convertable": isConvertable, "fileType": mimetype }
-
+             
 class DocumentConvertView(Resource):
 
     def post(self, file_id):
@@ -59,18 +59,19 @@ class DocumentConvertView(Resource):
         """
 
         if "file" in request.files:
-            tmp_file = create_temp_file(request.files["file"], False)
             filename = remove_extension(request.files["file"].filename)
+            result = create_tmp_file_and_get_mimetype(request.files["file"], filename)
         elif file_id:
             r = get_file_from_via(file_id)
             if r.status_code == 200:
-                tmp_file = create_temp_file(r, True)
                 filename = remove_extension(request.headers['Content-Disposition'])
+                result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
         else: 
             return abort(400, message="file field is required")
 
-        mimetype = get_file_mimetype(tmp_file)
-
+        mimetype = result['mimetype']
+        tmp_file = result['tmp_file']
+        
         if mimetype in app.config["ACCEPTED_MIMETYPES"]:
             return abort(400, message="File does not need to be converted.")
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:

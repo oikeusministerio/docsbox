@@ -167,10 +167,6 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
-  GHOSTSCRIPT: [
-    'gs', '-dPDFA=1', '-dBATCH', '-dNOPAUSE', '-dNOOUTERSAVE', '-dNOGC', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite',
-    '-dPDFSETTINGS=/screen', '-dNumRenderingThreads=2', '-dBandBufferSpace=500000000', '-dBufferSpace=1000000000', '-dMaxPatternBitmap=1000000', '-dPDFACompatibilityPolicy=1']
-  PDFA_DEF: ['/home/docsbox/pdfa_def/PDFA_def.ps', '-c', '"60000000 setvmthreshold"', '-f']
 
 DEVELOPMENT: &dev
   <<: *common

@@ -10,7 +10,8 @@ services:
       - "8000:8000"
     volumes:
       - ./docsbox:/home/docsbox
-      - /tmp/media:/home/docsbox/media
+      - /media:/home/docsbox/media
+      - ./registrymodifications.xcu:/root/.config/libreoffice/4/user/registrymodifications.xcu
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
     command: gunicorn -b :8000 docsbox:app
@@ -24,7 +25,8 @@ services:
       - web
     volumes:
       - ./docsbox:/home/docsbox
-      - /tmp/media:/home/docsbox/media
+      - /media:/home/docsbox/media
+      - ./registrymodifications.xcu:/root/.config/libreoffice/4/user/registrymodifications.xcu
     command: rq worker -c docsbox
  
   rqscheduler:

@@ -4,6 +4,7 @@ RUN apt-get upgrade -y
 RUN apt-get update
 RUN apt-get install software-properties-common -y
 RUN add-apt-repository ppa:libreoffice/ppa
+RUN apt-get update
 RUN apt-get install -y libffi-dev libmagic-dev libmagickwand-dev
 RUN apt-get install -y libreoffice libreofficekit-dev
 RUN apt-get install -y ghostscript
