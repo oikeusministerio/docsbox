@@ -2,13 +2,11 @@ import os
 import zipfile
 import ujson
 import itertools
-from PyPDF2 import PdfFileReader, xmp
-
-from wand.image import Image
-
 import magic
 
-from flask import current_app as app
+from PyPDF2 import PdfFileReader, xmp
+from wand.image import Image
+from docsbox import app
 
 
 def make_zip_archive(uuid, tmp_dir):

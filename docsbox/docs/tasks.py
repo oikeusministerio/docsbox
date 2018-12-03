@@ -1,16 +1,14 @@
 import os
-import shutil
 import datetime
 import subprocess
 
 from pylokit import Office
 from wand.image import Image
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-
 from rq import get_current_job
-
 from docsbox import app, rq
 from docsbox.docs.utils import make_zip_archive, make_thumbnails
+from docsbox.docs.via_controller import save_file_on_via
 
 
 def get_task(task_id):
@@ -22,7 +20,6 @@ def do_task(task_id):
     task = queue.fetch_job(task_id)
     return queue.run_job(task)
 
-
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def remove_file(path):
     """
@@ -31,16 +28,17 @@ def remove_file(path):
     """
     return os.remove(path)
 
-
-def create_temp_file(original_file_data):
+def create_temp_file(original_file, stream):
     with NamedTemporaryFile(delete=False, prefix=app.config["MEDIA_PATH"]) as tmp_file:
-        for chunk in original_file_data.iter_content(chunk_size=128):
-            tmp_file.write(chunk)
+        if stream:
+            for chunk in original_file.iter_content(chunk_size=128):
+                tmp_file.write(chunk)
+        else:
+            original_file.save(tmp_file)
         tmp_file.flush()
         tmp_file.close()
         remove_file.schedule(datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
         return tmp_file
-
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def process_convertion(path, options, meta):
@@ -54,8 +52,11 @@ def process_convertion(path, options, meta):
         result= process_audio_convertion(path, options, meta, current_task)
     elif exportFormatType == "VIDEO_EXPORT_FORMATS":
         result= process_video_convertion(path, options, meta, current_task)
-    return result
 
+    if result:
+        r = save_file_on_via(app.config["MEDIA_PATH"] + "/" + current_task.id, result["fileType"], meta["via_allowed_users"])
+        result['fileId'] = r.headers.get("Document-id")
+    return result
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
@@ -69,7 +70,7 @@ def process_document_convertion(path, options, meta, current_task):
                         tmp_path = os.path.join(tmp_dir, current_task.id)
                         original_document.saveAs(tmp_path, fmt=options["format"])
                         try:
-                            subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path, tmp_path])
+                            subprocess.check_output(app.config["GHOSTSCRIPT"] + ['-sOutputFile=' + output_path] + app.config['PDFA_DEF'] + [tmp_path])
                         except:
                             current_task.cancel()
                             return
@@ -90,18 +91,14 @@ def process_document_convertion(path, options, meta, current_task):
         current_task.save_meta()
     return {"fileName": file_name, "fileType": fileType }
 
-
 def process_image_convertion(path, options, meta, current_task):
     return "NOT IMPLEMENTED"
-
 
 def process_audio_convertion(path, options, meta, current_task):
     return "NOT IMPLEMENTED"
 
-
 def process_video_convertion(path, options, meta, current_task):
     return "NOT IMPLEMENTED"
-
 
 def thumbnail_generator(path, options, meta, current_task, original_document, tmp_dir):
     is_created = False
