@@ -36,7 +36,7 @@ class DocumentTypeView(Resource):
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
         """
-        if "file" in request.files:
+        if request.files and "file" in request.files:
             mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None, schedule_file_del=False)['mimetype']
         elif file_id:
             r = get_file_from_via(file_id)
@@ -58,9 +58,10 @@ class DocumentConvertView(Resource):
         Checks file mimetype and creates converting task of given file
         """
 
-        if "file" in request.files:
+        if request.files and "file" in request.files:
             filename = remove_extension(request.files["file"].filename)
             result = create_tmp_file_and_get_mimetype(request.files["file"], filename)
+            via_allowed_users = None
         elif file_id:
             r = get_file_from_via(file_id)
             if r.status_code == 200:
@@ -89,7 +90,7 @@ class DocumentConvertView(Resource):
 
         task = process_convertion.queue(tmp_file.name, options, 
                                             {"filename": filename, "mimetype": mimetype, 
-                                            "via_allowed_users": via_allowed_users if via_allowed_users else None})
+                                            "via_allowed_users": via_allowed_users})
         return { "taskId": task.id, "status": task.status}
 
 class DocumentDownloadView(Resource):
@@ -103,7 +104,7 @@ class DocumentDownloadView(Resource):
         if task:
             if task.status == "finished":
                 if task.result:
-                    if task.result["fileId"]:
+                    if "fileId" in task.result:
                         return { 
                             "taskId": task.id,
                             "status": task.status,

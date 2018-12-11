@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 RUN apt-get upgrade -y
 RUN apt-get update
-RUN apt-get install -y software-properties-common libffi-dev libmagic-dev libmagickwand-dev
+RUN apt-get install -y software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev
 RUN add-apt-repository ppa:libreoffice/ppa
 RUN apt-get update
 RUN apt-get install -y libreoffice libreofficekit-dev hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru
