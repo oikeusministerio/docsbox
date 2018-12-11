@@ -1,6 +1,6 @@
 import datetime
 
-from flask import request
+from flask import request, send_from_directory
 from flask_restful import Resource, abort
 from docsbox import app
 from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
@@ -29,7 +29,7 @@ class DocumentStatusView(Resource):
         else:
             return abort(404, message="Unknown task_id")
 
-class DocumentTypeView(Resource):   
+class DocumentTypeView(Resource):
 
     def post(self, file_id):
         """
@@ -66,8 +66,13 @@ class DocumentConvertView(Resource):
             if r.status_code == 200:
                 filename = remove_extension(request.headers['Content-Disposition'])
                 result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
-        else: 
-            return abort(400, message="file field is required")
+
+                if request.headers['Via-Allowed-Users']:
+                    via_allowed_users = request.headers['Via-Allowed-Users']
+                else:
+                    via_allowed_users = app.config["VIA_ALLOWED_USERS"]
+            else: 
+                return abort(400, message="file field is required")
 
         mimetype = result['mimetype']
         tmp_file = result['tmp_file']
@@ -77,17 +82,14 @@ class DocumentConvertView(Resource):
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
             return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
 
-        if request.headers['Via-Allowed-Users']:
-            via_allowed_users = request.headers['Via-Allowed-Users']
-        else:
-            via_allowed_users = app.config["VIA_ALLOWED_USERS"]
-
         try:
             options = set_options(request.form.get("options", None), mimetype)
         except ValueError as err:
             return abort(400, message=err.args[0])
-                    
-        task = process_convertion.queue(tmp_file.name, options, {"filename": filename, "mimetype": mimetype, "via_allowed_users": via_allowed_users})
+
+        task = process_convertion.queue(tmp_file.name, options, 
+                                            {"filename": filename, "mimetype": mimetype, 
+                                            "via_allowed_users": via_allowed_users if via_allowed_users else None})
         return { "taskId": task.id, "status": task.status}
 
 class DocumentDownloadView(Resource):
@@ -101,14 +103,17 @@ class DocumentDownloadView(Resource):
         if task:
             if task.status == "finished":
                 if task.result:
-                   return { 
-                        "taskId": task.id,
-                        "status": task.status,
-                        "convertable": True,
-                        "fileId": task.result["fileId"],
-                        "fileType": task.result["fileType"],
-                        "fileName": task.result["fileName"]
-                    }
+                    if task.result["fileId"]:
+                        return { 
+                            "taskId": task.id,
+                            "status": task.status,
+                            "convertable": True,
+                            "fileId": task.result["fileId"],
+                            "fileType": task.result["fileType"],
+                            "fileName": task.result["fileName"]
+                        }
+                    else:
+                        return send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
                 else:
                     return abort(404, message="Task with no result")
             else:
