@@ -19,3 +19,4 @@ ADD . /home/docsbox
 WORKDIR /home/
 RUN pip3 install --upgrade pip
 RUN pip3 install -r docsbox/requirements.txt
+COPY ./config/registrymodifications.xcu /root/.config/libreoffice/4/user/

@@ -11,11 +11,10 @@ services:
     volumes:
       - ./docsbox:/home/docsbox
       - /media:/home/docsbox/media
-      - ./registrymodifications.xcu:/root/.config/libreoffice/4/user/registrymodifications.xcu
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
     command: gunicorn -b :8000 docsbox:app
- 
+
   rqworker:
     restart: always
     build: ./docsbox
@@ -26,7 +25,6 @@ services:
     volumes:
       - ./docsbox:/home/docsbox
       - /media:/home/docsbox/media
-      - ./registrymodifications.xcu:/root/.config/libreoffice/4/user/registrymodifications.xcu
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
     command: rq worker -c docsbox
