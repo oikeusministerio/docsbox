@@ -1,13 +1,13 @@
 FROM ubuntu:16.04
-MAINTAINER Dmitry Veselov <d.a.veselov@yandex.ru>
 
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install software-properties-common -y
+RUN apt-get upgrade -y
+RUN apt-get update
+RUN apt-get install -y software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev
 RUN add-apt-repository ppa:libreoffice/ppa
 RUN apt-get update
-RUN apt-get install -y libffi-dev libmagic-dev libmagickwand-dev
-RUN apt-get install -y libreoffice libreofficekit-dev
-RUN apt-get install -y ghostscript
+RUN apt-get install -y libreoffice libreofficekit-dev hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && apt-get install -y ttf-mscorefonts-installer
+RUN apt-get install -y fonts-dejavu-extra fonts-freefont-otf fonts-freefont-ttf fonts-lmodern fonts-lyx fonts-sil-gentium fonts-dustin fonts-fanwood fonts-3270 fonts-font-awesome fonts-bpg-georgian
 RUN apt-get install -y python3-dev python3-pip git
 
 RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8
@@ -19,3 +19,4 @@ ADD . /home/docsbox
 WORKDIR /home/
 RUN pip3 install --upgrade pip
 RUN pip3 install -r docsbox/requirements.txt
+COPY ./config/registrymodifications.xcu /root/.config/libreoffice/4/user/
