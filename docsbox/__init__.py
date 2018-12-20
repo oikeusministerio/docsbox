@@ -1,10 +1,12 @@
-from os import environ
+import sys
+import logging
 
+from os import environ
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
 from ordbok.flask_helper import FlaskOrdbok
-import logging
+from pygelf import GelfHttpHandler
 
 app = Flask(__name__)
 ordbok = FlaskOrdbok()
@@ -23,7 +25,13 @@ app.config.update({
 api = Api(app)
 rq = RQ(app)
 
-log = logging.getLogger('gunicorn.access')
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("gunicorn.access")
+try:
+    log.addHandler(GelfHttpHandler(host=app.config["GRAYLOG_HOST"], port=app.config["GRAYLOG_PORT"], _app_name='Conversion Service'))
+    log.info('Hello World')
+except TimeoutError:
+    log.warning('Timed Out - Not Connected With Graylog')
 
 from docsbox.docs.views import *
     

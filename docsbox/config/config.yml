@@ -167,6 +167,11 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
+  GRAYLOG_HOST: 'logdev.om.fi'
+  GRAYLOG_PORT: 445
+  GRAYLOG_SYSTEM: 'Conversion Service'
+  GRAYLOG_ENVIRONMENT: 'DEV'
+
 
 DEVELOPMENT: &dev
   <<: *common
