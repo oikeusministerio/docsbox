@@ -31,94 +31,128 @@ COMMON: &common
 
   ACCEPTED_MIMETYPES:
     application/vnd.oasis.opendocument.text: # LibreOffice Word
+      name: "OpenDocument Text"
       format: "odt"
     application/vnd.oasis.opendocument.spreadsheet: # LibreOffice Calc
+      name: "OpenDocument SpreadSheet"
       format: "ods"
     application/vnd.oasis.opendocument.presentation: # LibreOffice Impress
+      name: "OpenDocument Presentation"
       format: "odp"
     application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
+      name: "OpenDocument Graphics"
       format: "odg"
     application/vnd.oasis.opendocument.formula: # LibreOffice Math
+      name: "OpenDocument Formula"
       format: "odf"
     text/plain: # Plain Text File
+      name: "Text"
       format: "txt"
     text/csv: # Comma Seperated Values
+      name: "CSV"
       format: "csv"
     application/pdfa: # Portable Document Format Archive
+      name: "PDF/A"
       format: "pdf"
     application/epub+zip: # EPUB
+      name: "ePUB"
       format: "epub"
     audio/x-flac: # Free Lossless Audio Codec
+      name: "Flac"
       format: "flac"
     video/mp4: # Advanced Video Coding
+      name: "MP4"
       format: "mp4"
     image/jpeg: # Joint Photographic Group
+      name: "JPEG"
       format: "jpeg"
     image/png: # Portable Network Graphics
+      name: "PNG"
       format: "png"
 
   CONVERTABLE_MIMETYPES:
     application/pdf: # Portable Document Format
+      name: "PDF"
       formats: PDF_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/msword: # Microsoft Word 2003
+      name: "Microsoft Word"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.wordprocessingml.document: # Microsoft Word 2007
+      name: "Microsoft Word 2007"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.ms-excel: # Microsoft Excel 2003
+      name: "Microsoft Excel"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: # Microsoft Excel 2007
+      name: "Microsoft Excel 2007"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.ms-powerpoint: # Microsoft Powerpoint 2003
+      name: "Microsoft Powerpoint"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.presentationml.presentation: # Microsoft Powerpoint 2007
+      name: "Microsoft Powerpoint 2007"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     text/rtf: # Rich Text Format
+      name: "Rich Text Format"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.writer: # sxw
+    application/vnd.sun.xml.writer: # sxw OpenDocument XML Text
+      name: "OpenDocument XML Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.writer.template: # stw
+    application/vnd.sun.xml.writer.template: # stw OpenDocument XML Text
+      name: "OpenDocument XML Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.calc: # sxc
+    application/vnd.sun.xml.calc: # sxc OpenDocument XML SpreadSheet
+      name: "OpenDocument XML SpreadSheet"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.calc.template: # stc
+    application/vnd.sun.xml.calc.template: # sxt OpenDocument XML SpreadSheet
+      name: "OpenDocument XML SpreadSheet"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.draw: # sxd
+    application/vnd.sun.xml.draw: # sxd OpenDocument XML Graphics
+      name: "OpenDocument XML Graphics"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.impress: # sxi
+    application/vnd.sun.xml.draw.template: # std OpenDocument XML Graphics
+      name: "OpenDocument XML Graphics"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.impress.template: # sti
+    application/vnd.sun.xml.impress: # sxi OpenDocument XML Presentation
+      name: "OpenDocument XML Presentation"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.draw.template: # std
+    application/vnd.sun.xml.impress.template: # sti OpenDocument XML Presentation
+      name: "OpenDocument XML Presentation"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.math: # sxm
+    application/vnd.sun.xml.math: # sxm OpenDocument XML Formula
+      name: "OpenDocument XML Formula"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.sun.xml.writer.global: # sxg
+      name: "OpenDocument XML Master Document"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/applefile: #Apple Keynote
+      name: "Apple Keynote"
       formats: "PRESENTATION_EXPORT_FORMATS"
       default_options: DEFAULT_OPTIONS
     application/applefile: #Apple Numbers
+      name: "Apple Numbers"
       formats: "SPREADSHEET_EXPORT_FORMATS"
       default_options: DEFAULT_OPTIONS
     application/applefile: #Apple Pages
+      name: "Apple Pages"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
 
