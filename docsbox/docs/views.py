@@ -49,7 +49,11 @@ class DocumentTypeView(Resource):
             return abort(400, message="file field is required")
 
         isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
-        return { "convertable": isConvertable, "fileType": mimetype }
+        if isConvertable:
+            filetype = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
+        else:
+            filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"]
+        return { "convertable": isConvertable, "fileType": filetype }
              
 class DocumentConvertView(Resource):
 
