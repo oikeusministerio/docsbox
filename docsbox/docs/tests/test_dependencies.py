@@ -2,79 +2,105 @@ filesNotConvertable = [
     {
      "fileExt": ".ODT",
      "fileName": "test6",
-     "fileType": "application/vnd.oasis.opendocument.text",
+     "fileNameExt": "test6.odt",
+     "mimeType": "application/vnd.oasis.opendocument.text",
+     "fileType": "OpenDocument Text",
      "fileId": "2ca6808c-941c-4e7e-978d-5d9f88dfdd4f"
     },
     {
     "fileExt": ".PDF-A",
     "fileName": "test36",
-    "fileType": "application/pdfa",
+    "fileNameExt": "test36.pdf",
+    "mimeType": "application/pdfa",
+    "fileType": "PDF/A",
     "fileId": "a5c9416d-b044-4dff-9cf9-983ad592a3ba"
     },
     {
     "fileExt": ".ODP",
     "fileName": "test4",
-    "fileType": "application/vnd.oasis.opendocument.presentation",
+    "fileNameExt": "test4.odp",
+    "mimeType": "application/vnd.oasis.opendocument.presentation",
+    "fileType": "OpenDocument Presentation",
     "fileId": "9b4e4fe5-abd8-41e7-a6dd-e081271f6ed9"
     },
     {
     "fileExt": ".ODG",
     "fileName": "test18",
-    "fileType": "application/vnd.oasis.opendocument.graphics",
+    "fileNameExt": "test18.odg",
+    "mimeType": "application/vnd.oasis.opendocument.graphics",
+    "fileType": "OpenDocument Graphics",
     "fileId": "eed6ee00-305d-4488-9556-00bcc04fb3d0"
     },
     {
     "fileExt": ".ODF",
     "fileName": "test19",
-    "fileType": "application/vnd.oasis.opendocument.formula",
+    "fileNameExt": "test19.odf",
+    "mimeType": "application/vnd.oasis.opendocument.formula",
+    "fileType": "OpenDocument Formula",
     "fileId": "7dd765b6-bc52-42dd-8531-3c5cc9a1911d"
     },
     {
     "fileExt": ".ODS",
     "fileName": "test20",
-    "fileType": "application/vnd.oasis.opendocument.spreadsheet",
+    "fileNameExt": "test20.ods",
+    "mimeType": "application/vnd.oasis.opendocument.spreadsheet",
+    "fileType": "OpenDocument SpreadSheet",
     "fileId": "76abc065-9d46-46b2-85a8-d3596d574d9a"
     },
     {
     "fileExt": ".PNG",
     "fileName": "test9",
-    "fileType":  "image/png",
+    "fileNameExt": "test9.png",
+    "mimeType":  "image/png",
+    "fileType": "PNG",
     "fileId": "a8cd8a1e-ec68-4ede-821b-4c8df4944cee"
     },
     {
     "fileExt": ".TXT",
     "fileName": "test11",
-    "fileType": "text/plain",
+    "fileNameExt": "test11.txt",
+    "mimeType": "text/plain",
+    "fileType": "Text",
     "fileId": "3c58bc77-e40f-40f9-b5b2-710c652eac89"
     },
     {
     "fileExt": ".EPUB",
     "fileName": "test14",
-    "fileType": "application/epub+zip",
+    "fileNameExt": "test14.epub",
+    "mimeType": "application/epub+zip",
+    "fileType": "ePUB",
     "fileId": "9106d286-a47a-474a-a472-3e34e01469e6"
     },
     {
     "fileExt": ".MP4",
     "fileName": "test15",
-    "fileType": "video/mp4",
+    "fileNameExt": "test15.mp4",
+    "mimeType": "video/mp4",
+    "fileType": "MP4",
     "fileId": "6cd2f270-7821-43ee-b807-fa97d0cb77cc"
     },
     {
     "fileExt": ".JPG",
     "fileName": "test17",
-    "fileType": "image/jpeg",
+    "fileNameExt": "test17.jpg",
+    "mimeType": "image/jpeg",
+    "fileType": "JPEG",
     "fileId": "31ace984-fe0c-4447-b441-f91c58c47591"
     },
     {
     "fileExt": ".CSV",
     "fileName": "test12",
-    "fileType": "text/csv",
+    "fileNameExt": "test12.csv",
+    "mimeType": "text/csv",
+    "fileType": "CSV",
     "fileId": "af94093a-bb29-4b86-9605-2f16dd76ed80"
     },
     {
     "fileExt": ".FLAC",
     "fileName": "test16",
-    "fileType": "audio/x-flac",
+    "fileNameExt": "test16.flac",
+    "mimeType": "audio/x-flac",
+    "fileType": "Flac",
     "fileId": "d735d56e-e854-4c21-a1fd-5e092016c859"
     }
 ]
@@ -83,128 +109,160 @@ filesConvertable = [
     {
     "fileExt": ".SXW",
     "fileName": "test26",
-    "fileType": "application/vnd.sun.xml.writer",
+    "fileNameExt": "test26.sxw",
+    "mimeType": "application/vnd.sun.xml.writer",
+    "fileType": "OpenDocument XML Text",
     "fileId": "4e123e11-cddd-40bb-9a81-8d4c1c494894"
     },
     {
     "fileExt": ".XLSX",
     "fileName": "test1",
-    "fileType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "fileNameExt": "test1.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "fileType": "Microsoft Excel 2007",
     "fileId": "f39960e0-8d33-4285-8810-90a183beaeba"
     },
     {
     "fileExt": ".DOC",
     "fileName": "test5",
-    "fileType": "application/msword",
+    "fileNameExt": "test5.doc",
+    "mimeType": "application/msword",
+    "fileType": "Microsoft Word",
     "fileId": "5afc247a-b214-4634-bc9d-450555c599e8"
     },
     {
     "fileExt": "PDF",
     "fileName": "test7",
-    "fileType": "application/pdf",
+    "fileNameExt": "test7.pdf",
+    "mimeType": "application/pdf",
+    "fileType": "PDF",
     "fileId": "bd38432f-8b8d-483d-b6bc-e5282d0a8798"
     },
     {
     "fileExt": ".DOCX",
     "fileName": "test8",
-    "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "fileNameExt": "test8.docx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "fileType": "Microsoft Word 2007",
     "fileId": "c8a2ecab-3862-496a-a33d-a9d65673fee3"
     },
     {
     "fileExt": ".PPTX",
     "fileName": "test10",
-    "fileType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "fileNameExt": "test10.pptx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "fileType": "Microsoft Powerpoint 2007",
     "fileId": "1631f92a-b33c-43af-a946-1a7e7d9258bc"
     },
     {
     "fileExt": ".PPT",
     "fileName": "test2",
-    "fileType": "application/vnd.ms-powerpoint",
+    "fileNameExt": "test2.ppt",
+    "mimeType": "application/vnd.ms-powerpoint",
+    "fileType": "Microsoft Powerpoint",
     "fileId": "4b20149a-1a87-4a9e-a5e1-dfaeea3f7944"
     },
     {
     "fileExt": ".XLS",
     "fileName": "test22",
-    "fileType": "application/vnd.ms-excel",
+    "fileNameExt": "test22.xls",
+    "mimeType": "application/vnd.ms-excel",
+    "fileType": "Microsoft Excel",
     "fileId": "bae84e5a-a50f-410b-aa42-31a378a2c6c7"
     },
     {
     "fileExt": ".RTF",
     "fileName": "test13",
-    "fileType": "text/rtf",
+    "fileNameExt": "test13.rtf",
+    "mimeType": "text/rtf",
+    "fileType": "Rich Text Format",
     "fileId": "8f7a7fb8-e188-4e22-9c87-b79cc82403ab"
     },
     {
     "fileExt": ".SXC",
     "fileName": "test27",
-    "fileType": "application/vnd.sun.xml.calc",
+    "fileNameExt": "test27.sxc",
+    "mimeType": "application/vnd.sun.xml.calc",
+    "fileType": "OpenDocument XML SpreadSheet",
     "fileId": "49088fb9-824a-4504-ad90-2ac01999762b"
     },
     {
     "fileExt": ".SXD",
     "fileName": "test31",
-    "fileType": "application/vnd.sun.xml.draw",
+    "fileNameExt": "test31.sxd",
+    "mimeType": "application/vnd.sun.xml.draw",
+    "fileType": "OpenDocument XML Graphics",
     "fileId": "9bc1538e-5703-4cc2-9ef9-bc8f3040feab"
     },
     {
     "fileExt": ".NUMBERS",
     "fileName": "test34",
-    "fileType": "application/applefile",
+    "fileNameExt": "test34.numbers",
+    "mimeType": "application/applefile",
+    "fileType": "Apple Pages",
     "fileId": "dc3665f2-3af6-4bae-800b-98427951bbc5"
     },
     {
     "fileExt": ".PAGES",
     "fileName": "test25",
-    "fileType": "application/applefile",
+    "fileNameExt": "test25.pages",
+    "mimeType": "application/applefile",
+    "fileType": "Apple Pages",
     "fileId": "57447091-398b-43e9-bb29-916fcdfc1e11"
     },
     {
     "fileExt": ".KTH",
     "fileName": "test23",
-    "fileType": "application/applefile",
+    "fileNameExt": "test23.kth",
+    "mimeType": "application/applefile",
+    "fileType": "Apple Pages",
     "fileId": "dc17903f-c13e-4d2f-b9af-e9fdb3c8d570"
     },
     {
     "fileExt": ".KEY",
     "fileName": "test24",
-    "fileType": "application/applefile",
+    "fileNameExt": "test24.key",
+    "mimeType": "application/applefile",
+    "fileType": "Apple Pages",
     "fileId": "dcc407b9-d8f4-4120-b32b-23bd76526091"
     },
     {
     "fileExt": ".SXI",
     "fileName": "test29",
-    "fileType": "application/vnd.sun.xml.impress",
+    "fileNameExt": "test29.sxi",
+    "mimeType": "application/vnd.sun.xml.impress",
+    "fileType": "OpenDocument XML Presentation",
     "fileId": "bf25fa1b-bf1c-4ca4-b098-0f3a81ef2ad6"
     }
     # DISCARD SUPPORT TO (.SXM, .STD, .STW, .STC, .STI)
     # {
     # "fileExt": ".SXM",
     # "fileName": "test33",
-    # "fileType": "application/vnd.sun.xml.math",
+    # "mimeType": "application/vnd.sun.xml.math",
     # "fileId": ""
     # },
     # {
     # "fileExt": ".STD",
     # "fileName": "test32",
-    # "fileType": "application/vnd.sun.xml.draw.template",
+    # "mimeType": "application/vnd.sun.xml.draw.template",
     # "fileId": ""
     # },
     # {
     # "fileExt": ".STW",
     # "fileName": "test21",
-    # "fileType": "application/vnd.sun.xml.writer.template",
+    # "mimeType": "application/vnd.sun.xml.writer.template",
     # "fileId": ""
     # },
     # {
     # "fileExt": ".STC",
     # "fileName": "test28",
-    # "fileType": "application/vnd.sun.xml.calc.template",
+    # "mimeType": "application/vnd.sun.xml.calc.template",
     # "fileId": ""
     # },
     # {
     # "fileExt": ".STI",
     # "fileName": "test30",
-    # "fileType": "application/vnd.sun.xml.impress.template",
+    # "mimeType": "application/vnd.sun.xml.impress.template",
     # "fileId": ""
     # }
 ]
@@ -213,7 +271,9 @@ filesUnknown = [
     {
     "fileExt": ".PYTHON",
     "fileName": "test35",
-    "fileType": "text/x-python",
+    "fileNameExt": "test35.py",
+    "mimeType": "text/x-python",
+    "fileType": "Unknown",
     "fileId": "2d431c06-6cfe-4f16-ba8d-51c58da502e5"
     }
 ]
