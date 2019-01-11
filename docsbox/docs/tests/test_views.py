@@ -8,6 +8,7 @@ from requests import get
 
 # SetUp/EndPoints
 class BaseTestCase(unittest.TestCase):
+    
     via_run = os.getenv('VIA_RUN_TEST')
     headers = {'Content-Disposition': ""}
     def setUp(self):
