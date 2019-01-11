@@ -14,3 +14,5 @@ services:
    extra_hosts:
      - it1.integraatiopalvelu.fi:46.30.128.27
    command: nosetests
+   environment:
+    VIA_RUN_TEST: ${VIA_RUN_TEST}
