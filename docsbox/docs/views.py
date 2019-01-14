@@ -51,8 +51,9 @@ class DocumentTypeView(Resource):
         isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
         if isConvertable:
             filetype = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
-        else:
-            filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"]
+        elif mimetype in app.config["ACCEPTED_MIMETYPES"]:
+            filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"] 
+        else: filetype = "Unknown"
         return { "convertable": isConvertable, "fileType": filetype }
              
 class DocumentConvertView(Resource):

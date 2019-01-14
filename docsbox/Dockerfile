@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 RUN apt-get upgrade -y
 RUN apt-get update
 RUN apt-get install -y software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev
-RUN add-apt-repository ppa:libreoffice/ppa
+RUN add-apt-repository ppa:libreoffice/libreoffice-6-0 -y
 RUN apt-get update
 RUN apt-get install -y libreoffice libreofficekit-dev hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru
 RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && apt-get install -y ttf-mscorefonts-installer
