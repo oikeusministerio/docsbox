@@ -9,7 +9,7 @@ from requests import get
 # SetUp/EndPoints
 class BaseTestCase(unittest.TestCase):
     
-    via_run = os.getenv('VIA_RUN_TEST')
+    via_run = os.getenv('TEST_VIA')
     headers = {'Content-Disposition': ""}
     def setUp(self):
         self.app = docsbox.app
