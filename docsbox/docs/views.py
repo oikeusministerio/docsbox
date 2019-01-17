@@ -1,12 +1,11 @@
 import datetime
-import re
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort
 from requests import exceptions
 from docsbox import app
 from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
-from docsbox.docs.utils import remove_extension, set_options
+from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
 
 class DocumentStatusView(Resource):
@@ -40,7 +39,7 @@ class DocumentTypeView(Resource):
         """
         if request.files and "file" in request.files:
             mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None, schedule_file_del=False)['mimetype']
-        elif file_id and bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", file_id)):
+        elif file_id and is_valid_uuid(file_id):
             try:
                 r = get_file_from_via(file_id)
 
@@ -74,7 +73,7 @@ class DocumentConvertView(Resource):
             filename = remove_extension(request.files["file"].filename)
             result = create_tmp_file_and_get_mimetype(request.files["file"], filename)
             via_allowed_users = None
-        elif file_id and bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", file_id)):
+        elif file_id and is_valid_uuid(file_id):
             try:
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
