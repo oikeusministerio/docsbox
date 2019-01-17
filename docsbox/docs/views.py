@@ -81,7 +81,7 @@ class DocumentConvertView(Resource):
                     filename = remove_extension(request.headers['Content-Disposition'])
                     result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
 
-                    if request.headers['Via-Allowed-Users']:
+                    if 'Via-Allowed-Users' in request.headers:
                         via_allowed_users = request.headers['Via-Allowed-Users']
                     else:
                         via_allowed_users = app.config["VIA_ALLOWED_USERS"]
