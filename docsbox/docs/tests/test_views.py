@@ -87,14 +87,14 @@ class DocumentUUIDTestCase(BaseTestCase):
         self.assertTrue(json.get("taskId"))
         self.assertEqual(json.get("status"), "queued")
         
-        time.sleep(3)
+        time.sleep(5)
     
         response = self.status_file(json.get("taskId"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ujson.loads(response.data), {
             "taskId": json.get("taskId"),
             "status": "finished",
-            "fileType": "application/pdf"
+            "fileType": "PDF/A"
         })
     '''
     def test_get_task_by_invalid_uuid(self):
@@ -110,7 +110,7 @@ class DocumentUUIDTestCase(BaseTestCase):
 class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
     def test_delete_temporary_file(self):
         if self.via_run == "True":
-            response = self.convert_file(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
+            response = self.convert_file_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
         else:    
             response = self.convert_file_nVIA(dep.filesConvertable[0]['fileNameExt']) 
         json = ujson.loads(response.data)
@@ -129,7 +129,7 @@ class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
 class DocumentDetectAndConvertTestCase(BaseTestCase):   
     def test_convert_invalid_mimetype(self):
         if self.via_run == "True":
-            response = self.convert_file(dep.filesUnknown[0]['fileId'], dep.filesUnknown[0]['fileName']) 
+            response = self.convert_file_VIA(dep.filesUnknown[0]['fileId'], dep.filesUnknown[0]['fileName']) 
         else:
             response = self.convert_file_nVIA(dep.filesUnknown[0]['fileNameExt']) 
         json = ujson.loads(response.data)
@@ -155,7 +155,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
     
     def test_convert_invalid_formats(self):
         if self.via_run == "True":
-            response = self.convert_file_with_options(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
+            response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
                 "formats": ["csv"],
             })
         else:
@@ -172,7 +172,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
         for file in dep.filesNotConvertable:
             # Detect file type   
             if self.via_run == "True":
-                response = self.detection_file_type(file['fileId'])
+                response = self.detection_file_type_VIA(file['fileId'])
             else:    
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)  
@@ -184,7 +184,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
 
             # Convert file 
             if self.via_run == "True":
-                response = self.convert_file(file['fileId'], file['fileName']) 
+                response = self.convert_file_VIA(file['fileId'], file['fileName']) 
             else:
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
@@ -197,7 +197,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
         for file in dep.filesConvertable:            
             # Detect file type   
             if self.via_run == "True":
-                response = self.detection_file_type(file['fileId'])
+                response = self.detection_file_type_VIA(file['fileId'])
             else:
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)  
@@ -208,7 +208,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             }) 
             
             if self.via_run == "True":
-                response = self.convert_file(file['fileId'], file['fileName']) 
+                response = self.convert_file_VIA(file['fileId'], file['fileName']) 
             else:
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
@@ -226,18 +226,18 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
                     self.assertEqual(ujson.loads(response.data), {
                     "taskId": json.get("taskId"),
                     "status": "finished",
-                    "fileType": "application/pdf"
+                    "fileType": "PDF/A",
                     })
                     break 
    
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
-        mergeLists = dep.filesConvertable + dep.filesUnknown + dep.filesNotConvertable
+        mergeLists = dep.filesConvertable + dep.filesNotConvertable + dep.filesUnknown
         for file in mergeLists:       
             # Detect file type   
             if self.via_run == "True":
-                response = self.detection_file_type(file['fileId'])
+                response = self.detection_file_type_VIA(file['fileId'])
             else:
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)  
@@ -256,7 +256,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
 
             # Convert file 
             if self.via_run == "True":
-                response = self.convert_file(file['fileId'], file['fileName'])
+                response = self.convert_file_VIA(file['fileId'], file['fileName'])
             else:
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
@@ -274,7 +274,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         self.assertEqual(ujson.loads(response.data), {
                         "taskId": json.get("taskId"),
                         "status": "finished",
-                        "fileType": "application/pdf"
+                        "fileType": "PDF/A"
                         })
                         break 
                
@@ -289,7 +289,8 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         "fileId": json.get("fileId"),
                         "convertable": True,
                         "taskId": json.get("taskId"),
-                        "fileType": "application/pdf",
+                        "fileType": "PDF/A",
+                        "mimeType": "application/pdf",
                         "fileName": file['fileName'] + ".pdf"
                     })
                     

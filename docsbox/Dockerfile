@@ -6,7 +6,9 @@ RUN apt-get install -y software-properties-common dialog apt-utils libffi-dev li
 RUN add-apt-repository ppa:libreoffice/libreoffice-6-0 -y
 RUN apt-get update
 RUN apt-get install -y libreoffice libreofficekit-dev hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru
-RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && apt-get install -y ttf-mscorefonts-installer
+RUN echo debconf debconf/frontend select Noninteractive | debconf-set-selections
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
+RUN apt-get install -y ttf-mscorefonts-installer
 RUN apt-get install -y fonts-dejavu-extra fonts-freefont-otf fonts-freefont-ttf fonts-lmodern fonts-lyx fonts-sil-gentium fonts-dustin fonts-fanwood fonts-3270 fonts-font-awesome fonts-bpg-georgian
 RUN apt-get install -y python3-dev python3-pip git
 

@@ -107,15 +107,7 @@ COMMON: &common
       name: "OpenDocument XML Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.writer.template: # stw OpenDocument XML Text
-      name: "OpenDocument XML Text"
-      formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
     application/vnd.sun.xml.calc: # sxc OpenDocument XML SpreadSheet
-      name: "OpenDocument XML SpreadSheet"
-      formats: SPREADSHEET_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.calc.template: # sxt OpenDocument XML SpreadSheet
       name: "OpenDocument XML SpreadSheet"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
@@ -123,21 +115,9 @@ COMMON: &common
       name: "OpenDocument XML Graphics"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.draw.template: # std OpenDocument XML Graphics
-      name: "OpenDocument XML Graphics"
-      formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
     application/vnd.sun.xml.impress: # sxi OpenDocument XML Presentation
       name: "OpenDocument XML Presentation"
       formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.impress.template: # sti OpenDocument XML Presentation
-      name: "OpenDocument XML Presentation"
-      formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
-    application/vnd.sun.xml.math: # sxm OpenDocument XML Formula
-      name: "OpenDocument XML Formula"
-      formats: SPREADSHEET_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
     application/vnd.sun.xml.writer.global: # sxg
       name: "OpenDocument XML Master Document"
@@ -186,7 +166,7 @@ COMMON: &common
     "OpenOffice.org 1.x Writer document",
     "OpenOffice.org 1.x Calc spreadsheet",
     "OpenOffice.org 1.x Draw document",
-    "Open Office.org 1.x Writer Document Template",
+    "OpenOffice.org 1.x Writer Document Template",
     "OpenOffice.org 1.x Spreadsheet Template",
     "OpenOffice.org 1.x Impress presentation",
     "OpenOffice.org 1.0 Presentation Template",

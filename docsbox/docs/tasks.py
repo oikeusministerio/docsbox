@@ -61,7 +61,7 @@ def process_convertion(path, options, meta):
         result= process_video_convertion(path, options, meta, current_task)
 
     if result and meta["via_allowed_users"]:
-        r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["fileType"], meta["via_allowed_users"])
+        r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], meta["via_allowed_users"])
         result['fileId'] = r.headers.get("Document-id")
     return result
 
@@ -75,16 +75,18 @@ def process_document_convertion(path, options, meta, current_task):
                 # We checks the config for the mimetype of the converted format, expect if its pdf
                 # Because in the config pdf format is as application/pdfa to diferenciate versions
                 if options["format"] == "pdf":
-                    fileType="application/pdf"
+                    mimetype ="application/pdf"
+                    filetype="PDF/A"
                 else:
-                    fileType = (key for key, value in app.config["ACCEPTED_MIMETYPES"].items() if value["format"] == options["format"])
+                    mimetype = (key for key, value in app.config["ACCEPTED_MIMETYPES"].items() if value["format"] == options["format"])
+                    filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"]
                     
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                         output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document) 
     file_remove_task = remove_file.schedule(datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]), output_path)
     current_task.meta["tmp_file_remove_task"] = file_remove_task.id
     current_task.save_meta()
-    return {"fileName": file_name, "fileType": fileType }
+    return {"fileName": file_name, "mimeType": mimetype, "fileType": filetype }
 
 def process_image_convertion(path, options, meta, current_task):
     return "NOT IMPLEMENTED"
