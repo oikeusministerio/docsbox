@@ -1,6 +1,6 @@
-# docsbox [![Build Status](https://travis-ci.org/dveselov/docsbox.svg?branch=master)](https://travis-ci.org/dveselov/docsbox)
+# docsbox [![Build Status](https://travis-ci.org/oikeusministerio/docsbox.svg?branch=master)](https://travis-ci.org/oikeusministerio/docsbox)
 
-`docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into more useful filetypes like PDF, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
+`docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into PDF/A, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
 `docsbox` uses **LibreOffice** (via **LibreOfficeKit**) for document converting.
 
 # Install and Start
@@ -34,50 +34,96 @@ REDIS_URL - redis-server url (default: redis://redis:6379/0)
 The service can be configurable through the yml file `docsbox/config/config.yml`.
 
 # Test
-The conversion service connects with VIA fileservice where requests the file given a file id. To test its nedded some VIA file id
+The conversion can be made using VIA or by sending the file appended to the request.
+
+If there is no file appended the conversion service connects with VIA fileservice where requests the file with the given id. To test it will be needed some VIA file id
 
 Checking File Type:
 ```bash
-$ curl -X GET http://localhost/conversion-service/get-file-type/02127a06-d078-4935-a6f9-b7cbdbff4959
+$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/get-file-type/0
 {
-    "convertable": true,
-    "fileType": "application/msword"
+    "fileType": "Microsoft Word",
+    "convertable": true
+}
+```
+```bash
+$ curl -X POST http://localhost/conversion-service/get-file-type/02127a06-d078-4935-a6f9-b7cbdbff4959
+{
+    "fileType": "Microsoft Word",
+    "convertable": true
+}
+```
+```bash
+curl -X POST -F "file=@test6.odt" http://localhost/conversion-service/convert/0
+{
+    "message": "File does not need to be converted."
+}
+```
+```bash
+$ curl -X POST http://localhost/conversion-service/get-file-type/0123456789
+{
+    "message": "No file has sent nor valid file_id given."
 }
 ```
 
 Request conversion & checking conversion status:
 ```bash
+$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/convert/0
+{
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
+    "status": "queued"
+}
+```
+```bash
 $ curl -X POST --header "Content-Disposition: filename.doc" http://localhost/conversion-service/convert/02127a06-d078-4935-a6f9-b7cbdbff4959
 {
-    "status": "queued",
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
+    "status": "queued"
 }
-
+```
+```bash
+$ curl -X POST http://localhost/conversion-service/convert/0123456789
+{
+    "message": "No file has sent nor valid file_id given."
+}
+```
+```bash
 $ curl -X GET http://localhost/conversion-service/status/bbf78afd-011c-4815-95da-17b810fa4f5f
 {
-    "fileType": "application/pdf",
-    "status": "finished",
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
+    "fileType": "PDF/A",
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
+    "status": "finished"
 }
 ```
 
-The conversion service saves the converted file in VIA fileservice and returns its id.
-Request converted file id:
+If the conversion service used a VIA file the converted file also will be saved in VIA and returns the new file id.
+If the file was sent directly to the conversion service, the converted file is sent when its requested 
+
+Request converted file:
 ```bash
 $ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
 {
     "convertable": true,
     "fileId": "92180232-5d1a-456f-80d7-2cbc596afb57",
     "fileName": "filename.pdf",
-    "fileType": "application/pdf",
+    "mimeType": "application/pdf",
+    "fileType": "PDF/A",
     "status": "finished",
     "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
 }
 ```
+```bash
+$ curl -X GET -O http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   212  100   212    0     0  15142      0 --:--:-- --:--:-- --:--:-- 15142
+
+
+```
 
 Its is possible to request the deletion of the temp converted file as:
 ```bash
-$ curl -X DELETE -O http://localhost/conversion-service/delete-tmp-file/bbf78afd-011c-4815-95da-17b810fa4f5f
+$ curl -X DELETE http://localhost/conversion-service/delete-tmp-file/bbf78afd-011c-4815-95da-17b810fa4f5f
 "finished"
 ```
 
@@ -103,19 +149,21 @@ The Application implements possibility for multi-host deployment using Docker Sw
 
 
 # Run tests (Ubuntu)
+Tests can be run with VIA or without, if connection to VIA is not possible, TEST_VIA must be set to False when running tests.
+
 ```
 1 - cd docsbox
 2 - docker-compose build
-3 - sudo docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
+3 - sudo TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 4 - The tests are run on the docker container and the run result is returned on the console
 5 - Folder Inputs to input files for conversion
-6 - Folder Outputs to output of converted files
+6 - Folder Outputs to output the converted files
 ```
 
 # Supported filetypes
-| Type           | Format                              | 
-| ---------------|------------------------------------ |
-| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` |
-| Presentation   | `.pptx` `.ppt` `.pages`             |
-| Spreadsheet    | `.xlsx` `.xls` `.numbers`           |
-| OpenOffice XML | `.sxw` `.sxc` `.sxd`                |
+| Type           | Format                                     | 
+| ---------------|------------------------------------------- |
+| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` `.sxw` |
+| Presentation   | `.pptx` `.ppt` `.pages` `.sxi`             |
+| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc`           |
+| Others         | `.sxd` `.sxg`

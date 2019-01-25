@@ -3,6 +3,7 @@ import zipfile
 import ujson
 import itertools
 import magic
+import re
 
 from PyPDF2 import PdfFileReader, xmp
 from wand.image import Image
@@ -109,3 +110,6 @@ def get_file_mimetype(file):
 
 def remove_extension(file):
     return os.path.splitext(file)[0]
+
+def is_valid_uuid(uuid):
+    return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))

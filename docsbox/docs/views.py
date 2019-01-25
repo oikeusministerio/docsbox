@@ -2,9 +2,10 @@ import datetime
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort
-from docsbox import app, log
+from requests import exceptions
+from docsbox import app
 from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
-from docsbox.docs.utils import remove_extension, set_options
+from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
 
 class DocumentStatusView(Resource):
@@ -27,7 +28,7 @@ class DocumentStatusView(Resource):
                     "status": task.status
                 }
         else:
-            return abort(404, message="Unknown task_id")
+            abort(404, message="Unknown task_id")
 
 class DocumentTypeView(Resource):
 
@@ -38,18 +39,28 @@ class DocumentTypeView(Resource):
         """
         if request.files and "file" in request.files:
             mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None, schedule_file_del=False)['mimetype']
-        elif file_id:
-            r = get_file_from_via(file_id)
+        elif file_id and is_valid_uuid(file_id):
+            try:
+                r = get_file_from_via(file_id)
 
-            if r.status_code == 200:
-                mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True, schedule_file_del=False)['mimetype']
-            else: 
-                return abort(r.status_code, message=r.json()["message"])
+                if r.status_code == 200:
+                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True, schedule_file_del=False)['mimetype']
+                elif r.status_code == 404: 
+                    abort(404, message="File id was not found.")
+                else:
+                    abort(r.status_code, message=r)
+
+            except exceptions.Timeout:
+                abort(504, "VIA service took too long to respond.")
         else:
-            return abort(400, message="file field is required")
+            abort(400, message="No file has sent nor valid file_id given.")
 
         isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
-        return { "convertable": isConvertable, "fileType": mimetype }
+        if isConvertable:
+            filetype = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
+        else:
+            filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"] if mimetype in app.config["ACCEPTED_MIMETYPES"] else "Unknown"
+        return { "convertable": isConvertable, "fileType": filetype }
              
 class DocumentConvertView(Resource):
 
@@ -62,31 +73,39 @@ class DocumentConvertView(Resource):
             filename = remove_extension(request.files["file"].filename)
             result = create_tmp_file_and_get_mimetype(request.files["file"], filename)
             via_allowed_users = None
-        elif file_id:
-            r = get_file_from_via(file_id)
-            if r.status_code == 200:
-                filename = remove_extension(request.headers['Content-Disposition'])
-                result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
+        elif file_id and is_valid_uuid(file_id):
+            try:
+                r = get_file_from_via(file_id)
+                if r.status_code == 200:
+                    filename = remove_extension(request.headers['Content-Disposition'])
+                    result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
 
-                if request.headers['Via-Allowed-Users']:
-                    via_allowed_users = request.headers['Via-Allowed-Users']
+                    if 'Via-Allowed-Users' in request.headers:
+                        via_allowed_users = request.headers['Via-Allowed-Users']
+                    else:
+                        via_allowed_users = app.config["VIA_ALLOWED_USERS"]
+
+                elif r.status_code == 404: 
+                    abort(404, message="File id was not found.")
                 else:
-                    via_allowed_users = app.config["VIA_ALLOWED_USERS"]
-            else: 
-                return abort(400, message="file field is required")
+                    abort(r.status_code, message=r)
+            except exceptions.Timeout:
+                abort(504, "VIA service took too long to respond.")
+        else:
+            abort(400, message="No file has sent nor valid file_id given.")
 
         mimetype = result['mimetype']
         tmp_file = result['tmp_file']
         
         if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-            return abort(400, message="File does not need to be converted.")
+            abort(400, message="File does not need to be converted.")
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-            return abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
+            abort(415, message="Not supported mimetype: '{0}'".format(mimetype))
 
         try:
             options = set_options(request.form.get("options", None), mimetype)
         except ValueError as err:
-            return abort(400, message=err.args[0])
+            abort(400, message=err.args[0])
 
         task = process_convertion.queue(tmp_file.name, options, 
                                             {"filename": filename, "mimetype": mimetype, 
@@ -111,16 +130,20 @@ class DocumentDownloadView(Resource):
                             "convertable": True,
                             "fileId": task.result["fileId"],
                             "fileType": task.result["fileType"],
+                            "mimeType": task.result["mimeType"],
                             "fileName": task.result["fileName"]
                         }
                     else:
-                        return send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
+                        try:
+                            return send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
+                        except exceptions.Timeout:
+                            abort(504, "VIA service took too long to respond.")
                 else:
-                    return abort(404, message="Task with no result")
+                    abort(404, message="Task with no result")
             else:
-                return abort(400, message="Task is still queued")
+                abort(400, message="Task is still queued")
         else:
-            return abort(404, message="Unknown task_id")
+            abort(404, message="Unknown task_id")
 
 class DeleteTmpFiles(Resource):
 
@@ -131,15 +154,18 @@ class DeleteTmpFiles(Resource):
         """
         task = get_task(task_id)
         if task and task.status == "finished":
-            tmp_task_id = task.meta["tmp_file_remove_task"]
-            if tmp_task_id:
-                tmp_tsk = get_task(tmp_task_id)
-                if tmp_tsk.status != "finished":
-                    tmptask = do_task(tmp_task_id)
-                    return tmptask.status
+            tmp_file_remove_task_id = task.meta["tmp_file_remove_task"]
+            if tmp_file_remove_task_id:
+                tmp_task = get_task(tmp_file_remove_task_id)
+                if tmp_task:
+                    if tmp_task.status != "finished":
+                        tmp_task = do_task(tmp_file_remove_task_id)
+                        return tmp_task.status
+                    else:
+                        return 'finished'
                 else:
-                    return abort(400, message="Task is " + tmp_tsk.status)
+                    abort(404, message="Unknown tmp_file_remove_task_id")
             else:
                 return 'finished'
         else:
-            return abort(404, message="Unknown task_id")
+            abort(404, message="Unknown task_id")
