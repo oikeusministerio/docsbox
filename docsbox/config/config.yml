@@ -187,11 +187,18 @@ COMMON: &common
     path: '/gelf'
     localname: 'conversion.service.dev'
   LOGGING:
-    level: 'INFO'
-    extra:
-      system: 'Document Conversion Service'
-      environment: 'DEV'
-
+    access:
+      level: 'INFO'
+      extra:
+        logtype: 'access'
+        system: 'Document Conversion Service'
+        environment: 'DEV'
+    error:
+      level: 'WARNING'
+      extra:
+        logtype: 'error'
+        system: 'Document Conversion Service'
+        environment: 'DEV'
     
 
 DEVELOPMENT: &dev

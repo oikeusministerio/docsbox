@@ -23,7 +23,8 @@ app.config.update({
 
 api = Api(app)
 rq = RQ(app)
-app.logger = GraylogLogger("docsbox.access", app.config["GRAYLOG"], app.config["LOGGING"])
+app.logger = GraylogLogger("docsbox.access", app.config["GRAYLOG"], app.config["LOGGING"]["access"])
+app.errlog = GraylogLogger("docsbox.error", app.config["GRAYLOG"], app.config["LOGGING"]["error"])
 
 from docsbox.docs.views import *
     
