@@ -1,14 +1,13 @@
 import sys
-import logging
 
 from os import environ
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
 from ordbok.flask_helper import FlaskOrdbok
-from pygelf import GelfHttpHandler
+from docsbox.logs import GraylogLogger
 
-app = Flask(__name__)
+app = Flask(__name__)   
 ordbok = FlaskOrdbok()
 
 ordbok.init_app(app)
@@ -24,14 +23,7 @@ app.config.update({
 
 api = Api(app)
 rq = RQ(app)
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("gunicorn.access")
-try:
-    log.addHandler(GelfHttpHandler(host=app.config["GRAYLOG_HOST"], port=app.config["GRAYLOG_PORT"], _app_name='Conversion Service'))
-    log.info('Hello World')
-except TimeoutError:
-    log.warning('Timed Out - Not Connected With Graylog')
+app.logger = GraylogLogger("docsbox.access", app.config["GRAYLOG"], app.config["LOGGING"])
 
 from docsbox.docs.views import *
     
@@ -41,6 +33,7 @@ api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")
 api.add_resource(DocumentDownloadView, "/conversion-service/get-converted-file/<task_id>")
 api.add_resource(DeleteTmpFiles, "/conversion-service/delete-tmp-file/<task_id>")
 
+app.logger.info("Document Conversion Service as started")
 
 if __name__ == "__main__":
     ordbok.app_run(app)
