@@ -14,4 +14,4 @@ ujson==1.35
 nose==1.3.7
 ordbok==0.1.9
 PyPDF2==1.26.0
-pygelf==0.3.4
+graypy==0.3.2

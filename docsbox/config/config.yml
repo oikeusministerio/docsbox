@@ -4,14 +4,14 @@ COMMON: &common
 
   LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
   
-  REDIS_URL: "redis://redis:6379/0"
+  REDIS_URL: 
   REDIS_JOB_TIMEOUT: 600
   ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
-  VIA_URL: "https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
-  VIA_CERT_PATH: "/home/docsbox/certificate.pem"
-  VIA_ALLOWED_USERS: "sampotesti"
+  VIA_URL:
+  VIA_CERT_PATH:
+  VIA_ALLOWED_USERS:
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
@@ -181,24 +181,22 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
-  GRAYLOG:
-    host: 'logdev.om.fi'
-    port: 444
-    path: '/gelf'
-    localname: 'conversion.service.dev'
+  GRAYLOG_HOST: localhost
+  GRAYLOG_PORT: 12001
+  GRAYLOG_PATH: '/gelf'
+  GRAYLOG_SOURCE: 
   LOGGING:
     access:
       level: 'INFO'
       extra:
         logtype: 'access'
-        system: 'Document Conversion Service'
-        environment: 'DEV'
     error:
       level: 'WARNING'
       extra:
         logtype: 'error'
-        system: 'Document Conversion Service'
-        environment: 'DEV'
+    extra:
+      system: 'Document Conversion Service'
+      environment: 'DEV'
     
 
 DEVELOPMENT: &dev

@@ -10,19 +10,19 @@ from flask.logging import default_handler
 
 class GraylogLogger(logging.LoggerAdapter):
 
-    def __init__(self, name, graylog_cfg, logging_cfg):
+    def __init__(self, name, app, logtype):
+        logging_cfg = app.config["LOGGING"]
         logger = logging.getLogger(name)
-        logger.setLevel(logging._checkLevel(logging_cfg["level"]))
+        logger.setLevel(logging._checkLevel(logging_cfg[logtype]["level"]))
 
-        httpsHandler = GelfHTTPHandler(host=graylog_cfg["host"], port=graylog_cfg["port"],
-                                        path=graylog_cfg["path"], localname=graylog_cfg["localname"])
+        httpsHandler = GelfHTTPHandler(host=app.config["GRAYLOG_HOST"], port=app.config["GRAYLOG_PORT"],
+                                        path=app.config["GRAYLOG_PATH"], localname=app.config["GRAYLOG_SOURCE"])
         logger.addHandler(httpsHandler)
 
         self.logger = logger
-        self.extra = logging_cfg["extra"]
+        self.extra = { **logging_cfg["extra"], **logging_cfg[logtype]["extra"]}
 
     def log(self, level, msg, extra= None, *args, **kwargs):
-        level = logging._checkLevel(level)
         kwargs["extra"]= self.extra
         if extra:
             if "request" in extra:
@@ -50,7 +50,9 @@ class GelfHTTPHandler(BaseGELFHandler, logging.Handler):
 
     def emit(self, record):
         data = BaseGELFHandler.makePickle(self, record)
-
-        self.connection = HTTPSConnection(self.host, self.port, context=ssl._create_unverified_context(), timeout=self.timeout)        
-        self.connection.request('POST', self.path, data, headers={'Content-type': 'application/json'})
-        self.connection.close()
+        try:
+            self.connection = HTTPSConnection(self.host, self.port, context=ssl._create_unverified_context(), timeout=self.timeout)        
+            self.connection.request('POST', self.path, data, headers={'Content-type': 'application/json'})
+            self.connection.close()
+        except:
+            print("ERROR - Connection with Graylog was not possible, log was not sent.")
