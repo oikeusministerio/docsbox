@@ -15,10 +15,6 @@ services:
       - it1.integraatiopalvelu.fi:46.30.128.27
       - logdev.om.fi:10.188.10.31
     environment:
-      REDIS_URL: "redis://redis:6379/0"
-      VIA_URL: 'https://it1.integraatiopalvelu.fi/Tallennuspalvelu'
-      VIA_CERT_PATH: '/home/docsbox/certificate.pem'
-      VIA_ALLOWED_USERS: sampotesti
       GRAYLOG_HOST: 'logdev.om.fi'
       GRAYLOG_PORT: 444
       GRAYLOG_PATH: '/gelf'
@@ -38,11 +34,6 @@ services:
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
       - logdev.om.fi:10.188.10.31
-    environment:
-      REDIS_URL: "redis://redis:6379/0"
-      VIA_URL: 'https://it1.integraatiopalvelu.fi/Tallennuspalvelu'
-      VIA_CERT_PATH: '/home/docsbox/certificate.pem'
-      VIA_ALLOWED_USERS: sampotesti
     command: rq worker -c docsbox
  
   rqscheduler:

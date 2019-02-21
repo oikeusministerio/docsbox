@@ -111,12 +111,12 @@ class DocumentConvertView(Resource):
         
         if mimetype in app.config["ACCEPTED_MIMETYPES"]:
             message="File does not need to be converted."
-            app.errlog.log('WARNING', request, 400, message)
+            app.errlog.log(logging.WARNING, message, extra={"request": request, "status": 400})
             abort(400, message=message)
             
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
             message="Not supported mimetype: '{0}'".format(mimetype)
-            app.errlog.log('WARNING', message, extra={"request": request, "status": 415})
+            app.errlog.log(logging.WARNING, message, extra={"request": request, "status": 415})
             abort(415, message=message)
 
         try:

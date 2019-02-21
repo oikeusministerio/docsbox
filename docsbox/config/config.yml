@@ -4,14 +4,14 @@ COMMON: &common
 
   LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
   
-  REDIS_URL: 
+  REDIS_URL: "redis://redis:6379/0"
   REDIS_JOB_TIMEOUT: 600
   ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
-  VIA_URL:
-  VIA_CERT_PATH:
-  VIA_ALLOWED_USERS:
+  VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
+  VIA_CERT_PATH: /home/docsbox/certificate.pem
+  VIA_ALLOWED_USERS: sampotesti
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
