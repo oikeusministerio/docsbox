@@ -2,12 +2,22 @@ import datetime
 import logging
 
 from flask import request, send_from_directory
-from flask_restful import Resource, abort
+from flask_restful import Resource, abort as flask_abort
 from requests import exceptions
 from docsbox import app
 from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
 from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
+
+def abort(error_code, message, request):
+    if error_code >= 500:
+        error_level = logging.CRITICAL
+    elif error_code >= 400:
+        error_level = logging.ERROR
+    elif error_code >= 300:
+        error_level = logging.WARNING
+    app.errlog.log(error_level, message, extra={"request": request, "status": error_code})
+    flask_abort(error_code, message=message)
 
 class DocumentStatusView(Resource):
 
@@ -29,8 +39,7 @@ class DocumentStatusView(Resource):
                     "status": task.status
                 }
         else:
-            app.errlog.log(logging.ERROR, "Unknown task_id", extra={"request": request, "status": 404})
-            abort(404, message="Unknown task_id")
+            abort(404, "Unknown task_id", request)
 
 class DocumentTypeView(Resource):
 
@@ -48,18 +57,14 @@ class DocumentTypeView(Resource):
                 if r.status_code == 200:
                     mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True, schedule_file_del=False)['mimetype']
                 elif r.status_code == 404: 
-                    app.errlog.log(logging.ERROR, "File id was not found.", extra={"request": request, "status": 404})
-                    abort(404, message="File id was not found.")
+                    abort(404, "File id was not found.", request)
                 else:
-                    app.errlog.log(logging.ERROR, r, extra={"request": request, "status": r.status_code})
-                    abort(r.status_code, message=r)
+                    abort(r.status_code, r, request)
 
             except exceptions.Timeout:
-                app.errlog.log('CRITICAL', "VIA service took too long to respond.", extra={"request": request, "status": 504})
-                abort(504, "VIA service took too long to respond.")
+                abort(504, "VIA service took too long to respond.", request)
         else:
-            app.errlog.log(logging.ERROR, "No file has sent nor valid file_id given.", extra={"request": request, "status": 400})
-            abort(400, message="No file has sent nor valid file_id given.")
+            abort(400, "No file has sent nor valid file_id given.", request)
 
         isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
         if isConvertable:
@@ -94,37 +99,27 @@ class DocumentConvertView(Resource):
                         via_allowed_users = app.config["VIA_ALLOWED_USERS"]
 
                 elif r.status_code == 404: 
-                    app.errlog.log(logging.ERROR, "File id was not found.", extra={"request": request, "status": 404})
-                    abort(404, message="File id was not found.")
+                    abort(404, "File id was not found.", request)
                 else:
-                    app.errlog.log(logging.ERROR, r, extra={"request": request, "status": r.status_code})
-                    abort(r.status_code, message=r)
+                    abort(r.status_code, r, request)
             except exceptions.Timeout:
-                app.errlog.log('CRITICAL', "VIA service took too long to respond.", extra={"request": request, "status": 504})
-                abort(504, "VIA service took too long to respond.")
+                abort(504, "VIA service took too long to respond.", request)
         else:
-            app.errlog.log(logging.ERROR, "No file has sent nor valid file_id given.", extra={"request": request, "status": 400})
-            abort(400, message="No file has sent nor valid file_id given.")
+            abort(400, "No file has sent nor valid file_id given.", request)
 
         mimetype = result['mimetype']
         tmp_file = result['tmp_file']
         
         if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-            message="File does not need to be converted."
-            app.errlog.log(logging.WARNING, message, extra={"request": request, "status": 400})
-            abort(400, message=message)
+            abort(400, "File does not need to be converted.", request)
             
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-            message="Not supported mimetype: '{0}'".format(mimetype)
-            app.errlog.log(logging.WARNING, message, extra={"request": request, "status": 415})
-            abort(415, message=message)
+            abort(415, "Not supported mimetype: '{0}'".format(mimetype), request)
 
         try:
             options = set_options(request.form.get("options", None), mimetype)
         except ValueError as err:
-            message= err.args[0]
-            app.errlog.log(logging.ERROR, message, extra={"request": request, "status": 400})
-            abort(400, message=message)
+            abort(400, err.args[0], request)
 
         task = process_convertion.queue(tmp_file.name, options, 
                                             {"filename": filename, "mimetype": mimetype, 
@@ -161,18 +156,14 @@ class DocumentDownloadView(Resource):
                             response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
                             app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": 200})
                         except exceptions.Timeout:
-                            app.errlog.log('CRITICAL', "VIA service took too long to respond.", extra={"request": request, "status": 504})
-                            abort(504, "VIA service took too long to respond.")
+                            abort(504, "VIA service took too long to respond.", request)
                     return response
                 else:
-                    app.errlog.log(logging.ERROR, "Task with no result", extra={"request": request, "status": 404})
-                    abort(404, message="Task with no result")
+                    abort(404, "Task with no result", request)
             else:
-                app.errlog.log(logging.ERROR, "Task is still queued", extra={"request": request, "status": 400})
-                abort(400, message="Task is still queued")
+                abort(400, "Task is still queued", request)
         else:
-            app.errlog.log(logging.ERROR, "Unknown task_id", extra={"request": request, "status": 404})
-            abort(404, message="Unknown task_id")
+            abort(404, "Unknown task_id", request)
 
 class DeleteTmpFiles(Resource):
 
@@ -193,10 +184,8 @@ class DeleteTmpFiles(Resource):
                     else:
                         return 'finished'
                 else:
-                    app.errlog.log(logging.ERROR, "Unknown tmp_file_remove_task_id", extra={"request": request, "status": 404})
-                    abort(404, message="Unknown tmp_file_remove_task_id")
+                    abort(404, "Unknown tmp_file_remove_task_id", request)
             else:
                 return 'finished'
         else:
-            app.errlog.log(logging.ERROR, "Unknown task_id", extra={"request": request, "status": 404})
-            abort(404, message="Unknown task_id")
+            abort(404, "Unknown task_id", request)
