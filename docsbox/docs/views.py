@@ -14,8 +14,6 @@ def abort(error_code, message, request):
         error_level = logging.CRITICAL
     elif error_code >= 400:
         error_level = logging.ERROR
-    elif error_code >= 300:
-        error_level = logging.WARNING
     app.errlog.log(error_level, message, extra={"request": request, "status": error_code})
     flask_abort(error_code, message=message)
 
