@@ -9,9 +9,9 @@ COMMON: &common
   ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
-  VIA_URL: "https://it1.integraatiopalvelu.fi/Tallennuspalvelu"
-  VIA_CERT_PATH: "/home/docsbox/certificate.pem"
-  VIA_ALLOWED_USERS: "sampotesti"
+  VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
+  VIA_CERT_PATH: /home/docsbox/certificate.pem
+  VIA_ALLOWED_USERS: sampotesti
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
@@ -181,6 +181,23 @@ COMMON: &common
   LIBMAGIC_MIMETYPES:
     content-type: ["application/octet-stream", "text/plain"]
   
+  GRAYLOG_HOST: localhost
+  GRAYLOG_PORT: 12001
+  GRAYLOG_PATH: '/gelf'
+  GRAYLOG_SOURCE: 
+  LOGGING:
+    access:
+      level: 'INFO'
+      extra:
+        logtype: 'access'
+    error:
+      level: 'WARNING'
+      extra:
+        logtype: 'error'
+    extra:
+      system: 'Document Conversion Service'
+      environment: 'DEV'
+    
 
 DEVELOPMENT: &dev
   <<: *common

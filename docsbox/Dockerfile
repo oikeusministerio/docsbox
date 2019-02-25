@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 RUN apt-get upgrade -y
 RUN apt-get update
 RUN apt-get install -y software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev
-RUN add-apt-repository ppa:libreoffice/libreoffice-6-0 -y
+RUN add-apt-repository ppa:libreoffice/libreoffice-6-1 -y
 RUN apt-get update
 RUN apt-get install -y libreoffice libreofficekit-dev hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru
 RUN echo debconf debconf/frontend select Noninteractive | debconf-set-selections

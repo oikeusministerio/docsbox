@@ -13,7 +13,13 @@ services:
       - /media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
-    command: gunicorn -b :8000 docsbox:app
+      - logdev.om.fi:10.188.10.31
+    environment:
+      GRAYLOG_HOST: 'logdev.om.fi'
+      GRAYLOG_PORT: 444
+      GRAYLOG_PATH: '/gelf'
+      GRAYLOG_SOURCE: conversion.service.dev
+    command: gunicorn --config=docsbox/config/gunicorn.conf docsbox:app
 
   rqworker:
     restart: always
@@ -27,6 +33,7 @@ services:
       - /media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
+      - logdev.om.fi:10.188.10.31
     command: rq worker -c docsbox
  
   rqscheduler:
