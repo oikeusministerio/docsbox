@@ -1,7 +1,7 @@
 # docsbox [![Build Status](https://travis-ci.org/oikeusministerio/docsbox.svg?branch=master)](https://travis-ci.org/oikeusministerio/docsbox)
 
 `docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into PDF/A, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
-`docsbox` uses **LibreOffice** (via **LibreOfficeKit**) for document converting.
+`docsbox` uses **LibreOffice** 6.1 (via **LibreOfficeKit**) for document converting.
 
 # Install and Start
 Currently, installing powered by docker-compose:
@@ -27,7 +27,16 @@ f6b55773c71d  oikeusministerio/common-conversion:latest  "rq worker -c docsbox" 
 
 # Settings (env)
 ```
-REDIS_URL - redis-server url (default: redis://redis:6379/0)
+REDIS_URL - Redis Server url (default: redis://redis:6379/0)
+
+VIA_URL - VIA service url (default: https://it1.integraatiopalvelu.fi/Tallennuspalvelu)
+VIA_CERT_PATH - Certificate path for VIA connection (default: /home/docsbox/certificate.pem)
+VIA_ALLOWED_USERS - Allowed users for VIA (default: sampotesti)
+
+GRAYLOG_HOST - Graylog server (default: localhost)
+GRAYLOG_PORT - Graylog server input port (default: 12001)
+GRAYLOG_PATH - Graylog server input path (default: '/gelf')
+GRAYLOG_SOURCE - Graylog name for the logger Host
 ```
 
 # Configuration
@@ -129,7 +138,7 @@ $ curl -X DELETE http://localhost/conversion-service/delete-tmp-file/bbf78afd-01
 
 # API
 ```
-GET    /conversion-service/get-file-type/{file_id}
+POST    /conversion-service/get-file-type/{file_id}
 
 POST   /conversion-service/convert/{file_id}
 
