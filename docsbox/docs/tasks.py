@@ -4,6 +4,7 @@ import subprocess
 
 from pylokit import Office
 from wand.image import Image
+from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
@@ -29,7 +30,7 @@ def remove_file(path):
     return os.remove(path)
 
 def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, schedule_file_del=True):
-    result = { "mimetype": None, "tmp_file": None}
+    result = { "mimetype": None, "tmp_file": None }
     suffix= os.path.splitext(filename)[1] if filename else None
     with NamedTemporaryFile(delete=(schedule_file_del is False), dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
@@ -89,7 +90,11 @@ def process_document_convertion(path, options, meta, current_task):
     return {"fileName": file_name, "mimeType": mimetype, "fileType": filetype }
 
 def process_image_convertion(path, options, meta, current_task):
-    return "NOT IMPLEMENTED"
+    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], suffix=".pdf") as tmp_file:
+        tmp_file.write(imagesToPdf(path))
+        tmp_file.flush()
+        result = process_document_convertion(tmp_file, options, meta, current_task)
+    return result
 
 def process_audio_convertion(path, options, meta, current_task):
     return "NOT IMPLEMENTED"
