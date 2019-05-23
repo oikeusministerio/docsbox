@@ -48,14 +48,6 @@ filesNotConvertable = [
     "fileId": "76abc065-9d46-46b2-85a8-d3596d574d9a"
     },
     {
-    "fileExt": ".PNG",
-    "fileName": "test9",
-    "fileNameExt": "test9.png",
-    "mimeType":  "image/png",
-    "fileType": "PNG",
-    "fileId": "a8cd8a1e-ec68-4ede-821b-4c8df4944cee"
-    },
-    {
     "fileExt": ".TXT",
     "fileName": "test11",
     "fileNameExt": "test11.txt",
@@ -78,14 +70,6 @@ filesNotConvertable = [
     "mimeType": "video/mp4",
     "fileType": "MP4",
     "fileId": "6cd2f270-7821-43ee-b807-fa97d0cb77cc"
-    },
-    {
-    "fileExt": ".JPG",
-    "fileName": "test17",
-    "fileNameExt": "test17.jpg",
-    "mimeType": "image/jpeg",
-    "fileType": "JPEG",
-    "fileId": "31ace984-fe0c-4447-b441-f91c58c47591"
     },
     {
     "fileExt": ".CSV",
@@ -233,6 +217,22 @@ filesConvertable = [
     "mimeType": "application/vnd.sun.xml.impress",
     "fileType": "OpenDocument XML Presentation",
     "fileId": "bf25fa1b-bf1c-4ca4-b098-0f3a81ef2ad6"
+    },
+    {
+    "fileExt": ".JPG",
+    "fileName": "test17",
+    "fileNameExt": "test17.jpg",
+    "mimeType": "image/jpeg",
+    "fileType": "JPEG",
+    "fileId": "31ace984-fe0c-4447-b441-f91c58c47591"
+    },
+    {
+    "fileExt": ".PNG",
+    "fileName": "test9",
+    "fileNameExt": "test9.png",
+    "mimeType":  "image/png",
+    "fileType": "PNG",
+    "fileId": "a8cd8a1e-ec68-4ede-821b-4c8df4944cee"
     }
     # DISCARD SUPPORT TO (.SXM, .STD, .STW, .STC, .STI)
     # {
