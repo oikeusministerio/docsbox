@@ -11,7 +11,7 @@ COMMON: &common
 
   VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
   VIA_CERT_PATH: /home/docsbox/certificate.pem
-  VIA_ALLOWED_USERS: sampotesti
+  VIA_ALLOWED_USERS: 
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
@@ -63,12 +63,6 @@ COMMON: &common
     video/mp4: # Advanced Video Coding
       name: "MP4"
       format: "mp4"
-    image/jpeg: # Joint Photographic Group
-      name: "JPEG"
-      format: "jpeg"
-    image/png: # Portable Network Graphics
-      name: "PNG"
-      format: "png"
 
   CONVERTABLE_MIMETYPES:
     application/pdf: # Portable Document Format
@@ -133,6 +127,14 @@ COMMON: &common
       default_options: DEFAULT_OPTIONS
     application/applefile: #Apple Pages
       name: "Apple Pages"
+      formats: DOCUMENT_EXPORT_FORMATS
+      default_options: DEFAULT_OPTIONS
+    image/jpeg: # Joint Photographic Group
+      name: "JPEG"
+      formats: DOCUMENT_EXPORT_FORMATS
+      default_options: DEFAULT_OPTIONS
+    image/png: # Portable Network Graphics
+      name: "PNG"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
 
