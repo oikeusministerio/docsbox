@@ -145,7 +145,8 @@ class DocumentDownloadView(Resource):
                             "fileId": task.result["fileId"],
                             "fileType": task.result["fileType"],
                             "mimeType": task.result["mimeType"],
-                            "fileName": task.result["fileName"]
+                            "fileName": task.result["fileName"],
+                            "fileSize": task.result["fileSize"]
                         }
                         app.logger.log(logging.INFO, response, extra={"request": request, "status": 200})
                         return response
