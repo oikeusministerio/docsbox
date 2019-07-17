@@ -73,15 +73,12 @@ def process_document_convertion(path, options, meta, current_task):
             if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
                 file_name = "{0}.{1}".format(meta["filename"], options["format"])
                 original_document.saveAs(output_path, fmt=options["format"], options="SelectPdfVersion=1")
-                # We checks the config for the mimetype of the converted format, expect if its pdf
-                # Because in the config pdf format is as application/pdfa to diferenciate versions
-                if options["format"] == "pdf":
-                    mimetype ="application/pdf"
-                    filetype="PDF/A"
-                else:
-                    mimetype = (key for key, value in app.config["ACCEPTED_MIMETYPES"].items() if value["format"] == options["format"])
-                    filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"]
-                    
+                
+                for key, value in app.config["OUTPUT_FILETYPES"].items():
+                    if value["format"] == options["format"]:
+                        mimetype = key
+                        filetype = value["name"]
+
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                         output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document) 
     fileSize = os.path.getsize(output_path)

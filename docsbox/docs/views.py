@@ -64,11 +64,11 @@ class DocumentTypeView(Resource):
         else:
             abort(400, "No file has sent nor valid file_id given.", request)
 
-        isConvertable = mimetype not in app.config["ACCEPTED_MIMETYPES"] and mimetype in app.config["CONVERTABLE_MIMETYPES"]
+        isConvertable = mimetype in app.config["CONVERTABLE_MIMETYPES"]
         if isConvertable:
             filetype = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
         else:
-            filetype = app.config["ACCEPTED_MIMETYPES"][mimetype]["name"] if mimetype in app.config["ACCEPTED_MIMETYPES"] else "Unknown"
+            filetype = app.config["OUTPUT_FILETYPES"][mimetype]["name"] if mimetype in app.config["OUTPUT_FILETYPES"] else mimetype
         response= { "convertable": isConvertable, "fileType": filetype }
         app.logger.log(logging.INFO, response, extra={"request": request, "status": 200})
         return response
@@ -107,9 +107,6 @@ class DocumentConvertView(Resource):
 
         mimetype = result['mimetype']
         tmp_file = result['tmp_file']
-        
-        if mimetype in app.config["ACCEPTED_MIMETYPES"]:
-            abort(400, "File does not need to be converted.", request)
             
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
             abort(415, "Not supported mimetype: '{0}'".format(mimetype), request)

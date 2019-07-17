@@ -119,6 +119,7 @@ $ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-01
     "fileType": "PDF/A",
     "status": "finished",
     "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
+    "fileSize": "80325"
 }
 ```
 ```bash
@@ -170,9 +171,9 @@ Tests can be run with VIA or without, if connection to VIA is not possible, TEST
 ```
 
 # Supported filetypes
-| Type           | Format                                     | 
-| ---------------|------------------------------------------- |
-| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` `.sxw` |
-| Presentation   | `.pptx` `.ppt` `.pages` `.sxi`             |
-| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc`           |
-| Others         | `.sxd` `.sxg`
+| Type           | Format                                            | 
+| ---------------|-------------------------------------------------- |
+| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` `.sxw` `.odt` |
+| Presentation   | `.pptx` `.ppt` `.pages` `.sxi` `.odp`             |
+| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`           |
+| Others         | `.sxd` `.sxg` `.odg`                              |
