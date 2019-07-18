@@ -122,6 +122,7 @@ COMMON: &common
   OUTPUT_FILETYPES:
     application/pdfa:
       name: "PDF/A"
+      mimetype: "application/pdf"
       format: "pdf"
 
   DEFAULT_OPTIONS:

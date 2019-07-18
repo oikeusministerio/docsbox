@@ -76,7 +76,7 @@ def process_document_convertion(path, options, meta, current_task):
                 
                 for key, value in app.config["OUTPUT_FILETYPES"].items():
                     if value["format"] == options["format"]:
-                        mimetype = key
+                        mimetype = value["mimetype"]
                         filetype = value["name"]
 
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
