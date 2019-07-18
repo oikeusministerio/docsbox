@@ -127,17 +127,7 @@ class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
      
 # Group of tests to test detection of type file and check if it's possible to convert
 class DocumentDetectAndConvertTestCase(BaseTestCase):   
-    def test_convert_invalid_mimetype(self):
-        if self.via_run == "True":
-            response = self.convert_file_VIA(dep.filesUnknown[0]['fileId'], dep.filesUnknown[0]['fileName']) 
-        else:
-            response = self.convert_file_nVIA(dep.filesUnknown[0]['fileNameExt']) 
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 415)
-        self.assertEqual(json, {
-            "message": "Not supported mimetype: '"+dep.filesUnknown[0]['mimeType']+"'"
-        })
-    
+
     def test_convert_empty_formats(self):
         if self.via_run == "True":
             response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
@@ -168,7 +158,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             "message": "'application/vnd.sun.xml.writer' mimetype can't be converted to 'csv'"
         })
 
-    def test_detect_convert_file_not_required(self):
+    def test_detect_convert_file_not_convertable(self):
         for file in dep.filesNotConvertable:
             # Detect file type   
             if self.via_run == "True":
@@ -188,12 +178,12 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             else:
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, 415)
             self.assertEqual(json, {
-                'message': 'File does not need to be converted.'
+                'message': "Not supported mimetype: '{0}'".format(file['mimeType'])
             })
         
-    def test_detect_convert_file_required(self):
+    def test_detect_convert_file(self):
         for file in dep.filesConvertable:            
             # Detect file type   
             if self.via_run == "True":
@@ -233,7 +223,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
-        mergeLists = dep.filesConvertable + dep.filesNotConvertable + dep.filesUnknown
+        mergeLists = dep.filesConvertable + dep.filesNotConvertable
         for file in mergeLists:       
             # Detect file type   
             if self.via_run == "True":

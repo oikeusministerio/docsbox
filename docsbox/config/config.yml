@@ -29,41 +29,6 @@ COMMON: &common
 
   DOCUMENT_CONVERTION_FORMATS: ["DOCUMENT_EXPORT_FORMATS", "SPREADSHEET_EXPORT_FORMATS", "PRESENTATION_EXPORT_FORMATS", "PDF_EXPORT_FORMATS"]
 
-  ACCEPTED_MIMETYPES:
-    application/vnd.oasis.opendocument.text: # LibreOffice Word
-      name: "OpenDocument Text"
-      format: "odt"
-    application/vnd.oasis.opendocument.spreadsheet: # LibreOffice Calc
-      name: "OpenDocument SpreadSheet"
-      format: "ods"
-    application/vnd.oasis.opendocument.presentation: # LibreOffice Impress
-      name: "OpenDocument Presentation"
-      format: "odp"
-    application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
-      name: "OpenDocument Graphics"
-      format: "odg"
-    application/vnd.oasis.opendocument.formula: # LibreOffice Math
-      name: "OpenDocument Formula"
-      format: "odf"
-    text/plain: # Plain Text File
-      name: "Text"
-      format: "txt"
-    text/csv: # Comma Seperated Values
-      name: "CSV"
-      format: "csv"
-    application/pdfa: # Portable Document Format Archive
-      name: "PDF/A"
-      format: "pdf"
-    application/epub+zip: # EPUB
-      name: "ePUB"
-      format: "epub"
-    audio/x-flac: # Free Lossless Audio Codec
-      name: "Flac"
-      format: "flac"
-    video/mp4: # Advanced Video Coding
-      name: "MP4"
-      format: "mp4"
-
   CONVERTABLE_MIMETYPES:
     application/pdf: # Portable Document Format
       name: "PDF"
@@ -137,6 +102,27 @@ COMMON: &common
       name: "PNG"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DEFAULT_OPTIONS
+    application/vnd.oasis.opendocument.text: # LibreOffice Word
+      name: "OpenDocument Text"
+      formats: DOCUMENT_EXPORT_FORMATS
+      default_options: DEFAULT_OPTIONS
+    application/vnd.oasis.opendocument.spreadsheet: # LibreOffice Calc
+      name: "OpenDocument SpreadSheet"
+      formats: "SPREADSHEET_EXPORT_FORMATS"
+      default_options: DEFAULT_OPTIONS
+    application/vnd.oasis.opendocument.presentation: # LibreOffice Impress
+      name: "OpenDocument Presentation"
+      formats: "PRESENTATION_EXPORT_FORMATS"
+      default_options: DEFAULT_OPTIONS
+    application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
+      name: "OpenDocument Graphics"
+      formats: "PRESENTATION_EXPORT_FORMATS"
+      default_options: DEFAULT_OPTIONS
+
+  OUTPUT_FILETYPES:
+    application/pdfa:
+      name: "PDF/A"
+      format: "pdf"
 
   DEFAULT_OPTIONS:
     format: "pdf"
