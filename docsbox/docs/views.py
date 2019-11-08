@@ -14,7 +14,7 @@ def abort(error_code, message, request):
         error_level = logging.CRITICAL
     elif error_code >= 400:
         error_level = logging.ERROR
-    app.errlog.log(error_level, message, extra={"request": request, "status": error_code})
+    app.errlog.log(error_level, message, extra={"request": request, "status": str(error_code)})
     flask_abort(error_code, message=message)
 
 class DocumentStatusView(Resource):
