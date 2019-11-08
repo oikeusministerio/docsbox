@@ -14,7 +14,7 @@ def abort(error_code, message, request):
         error_level = logging.CRITICAL
     elif error_code >= 400:
         error_level = logging.ERROR
-    app.errlog.log(error_level, message, extra={"request": request, "status": error_code})
+    app.errlog.log(error_level, message, extra={"request": request, "status": str(error_code)})
     flask_abort(error_code, message=message)
 
 class DocumentStatusView(Resource):
@@ -70,7 +70,7 @@ class DocumentTypeView(Resource):
         else:
             filetype = app.config["OUTPUT_FILETYPES"][mimetype]["name"] if mimetype in app.config["OUTPUT_FILETYPES"] else mimetype
         response= { "convertable": isConvertable, "fileType": filetype }
-        app.logger.log(logging.INFO, response, extra={"request": request, "status": 200})
+        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
         return response
              
 class DocumentConvertView(Resource):
@@ -120,7 +120,7 @@ class DocumentConvertView(Resource):
                                             {"filename": filename, "mimetype": mimetype, 
                                             "via_allowed_users": via_allowed_users})
         response= { "taskId": task.id, "status": task.status}
-        app.logger.log(logging.INFO, response, extra={"request": request, "status": 200})
+        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
         return response
 
 class DocumentDownloadView(Resource):
@@ -145,12 +145,12 @@ class DocumentDownloadView(Resource):
                             "fileName": task.result["fileName"],
                             "fileSize": task.result["fileSize"]
                         }
-                        app.logger.log(logging.INFO, response, extra={"request": request, "status": 200})
+                        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
                         return response
                     else:
                         try:                          
                             response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
-                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": 200})
+                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": "200"})
                         except exceptions.Timeout:
                             abort(504, "VIA service took too long to respond.", request)
                     return response
