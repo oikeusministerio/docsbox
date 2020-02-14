@@ -3,9 +3,9 @@ import logging
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort as flask_abort
-from requests import exceptions
+from requests import exceptions, codes
 from docsbox import app
-from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task
+from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task, remove_file
 from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
 
@@ -47,14 +47,14 @@ class DocumentTypeView(Resource):
         Returns the File Mimetype
         """
         if request.files and "file" in request.files:
-            mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None, schedule_file_del=False)['mimetype']
+            mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None)['mimetype']
         elif file_id and is_valid_uuid(file_id):
             try:
                 r = get_file_from_via(file_id)
 
-                if r.status_code == 200:
-                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True, schedule_file_del=False)['mimetype']
-                elif r.status_code == 404: 
+                if r.status_code == codes.ok:
+                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
+                elif r.status_code == codes.not_found: 
                     abort(404, "File id was not found.", request)
                 else:
                     abort(r.status_code, r, request)
@@ -82,21 +82,24 @@ class DocumentConvertView(Resource):
 
         if request.files and "file" in request.files:
             filename = remove_extension(request.files["file"].filename)
-            result = create_tmp_file_and_get_mimetype(request.files["file"], filename)
+            result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
             via_allowed_users = None
         elif file_id and is_valid_uuid(file_id):
             try:
                 r = get_file_from_via(file_id)
-                if r.status_code == 200:
+                if r.status_code == codes.ok:
                     filename = remove_extension(request.headers['Content-Disposition'])
-                    result = create_tmp_file_and_get_mimetype(r, filename, stream=True)
+                    try:
+                        result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
+                    except:
+                        remove_file(result['tmp_file'])
 
                     if 'Via-Allowed-Users' in request.headers:
                         via_allowed_users = request.headers['Via-Allowed-Users']
                     else:
                         via_allowed_users = app.config["VIA_ALLOWED_USERS"]
 
-                elif r.status_code == 404: 
+                elif r.status_code == codes.not_found: 
                     abort(404, "File id was not found.", request)
                 else:
                     abort(r.status_code, r, request)
@@ -150,6 +153,7 @@ class DocumentDownloadView(Resource):
                     else:
                         try:                          
                             response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
+                            remove_file(app.config["MEDIA_PATH"] + task.id)
                             app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": "200"})
                         except exceptions.Timeout:
                             abort(504, "VIA service took too long to respond.", request)
@@ -168,20 +172,20 @@ class DeleteTmpFiles(Resource):
         If task with given id is finished get the task if
         for deleting the temp file.
         """
-        task = get_task(task_id)
-        if task and task.status == "finished":
-            tmp_file_remove_task_id = task.meta["tmp_file_remove_task"]
-            if tmp_file_remove_task_id:
-                tmp_task = get_task(tmp_file_remove_task_id)
-                if tmp_task:
-                    if tmp_task.status != "finished":
-                        tmp_task = do_task(tmp_file_remove_task_id)
-                        return tmp_task.status
-                    else:
-                        return 'finished'
-                else:
-                    abort(404, "Unknown tmp_file_remove_task_id", request)
-            else:
-                return 'finished'
-        else:
-            abort(404, "Unknown task_id", request)
+        # task = get_task(task_id)
+        # if task and task.status == "finished":
+        #     tmp_file_remove_task_id = task.meta["tmp_file_remove_task"]
+        #     if tmp_file_remove_task_id:
+        #         tmp_task = get_task(tmp_file_remove_task_id)
+        #         if tmp_task:
+        #             if tmp_task.status != "finished":
+        #                 tmp_task = do_task(tmp_file_remove_task_id)
+        #                 return tmp_task.status
+        #             else:
+        #                 return 'finished'
+        #         else:
+        #             abort(404, "Unknown tmp_file_remove_task_id", request)
+        #     else:
+        return 'finished'
+        # else:
+        #     abort(404, "Unknown task_id", request)

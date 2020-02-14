@@ -21,7 +21,6 @@ def do_task(task_id):
     task = queue.fetch_job(task_id)
     return queue.run_job(task)
 
-@rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def remove_file(path):
     """
     Just removes a file.
@@ -29,23 +28,20 @@ def remove_file(path):
     """
     return os.remove(path)
 
-def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, schedule_file_del=True):
+def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, delete=True):
     result = { "mimetype": None, "tmp_file": None }
     suffix= os.path.splitext(filename)[1] if filename else None
-    with NamedTemporaryFile(delete=(schedule_file_del is False), dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
+    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
             for chunk in original_file.iter_content(chunk_size=128):
                 tmp_file.write(chunk)
         else:
             original_file.save(tmp_file)
-
         tmp_file.flush()
         result['mimetype'] = get_file_mimetype(tmp_file)
-        tmp_file.close()
 
-        if schedule_file_del:
+        if delete is False:    
             result['tmp_file'] = tmp_file
-            remove_file.schedule(datetime.timedelta(seconds=app.config["ORIGINAL_FILE_TTL"]), tmp_file.name)
     return result
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
@@ -63,6 +59,7 @@ def process_convertion(path, options, meta):
 
     if result and meta["via_allowed_users"]:
         r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], meta["via_allowed_users"])
+        remove_file(app.config["MEDIA_PATH"] + current_task.id)
         result['fileId'] = r.headers.get("Document-id")
     return result
 
@@ -82,9 +79,7 @@ def process_document_convertion(path, options, meta, current_task):
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                         output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document) 
     fileSize = os.path.getsize(output_path)
-    file_remove_task = remove_file.schedule(datetime.timedelta(seconds=app.config["RESULT_FILE_TTL"]), output_path)
-    current_task.meta["tmp_file_remove_task"] = file_remove_task.id
-    current_task.save_meta()
+    remove_file(path)
     return { "fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": fileSize }
 
 def process_image_convertion(path, options, meta, current_task):

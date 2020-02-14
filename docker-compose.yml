@@ -36,15 +36,6 @@ services:
       - logdev.om.fi:10.188.10.31
     command: rq worker -c docsbox
  
-  rqscheduler:
-    restart: always
-    build: ./docsbox
-    image: oikeusministerio/common-conversion
-    depends_on:
-      - redis
-      - web
-    command: rqscheduler -H redis -p 6379 -d 0
- 
   nginx:
     restart: always
     image: nginx
