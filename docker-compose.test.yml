@@ -7,7 +7,6 @@ services:
      - redis
      - web
      - rqworker
-     - rqscheduler
    volumes:
      - ./docsbox:/home/docsbox
      - /media:/home/docsbox/media
