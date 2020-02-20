@@ -16,11 +16,6 @@ def get_task(task_id):
     queue = rq.get_queue()
     return queue.fetch_job(task_id)
 
-def do_task(task_id):
-    queue = rq.get_queue()
-    task = queue.fetch_job(task_id)
-    return queue.run_job(task)
-
 def remove_file(path):
     """
     Just removes a file.

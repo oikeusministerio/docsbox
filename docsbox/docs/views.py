@@ -3,9 +3,9 @@ import logging
 
 from flask import request, send_from_directory
 from flask_restful import Resource, abort as flask_abort
-from requests import exceptions, codes
+from requests import exceptions
 from docsbox import app
-from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, do_task, remove_file
+from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimetype, get_task, remove_file
 from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
 
@@ -14,7 +14,7 @@ def abort(error_code, message, request):
         error_level = logging.CRITICAL
     elif error_code >= 400:
         error_level = logging.ERROR
-    app.errlog.log(error_level, message, extra={"request": request, "status": str(error_code)})
+    app.errlog.log(error_level, message, extra={ "request": request, "status": str(error_code) })
     flask_abort(error_code, message=message)
 
 class DocumentStatusView(Resource):
@@ -52,9 +52,9 @@ class DocumentTypeView(Resource):
             try:
                 r = get_file_from_via(file_id)
 
-                if r.status_code == codes.ok:
+                if r.status_code == 200:
                     mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
-                elif r.status_code == codes.not_found: 
+                elif r.status_code == 404: 
                     abort(404, "File id was not found.", request)
                 else:
                     abort(r.status_code, r, request)
@@ -69,8 +69,8 @@ class DocumentTypeView(Resource):
             filetype = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
         else:
             filetype = app.config["OUTPUT_FILETYPES"][mimetype]["name"] if mimetype in app.config["OUTPUT_FILETYPES"] else mimetype
-        response= { "convertable": isConvertable, "fileType": filetype }
-        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
+        response = { "convertable": isConvertable, "fileType": filetype }
+        app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
              
 class DocumentConvertView(Resource):
@@ -87,19 +87,16 @@ class DocumentConvertView(Resource):
         elif file_id and is_valid_uuid(file_id):
             try:
                 r = get_file_from_via(file_id)
-                if r.status_code == codes.ok:
+                if r.status_code == 200:
                     filename = remove_extension(request.headers['Content-Disposition'])
-                    try:
-                        result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
-                    except:
-                        remove_file(result['tmp_file'])
+                    result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
 
                     if 'Via-Allowed-Users' in request.headers:
                         via_allowed_users = request.headers['Via-Allowed-Users']
                     else:
                         via_allowed_users = app.config["VIA_ALLOWED_USERS"]
 
-                elif r.status_code == codes.not_found: 
+                elif r.status_code == 404: 
                     abort(404, "File id was not found.", request)
                 else:
                     abort(r.status_code, r, request)
@@ -120,10 +117,10 @@ class DocumentConvertView(Resource):
             abort(400, err.args[0], request)
 
         task = process_convertion.queue(tmp_file.name, options, 
-                                            {"filename": filename, "mimetype": mimetype, 
-                                            "via_allowed_users": via_allowed_users})
-        response= { "taskId": task.id, "status": task.status}
-        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
+                                        { "filename": filename, "mimetype": mimetype, 
+                                        "via_allowed_users": via_allowed_users })
+        response = { "taskId": task.id, "status": task.status }
+        app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
 
 class DocumentDownloadView(Resource):
@@ -138,7 +135,7 @@ class DocumentDownloadView(Resource):
             if task.status == "finished":
                 if task.result:
                     if "fileId" in task.result:
-                        response= { 
+                        response = { 
                             "taskId": task.id,
                             "status": task.status,
                             "convertable": True,
@@ -148,13 +145,13 @@ class DocumentDownloadView(Resource):
                             "fileName": task.result["fileName"],
                             "fileSize": task.result["fileSize"]
                         }
-                        app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
+                        app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
                         return response
                     else:
                         try:                          
                             response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
                             remove_file(app.config["MEDIA_PATH"] + task.id)
-                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": "200"})
+                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={ "request": request, "status": "200" })
                         except exceptions.Timeout:
                             abort(504, "VIA service took too long to respond.", request)
                     return response
@@ -164,28 +161,3 @@ class DocumentDownloadView(Resource):
                 abort(400, "Task is still queued", request)
         else:
             abort(404, "Unknown task_id", request)
-
-class DeleteTmpFiles(Resource):
-
-    def delete(self, task_id):
-        """
-        If task with given id is finished get the task if
-        for deleting the temp file.
-        """
-        # task = get_task(task_id)
-        # if task and task.status == "finished":
-        #     tmp_file_remove_task_id = task.meta["tmp_file_remove_task"]
-        #     if tmp_file_remove_task_id:
-        #         tmp_task = get_task(tmp_file_remove_task_id)
-        #         if tmp_task:
-        #             if tmp_task.status != "finished":
-        #                 tmp_task = do_task(tmp_file_remove_task_id)
-        #                 return tmp_task.status
-        #             else:
-        #                 return 'finished'
-        #         else:
-        #             abort(404, "Unknown tmp_file_remove_task_id", request)
-        #     else:
-        return 'finished'
-        # else:
-        #     abort(404, "Unknown task_id", request)
