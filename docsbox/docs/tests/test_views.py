@@ -105,25 +105,6 @@ class DocumentUUIDTestCase(BaseTestCase):
             "message": "8c286c7f-ce38-4693-1234-e5d2ab3ce595. You have requested this URI [/conversion-service/convert/8c286c7f-ce38-4693-1234-e5d2ab3ce595] but did you mean /conversion-service/convert/<file_id> ?"
         })   
     '''
-
-# Test to test the deletion of temporary files
-class DocumentDeleteTemporaryFilesTestCase(BaseTestCase):
-    def test_delete_temporary_file(self):
-        if self.via_run == "True":
-            response = self.convert_file_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
-        else:    
-            response = self.convert_file_nVIA(dep.filesConvertable[0]['fileNameExt']) 
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(json.get("taskId"))
-        self.assertEqual(json.get("status"), "queued")
-        
-        time.sleep(3)
-
-        response_delete_tmpFile = self.delete_temporary_file(json.get("taskId"))
-        json_delete_tmpFile = ujson.loads(response_delete_tmpFile.data)
-        self.assertEqual(response_delete_tmpFile.status_code, 200)
-        self.assertEqual(json_delete_tmpFile, "finished")
      
 # Group of tests to test detection of type file and check if it's possible to convert
 class DocumentDetectAndConvertTestCase(BaseTestCase):   

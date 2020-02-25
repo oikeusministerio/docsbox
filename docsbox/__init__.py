@@ -42,8 +42,6 @@ api.add_resource(DocumentTypeView, "/conversion-service/get-file-type/<file_id>"
 api.add_resource(DocumentConvertView, "/conversion-service/convert/<file_id>")
 api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")
 api.add_resource(DocumentDownloadView, "/conversion-service/get-converted-file/<task_id>")
-api.add_resource(DeleteTmpFiles, "/conversion-service/delete-tmp-file/<task_id>")
-
 
 if __name__ == "__main__":
     ordbok.app_run(app)
