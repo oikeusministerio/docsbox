@@ -5,7 +5,8 @@ import itertools
 import magic
 import re
 
-from PyPDF2 import PdfFileReader, xmp
+from shutil import copyfile
+from PyPDF2 import PdfFileReader, PdfFileMerger, xmp
 from wand.image import Image
 from docsbox import app
 
@@ -113,3 +114,16 @@ def remove_extension(file):
 
 def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
+
+def remove_metadata(file):
+    tempfile = os.path.join(app.config["MEDIA_PATH"], "temp_file")
+    with open(file, mode="rb") as file_in:
+        pdf_merger = PdfFileMerger()
+        pdf_merger.append(file_in)
+        pdf_merger.addMetadata({
+            '/Producer': '',
+        })
+        with open(tempfile, mode="wb") as file_out:
+            pdf_merger.write(file_out)
+    copyfile(tempfile, file)
+    os.remove(tempfile)

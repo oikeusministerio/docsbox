@@ -8,7 +8,7 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_metadata
 from docsbox.docs.via_controller import save_file_on_via
 
 
@@ -72,7 +72,10 @@ def process_document_convertion(path, options, meta, current_task):
                         filetype = value["name"]
 
                 if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
-                        output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document) 
+                        output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document)
+                
+                if options["format"] == "pdf":
+                    remove_metadata(output_path)
     fileSize = os.path.getsize(output_path)
     remove_file(path)
     return { "fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": fileSize }
