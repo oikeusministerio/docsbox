@@ -28,13 +28,13 @@ class DocumentStatusView(Resource):
             if task.result:
                 return {
                     "taskId": task.id,
-                    "status": task.status,
+                    "status": task.get_status(),
                     "fileType": task.result["fileType"]
                 }
             else: 
                 return {
                     "taskId": task.id,
-                    "status": task.status
+                    "status": task.get_status()
                 }
         else:
             abort(404, "Unknown task_id", request)
@@ -119,7 +119,7 @@ class DocumentConvertView(Resource):
         task = process_convertion.queue(tmp_file.name, options, 
                                         { "filename": filename, "mimetype": mimetype, 
                                         "via_allowed_users": via_allowed_users })
-        response = { "taskId": task.id, "status": task.status }
+        response = { "taskId": task.id, "status": task.get_status() }
         app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
 
@@ -132,12 +132,12 @@ class DocumentDownloadView(Resource):
         """
         task = get_task(task_id)
         if task:
-            if task.status == "finished":
+            if task.get_status() == "finished":
                 if task.result:
                     if "fileId" in task.result:
                         response = { 
                             "taskId": task.id,
-                            "status": task.status,
+                            "status": task.get_status(),
                             "convertable": True,
                             "fileId": task.result["fileId"],
                             "fileType": task.result["fileType"],

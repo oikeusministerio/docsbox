@@ -9,9 +9,9 @@ services:
      - rqworker
    volumes:
      - ./docsbox:/home/docsbox
-     - /media:/home/docsbox/media
+     - ./media:/home/docsbox/media
    extra_hosts:
      - it1.integraatiopalvelu.fi:46.30.128.27
-   command: nosetests
+   command: nosetests docsbox/docs/tests/test_views.py
    environment:
     TEST_VIA: ${TEST_VIA}
