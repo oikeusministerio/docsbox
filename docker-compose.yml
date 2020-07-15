@@ -10,7 +10,7 @@ services:
       - "8000:8000"
     volumes:
       - ./docsbox:/home/docsbox
-      - ./media:/home/docsbox/media
+      - /media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
       - logdev.om.fi:10.188.10.31
@@ -30,7 +30,7 @@ services:
       - web
     volumes:
       - ./docsbox:/home/docsbox
-      - ./media:/home/docsbox/media
+      - /media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
       - logdev.om.fi:10.188.10.31
