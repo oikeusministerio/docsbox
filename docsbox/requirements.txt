@@ -18,3 +18,4 @@ PyPDF2==1.26.0
 graypy==0.3.2
 img2pdf==0.3.6
 ocrmypdf==10.2.0
+python-xmp-toolkit==2.0.1
