@@ -5,7 +5,8 @@ import itertools
 import magic
 import re
 
-from PyPDF2 import PdfFileReader, xmp
+from PyPDF2 import PdfFileReader, PdfFileMerger, xmp
+from libxmp import XMPFiles, consts
 from wand.image import Image
 from docsbox import app
 
@@ -113,3 +114,20 @@ def remove_extension(file):
 
 def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
+
+def copy_and_remove_metadata(file, new_file):
+    with open(file, mode="rb") as file_in:
+        pdf_merger = PdfFileMerger()
+        pdf_merger.append(file_in)
+        with open(new_file, mode="wb") as file_out:
+            pdf_merger.write(file_out)
+
+def remove_XMPMeta(file):
+    xmpfile = XMPFiles( file_path=file, open_forupdate=True )
+    xmp = xmpfile.get_xmp()
+    xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
+    xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
+    xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
+
+    xmpfile.put_xmp(xmp)
+    xmpfile.close_file()
