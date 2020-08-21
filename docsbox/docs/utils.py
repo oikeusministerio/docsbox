@@ -5,7 +5,7 @@ import itertools
 import magic
 import re
 
-from PyPDF2 import PdfFileReader, PdfFileMerger, xmp
+from PyPDF2 import PdfFileReader, xmp
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from docsbox import app
@@ -95,13 +95,16 @@ def get_file_mimetype(file):
         documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
 
         if mimeTypeFile == "application/pdf":
-            input = PdfFileReader(fileData)
-            metadata = input.getXmpMetadata()
-            if metadata is not None:
-                pdfa=app.config["PDFA"]
-                nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
-                if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                    mimeTypeFile = "application/pdfa"
+            try:
+                input = PdfFileReader(fileData)
+                metadata = input.getXmpMetadata()
+                if metadata is not None:
+                    pdfa=app.config["PDFA"]
+                    nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
+                    if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                        mimeTypeFile = "application/pdfa"
+            except ValueError:
+                mimeTypeFile = "Unknown/Corrupted"
         else:
             for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
                 if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
@@ -115,19 +118,17 @@ def remove_extension(file):
 def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
 
-def copy_and_remove_metadata(file, new_file):
-    with open(file, mode="rb") as file_in:
-        pdf_merger = PdfFileMerger()
-        pdf_merger.append(file_in)
-        with open(new_file, mode="wb") as file_out:
-            pdf_merger.write(file_out)
-
 def remove_XMPMeta(file):
     xmpfile = XMPFiles( file_path=file, open_forupdate=True )
     xmp = xmpfile.get_xmp()
     xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
     xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
     xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
+
+    xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
+    xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
+    xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
+    xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
 
     xmpfile.put_xmp(xmp)
     xmpfile.close_file()
