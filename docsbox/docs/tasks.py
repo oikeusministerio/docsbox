@@ -1,15 +1,12 @@
 import os
-import datetime
-import subprocess
 
-from shutil import copyfile
 from pylokit import Office
 from wand.image import Image
 from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, copy_and_remove_metadata, remove_XMPMeta
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta
 from docsbox.docs.via_controller import save_file_on_via
 
 
@@ -61,19 +58,14 @@ def process_convertion(path, options, meta):
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
-    if (meta["mimetype"] != 'application/pdf'):
-        with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
-            with office.documentLoad(path) as original_document:  # open original document
-                if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
-                    original_document.saveAs(output_path, fmt=options["format"])
+    with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
+        with office.documentLoad(path) as original_document:  # open original document
+            if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
+                original_document.saveAs(output_path, fmt=options["format"], options="SelectPdfVersion=1")
 
-                    if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
-                            output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document)
-    else:
-        copyfile(path, output_path)
+                if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
+                        output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document)
 
-    copy_and_remove_metadata(output_path, path) #Remove all metadata from the files (Author, Title, etc)
-    os.system('ocrmypdf --tesseract-timeout=0 --optimize 0 --skip-text {0} {1}'.format(path, output_path))
     remove_XMPMeta(output_path) #Removes XMP Metadata
 
     for key, value in app.config["OUTPUT_FILETYPES"].items():
