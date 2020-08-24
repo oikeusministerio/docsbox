@@ -90,26 +90,24 @@ def get_pdfa_version(nodes):
 
 def get_file_mimetype(file):
     with open(file.name, mode="rb") as fileData:
+        try:
+            mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
+            documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
 
-        mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
-        documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
-
-        if mimeTypeFile == "application/pdf":
-            try:
-                input = PdfFileReader(fileData)
-                metadata = input.getXmpMetadata()
-                if metadata is not None:
-                    pdfa=app.config["PDFA"]
-                    nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
-                    if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                        mimeTypeFile = "application/pdfa"
-            except ValueError:
-                mimeTypeFile = "Unknown/Corrupted"
-        else:
-            for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
-                if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
-                    mimeTypeFile = fileMimetype
-
+            if mimeTypeFile == "application/pdf":
+                    input = PdfFileReader(fileData)
+                    metadata = input.getXmpMetadata()
+                    if metadata is not None:
+                        pdfa=app.config["PDFA"]
+                        nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
+                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                            mimeTypeFile = "application/pdfa"
+            else:
+                for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
+                    if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
+                        mimeTypeFile = fileMimetype
+        except ValueError:
+            mimeTypeFile = "Unknown/Corrupted"
     return mimeTypeFile
 
 def remove_extension(file):
