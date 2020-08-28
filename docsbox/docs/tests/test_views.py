@@ -159,9 +159,10 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             else:
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
-            self.assertEqual(response.status_code, 415)
-            self.assertEqual(json, {
-                'message': "Not supported mimetype: '{0}'".format(file['mimeType'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(json,  {
+                "status": "non-convertable",
+                "fileType": file['mimeType']
             })
         
     def test_detect_convert_file(self):
@@ -214,7 +215,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
             json = ujson.loads(response.data)  
 
             self.assertEqual(response.status_code, 200)
-            if json.get("convertable"):
+
+            isConvertable = json.get("convertable")
+            if isConvertable:
                 self.assertEqual(json, {
                     "fileType": file['fileType'],
                     "convertable": True
@@ -232,61 +235,66 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 response = self.convert_file_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)
             if response.status_code == 200:
-                self.assertTrue(json.get("taskId"))
-                self.assertEqual(json.get("status"), "queued")
-                    
-                ttl = 10
-                while (ttl > 0):
-                    time.sleep(2)
-                    response = self.status_file(json.get("taskId"))
-                    json = ujson.loads(response.data)
-                    self.assertEqual(response.status_code, 200)
-                    if (json.get("status") == "finished"):
-                        self.assertEqual(ujson.loads(response.data), {
-                        "taskId": json.get("taskId"),
-                        "status": "finished",
-                        "fileType": "PDF/A"
-                        })
-                        break 
-               
-                if self.via_run == "True":
-                    # Download file with VIA
-                    response = self.download_file(json.get("taskId"))      
-                    self.assertEqual(response.status_code, 200)
-                    json = ujson.loads(response.data)
-                    print(json)
-                    self.assertEqual(ujson.loads(response.data), {
-                        "status": "finished",
-                        "fileId": json.get("fileId"),
-                        "convertable": True,
-                        "taskId": json.get("taskId"),
-                        "fileType": "PDF/A",
-                        "mimeType": "application/pdf",
-                        "fileName": file['fileName'] + ".pdf"
-                    })
-                    
-                    base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
-                    file_dir = os.path.join(base_dir, json.get("fileName"))
-                    via_response = get("{0}/{1}".format(self.app.config["VIA_URL"], json.get("fileId")), cert=self.app.config["VIA_CERT_PATH"], stream=True)     
-                    self.assertEqual(via_response.status_code, 200)
-                    with open(file_dir, "wb") as file:
-                        for chunk in via_response.iter_content(chunk_size=128):
-                            file.write(chunk)
-                    existFile = os.path.exists(file_dir)
-                    self.assertEqual(existFile, True)
-                    self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
-                else:
-                    # Download file nVIA
-                    base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
-                    file_dir = os.path.join(base_dir, file['fileName']+".pdf")
-                    response = self.download_file(json.get("taskId"))  
-                    self.assertEqual(response.status_code, 200)
-                    with open(file_dir, "wb") as file:
-                        file.write(response.data)
-                    existFile = os.path.exists(file_dir)
-                    self.assertEqual(existFile, True)
-                    self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                if isConvertable:
+                    self.assertTrue(json.get("taskId"))
+                    self.assertEqual(json.get("status"), "queued")
+                        
+                    ttl = 10
+                    while (ttl > 0):
+                        time.sleep(2)
+                        response = self.status_file(json.get("taskId"))
+                        json = ujson.loads(response.data)
+                        self.assertEqual(response.status_code, 200)
+                        if (json.get("status") == "finished"):
+                            self.assertEqual(ujson.loads(response.data), {
+                            "taskId": json.get("taskId"),
+                            "status": "finished",
+                            "fileType": "PDF/A"
+                            })
+                            break 
                 
+                    if self.via_run == "True":
+                        # Download file with VIA
+                        response = self.download_file(json.get("taskId"))      
+                        self.assertEqual(response.status_code, 200)
+                        json = ujson.loads(response.data)
+                        print(json)
+                        self.assertEqual(ujson.loads(response.data), {
+                            "status": "finished",
+                            "fileId": json.get("fileId"),
+                            "convertable": True,
+                            "taskId": json.get("taskId"),
+                            "fileType": "PDF/A",
+                            "mimeType": "application/pdf",
+                            "fileName": file['fileName'] + ".pdf"
+                        })
+                        
+                        base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
+                        file_dir = os.path.join(base_dir, json.get("fileName"))
+                        via_response = get("{0}/{1}".format(self.app.config["VIA_URL"], json.get("fileId")), cert=self.app.config["VIA_CERT_PATH"], stream=True)     
+                        self.assertEqual(via_response.status_code, 200)
+                        with open(file_dir, "wb") as file:
+                            for chunk in via_response.iter_content(chunk_size=128):
+                                file.write(chunk)
+                        existFile = os.path.exists(file_dir)
+                        self.assertEqual(existFile, True)
+                        self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                    else:
+                        # Download file nVIA
+                        base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
+                        file_dir = os.path.join(base_dir, file['fileName']+".pdf")
+                        response = self.download_file(json.get("taskId"))  
+                        self.assertEqual(response.status_code, 200)
+                        with open(file_dir, "wb") as file:
+                            file.write(response.data)
+                        existFile = os.path.exists(file_dir)
+                        self.assertEqual(existFile, True)
+                        self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                else:
+                    self.assertEqual(json,  {
+                        "status": "non-convertable",
+                        "fileType": file['mimeType']
+                    })
             elif response.status_code == 400:
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(json, {
