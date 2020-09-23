@@ -6,7 +6,6 @@ import magic
 import re
 
 from PyPDF2 import PdfFileReader, xmp
-from libxmp import XMPFiles, consts
 from wand.image import Image
 from docsbox import app
 
@@ -90,24 +89,22 @@ def get_pdfa_version(nodes):
 
 def get_file_mimetype(file):
     with open(file.name, mode="rb") as fileData:
-        try:
-            mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
-            documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
+       
+        mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
+        documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
 
-            if mimeTypeFile == "application/pdf":
-                    input = PdfFileReader(fileData)
-                    metadata = input.getXmpMetadata()
-                    if metadata is not None:
-                        pdfa=app.config["PDFA"]
-                        nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
-                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                            mimeTypeFile = "application/pdfa"
-            else:
-                for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
-                    if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
-                        mimeTypeFile = fileMimetype
-        except ValueError:
-            mimeTypeFile = "Unknown/Corrupted"
+        if mimeTypeFile == "application/pdf":
+            input = PdfFileReader(fileData)
+            metadata = input.getXmpMetadata()
+            if metadata is not None:
+                pdfa=app.config["PDFA"]
+                nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
+                if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                    mimeTypeFile = "application/pdfa"
+        else:
+            for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
+                if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
+                    mimeTypeFile = fileMimetype
     return mimeTypeFile
 
 def remove_extension(file):
@@ -115,18 +112,3 @@ def remove_extension(file):
 
 def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
-
-def remove_XMPMeta(file):
-    xmpfile = XMPFiles( file_path=file, open_forupdate=True )
-    xmp = xmpfile.get_xmp()
-    xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
-    xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
-    xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
-
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
-
-    xmpfile.put_xmp(xmp)
-    xmpfile.close_file()

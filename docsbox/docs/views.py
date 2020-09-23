@@ -109,22 +109,17 @@ class DocumentConvertView(Resource):
         tmp_file = result['tmp_file']
             
         if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-            remove_file(result['tmp_file'].name)
-            if mimetype == "Unknown/Corrupted":
-                response = { "status": "corrupted", "fileType": mimetype }
-            else:
-                response = { "status": "non-convertable", "fileType": mimetype }
-        else:
-            try:
-                options = set_options(request.form.get("options", None), mimetype)
-            except ValueError as err:
-                remove_file(result['tmp_file'].name)
-                abort(400, err.args[0], request)
+            abort(415, "Not supported mimetype: '{0}'".format(mimetype), request)
+        
+        try:
+            options = set_options(request.form.get("options", None), mimetype)
+        except ValueError as err:
+             abort(400, err.args[0], request)
 
-            task = process_convertion.queue(tmp_file.name, options, 
-                                            { "filename": filename, "mimetype": mimetype, 
-                                            "via_allowed_users": via_allowed_users })
-            response = { "taskId": task.id, "status": task.get_status() }
+        task = process_convertion.queue(tmp_file.name, options, 
+                                        { "filename": filename, "mimetype": mimetype, 
+                                        "via_allowed_users": via_allowed_users })
+        response = { "taskId": task.id, "status": task.get_status() }
         app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
 
