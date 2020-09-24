@@ -8,7 +8,7 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta
 from docsbox.docs.via_controller import save_file_on_via
 
 
@@ -60,13 +60,13 @@ def process_convertion(path, options, meta):
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
-    if (meta["mimetype"] == 'application/pdf'):
-        os.system('ocrmypdf --tesseract-timeout=0 --optimize 0 --skip-text {0} {1}'.format(path, output_path))
+    if (meta["mimetype"] == "application/pdf"):
+        os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --skip-text {0} {1}".format(path, output_path))
     else:
         with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
             with office.documentLoad(path) as original_document:  # open original document
                 if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
-                    original_document.saveAs(output_path, fmt=options["format"], options="SelectPdfVersion=2")
+                    original_document.saveAs(output_path, fmt=options["format"], options="SelectPdfVersion=1")
 
                     if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
                             output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document)
@@ -75,6 +75,10 @@ def process_document_convertion(path, options, meta, current_task):
         if value["format"] == options["format"]:
             mimetype = value["mimetype"]
             filetype = value["name"]
+
+    if filetype == "PDF/A":
+        remove_XMPMeta(output_path) #Removes XMP Metadata
+
     file_name = "{0}.{1}".format(meta["filename"], options["format"])
     fileSize = os.path.getsize(output_path)
     remove_file(path)
