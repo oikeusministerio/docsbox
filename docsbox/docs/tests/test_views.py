@@ -238,7 +238,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 if isConvertable:
                     self.assertTrue(json.get("taskId"))
                     self.assertEqual(json.get("status"), "queued")
-                        
+
                     ttl = 10
                     while (ttl > 0):
                         time.sleep(2)
@@ -251,11 +251,11 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                             "status": "finished",
                             "fileType": "PDF/A"
                             })
-                            break 
-                
+                            break
+
                     if self.via_run == "True":
                         # Download file with VIA
-                        response = self.download_file(json.get("taskId"))      
+                        response = self.download_file(json.get("taskId"))
                         self.assertEqual(response.status_code, 200)
                         json = ujson.loads(response.data)
                         print(json)
@@ -298,7 +298,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
             elif response.status_code == 400:
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(json, {
-                    'message': 'File does not need to be converted.'
+                    "message": "File does not need to be converted."
                 })  
             else:
                 self.assertEqual(response.status_code, 415)

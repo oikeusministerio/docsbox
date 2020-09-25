@@ -19,8 +19,8 @@ filesNotConvertable = [
     "fileExt": ".FLAC",
     "fileName": "test16",
     "fileNameExt": "test16.flac",
-    "mimeType": "audio/x-flac",
-    "fileType": "audio/x-flac",
+    "mimeType": "audio/flac",
+    "fileType": "audio/flac",
     "fileId": "d735d56e-e854-4c21-a1fd-5e092016c859"
     },
     {
