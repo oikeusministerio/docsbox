@@ -6,6 +6,7 @@ import magic
 import re
 
 from PyPDF2 import PdfFileReader, xmp
+from PyPDF2.utils import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from docsbox import app
@@ -95,18 +96,18 @@ def get_file_mimetype(file):
             documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
 
             if mimeTypeFile == "application/pdf":
-                    input = PdfFileReader(fileData)
-                    metadata = input.getXmpMetadata()
-                    if metadata is not None:
-                        pdfa=app.config["PDFA"]
-                        nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"]) 
-                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                            mimeTypeFile = "application/pdfa"
+                input = PdfFileReader(fileData, strict=False)
+                metadata = input.getXmpMetadata()
+                if metadata is not None:
+                    pdfa=app.config["PDFA"]
+                    nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+                    if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                        mimeTypeFile = "application/pdfa"
             else:
                 for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
                     if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
                         mimeTypeFile = fileMimetype
-        except ValueError:
+        except (ValueError, PdfReadError):
             mimeTypeFile = "Unknown/Corrupted"
     return mimeTypeFile
 
