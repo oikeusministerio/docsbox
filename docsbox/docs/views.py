@@ -46,23 +46,26 @@ class DocumentTypeView(Resource):
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
         """
-        if request.files and "file" in request.files:
-            mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None)['mimetype']
-        elif file_id and is_valid_uuid(file_id):
-            try:
-                r = get_file_from_via(file_id)
+        try:
+            if request.files and "file" in request.files:
+                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None)['mimetype']
+            elif file_id and is_valid_uuid(file_id):
+                try:
+                    r = get_file_from_via(file_id)
 
-                if r.status_code == 200:
-                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
-                elif r.status_code == 404: 
-                    abort(404, "File id was not found.", request)
-                else:
-                    abort(r.status_code, r, request)
+                    if r.status_code == 200:
+                        mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
+                    elif r.status_code == 404:
+                        abort(404, "File id was not found.", request)
+                    else:
+                        abort(r.status_code, r, request)
 
-            except exceptions.Timeout:
-                abort(504, "VIA service took too long to respond.", request)
-        else:
-            abort(400, "No file has sent nor valid file_id given.", request)
+                except exceptions.Timeout:
+                    abort(504, "VIA service took too long to respond.", request)
+            else:
+                abort(400, "No file has sent nor valid file_id given.", request)
+        except Exception as e:
+            abort(500, e, request)
 
         isConvertable = mimetype in app.config["CONVERTABLE_MIMETYPES"]
         if isConvertable:
@@ -79,31 +82,33 @@ class DocumentConvertView(Resource):
         """
         Checks file mimetype and creates converting task of given file
         """
+        try:
+            if request.files and "file" in request.files:
+                filename = remove_extension(request.files["file"].filename)
+                result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
+                via_allowed_users = None
+            elif file_id and is_valid_uuid(file_id):
+                try:
+                    r = get_file_from_via(file_id)
+                    if r.status_code == 200:
+                        filename = remove_extension(request.headers['Content-Disposition'])
+                        result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
 
-        if request.files and "file" in request.files:
-            filename = remove_extension(request.files["file"].filename)
-            result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
-            via_allowed_users = None
-        elif file_id and is_valid_uuid(file_id):
-            try:
-                r = get_file_from_via(file_id)
-                if r.status_code == 200:
-                    filename = remove_extension(request.headers['Content-Disposition'])
-                    result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
+                        if 'Via-Allowed-Users' in request.headers:
+                            via_allowed_users = request.headers['Via-Allowed-Users']
+                        else:
+                            via_allowed_users = app.config["VIA_ALLOWED_USERS"]
 
-                    if 'Via-Allowed-Users' in request.headers:
-                        via_allowed_users = request.headers['Via-Allowed-Users']
+                    elif r.status_code == 404:
+                        abort(404, "File id was not found.", request)
                     else:
-                        via_allowed_users = app.config["VIA_ALLOWED_USERS"]
-
-                elif r.status_code == 404: 
-                    abort(404, "File id was not found.", request)
-                else:
-                    abort(r.status_code, r, request)
-            except exceptions.Timeout:
-                abort(504, "VIA service took too long to respond.", request)
-        else:
-            abort(400, "No file has sent nor valid file_id given.", request)
+                        abort(r.status_code, r, request)
+                except exceptions.Timeout:
+                    abort(504, "VIA service took too long to respond.", request)
+            else:
+                abort(400, "No file has sent nor valid file_id given.", request)
+        except Exception as e:
+            abort(500, e, request)
 
         mimetype = result['mimetype']
         tmp_file = result['tmp_file']
