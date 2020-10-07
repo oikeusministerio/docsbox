@@ -16,7 +16,7 @@ def abort(status_code, message, request):
     elif status_code >= 400:
         error_level = logging.ERROR
     app.logger.log(error_level, message, extra={ "request": request, "status": str(status_code) })
-    response = jsonify({'status': status_code, 'message': message })
+    response = jsonify( { 'message': message } )
     response.status_code = status_code
     return response
 
@@ -73,7 +73,10 @@ class DocumentTypeView(Resource):
             if response["convertable"]:
                 response["fileType"] = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
             else:
-                response["fileType"] = app.config["OUTPUT_FILETYPES"][mimetype]["name"] if mimetype in app.config["OUTPUT_FILETYPES"] else mimetype
+                if mimetype == "application/pdfa":
+                    response["fileType"] = "PDF/A"
+                else:
+                    response["fileType"] = mimetype
 
         except exceptions.Timeout:
             return abort(504, "VIA service took too long to respond.", request)

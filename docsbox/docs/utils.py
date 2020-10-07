@@ -32,17 +32,18 @@ def set_options(options, mimetype):
     """
     if options:  # options validation
         options = ujson.loads(options)
-        formats = options.get("formats", None)
-        if not isinstance(formats, list) or not formats:
-            raise ValueError("Invalid 'formats' value")
+        fmt = options.get("format", None)
+        if not fmt:
+            raise ValueError("Invalid 'format' value")
         else:
-            for fmt in formats:
-                supported = (fmt in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]])
-                if not supported:
-                    message = "'{0}' mimetype can't be converted to '{1}'"
-                    raise ValueError(message.format(mimetype, fmt))
-        thumbnails = options.get("thumbnails", None) # check for thumbnails options on request and if they are valid
-        if app.config["THUMBNAILS_GENERATE"] and thumbnails: # THUMBNAILS_GENERATE is configured as False
+            supported = (fmt in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]])
+            if not supported:
+                message = "'{0}' mimetype can't be converted to '{1}'"
+                raise ValueError(message.format(mimetype, fmt))
+        # check for thumbnails options on request and if they are valid
+        thumbnails = options.get("thumbnails", None)
+        # THUMBNAILS_GENERATE is configured as False
+        if app.config["THUMBNAILS_GENERATE"] and thumbnails:
             if not isinstance(thumbnails, dict):
                 raise ValueError("Invalid 'thumbnails' value")
             else:
@@ -133,7 +134,7 @@ def remove_XMPMeta(file):
     xmpfile.close_file()
 
 def has_XMP(file):
-    xmpfile = XMPFiles( file_path=file)
+    xmpfile = XMPFiles(file_path=file)
     if xmpfile:
         xmp = xmpfile.get_xmp()
         if xmp:
@@ -142,3 +143,13 @@ def has_XMP(file):
             return False
     else:
         return False
+
+def hasAlpha(image_path):
+    with Image(filename=image_path) as img:
+        alpha = img.alpha_channel
+        return alpha
+
+def removeAlpha(image_path, new_image_path):
+    with Image(filename=image_path) as img:
+        img.type = 'truecolor'
+        img.save(filename=new_image_path)

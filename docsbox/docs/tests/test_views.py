@@ -112,26 +112,26 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
     def test_convert_empty_formats(self):
         if self.via_run == "True":
             response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
-                "formats": [],
+                "format": {},
             })
         else:
             response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-                "formats": []
+                "format": {}
             })
         json = ujson.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(json, {
-            "message": "Invalid 'formats' value"
+            "message": "Invalid 'format' value"
         })
     
     def test_convert_invalid_formats(self):
         if self.via_run == "True":
             response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName'], {
-                "formats": ["csv"],
+                "format": "csv",
             })
         else:
             response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-                "formats": ["csv"],
+                "format": "csv",
             })
         json = ujson.loads(response.data)
         self.assertEqual(response.status_code, 400)
@@ -252,6 +252,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                             "fileType": "PDF/A"
                             })
                             break
+                        if (json.get("status") == "failed"):
+                            self.fail()
+                        ttl-=1
 
                     if self.via_run == "True":
                         # Download file with VIA
