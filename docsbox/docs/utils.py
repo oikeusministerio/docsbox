@@ -131,3 +131,14 @@ def remove_XMPMeta(file):
 
     xmpfile.put_xmp(xmp)
     xmpfile.close_file()
+
+def has_XMP(file):
+    xmpfile = XMPFiles( file_path=file)
+    if xmpfile:
+        xmp = xmpfile.get_xmp()
+        if xmp:
+            return xmp.xmpptr != None
+        else:
+            return False
+    else:
+        return False

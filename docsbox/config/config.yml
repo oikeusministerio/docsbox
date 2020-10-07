@@ -5,7 +5,7 @@ COMMON: &common
   LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
   
   REDIS_URL: "redis://redis:6379/0"
-  REDIS_JOB_TIMEOUT: 600
+  REDIS_JOB_TIMEOUT: 300
   ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
