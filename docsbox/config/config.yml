@@ -5,7 +5,7 @@ COMMON: &common
   LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
   
   REDIS_URL: "redis://redis:6379/0"
-  REDIS_JOB_TIMEOUT: 600
+  REDIS_JOB_TIMEOUT: 300
   ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
 
@@ -19,11 +19,11 @@ COMMON: &common
   THUMBNAILS_QUANTIZE_COLORS": 128
   THUMBNAILS_QUANTIZE_COLORSPACE": "rgb"
 
-  DOCUMENT_EXPORT_FORMATS: ["pdf", "txt"]
-  SPREADSHEET_EXPORT_FORMATS: ["pdf", "csv"]
-  PRESENTATION_EXPORT_FORMATS: ["pdf"]
-  IMAGE_EXPORT_FORMATS: ["jpeg", "png"]
-  AUDIO_EXPORT_FORMATS: ["mp3", "flac"]
+  DOCUMENT_EXPORT_FORMATS: ["pdf", "docx"]
+  SPREADSHEET_EXPORT_FORMATS: ["pdf", "xlsx"]
+  PRESENTATION_EXPORT_FORMATS: ["pdf", "pptx"]
+  IMAGE_EXPORT_FORMATS: ["pdf", "jpeg", "png"]
+  AUDIO_EXPORT_FORMATS: ["mp3"]
   VIDEO_EXPORT_FORMATS: ["mp4"]
   PDF_EXPORT_FORMATS: ["pdf"]
 
@@ -33,104 +33,118 @@ COMMON: &common
     application/pdf: # Portable Document Format
       name: "PDF"
       formats: PDF_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: PDF_DEFAULT_OPTIONS
     application/msword: # Microsoft Word 2003
       name: "Microsoft Word"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.wordprocessingml.document: # Microsoft Word 2007
       name: "Microsoft Word 2007"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.ms-excel: # Microsoft Excel 2003
       name: "Microsoft Excel"
       formats: SPREADSHEET_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: # Microsoft Excel 2007
       name: "Microsoft Excel 2007"
       formats: SPREADSHEET_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.ms-powerpoint: # Microsoft Powerpoint 2003
       name: "Microsoft Powerpoint"
       formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.presentationml.presentation: # Microsoft Powerpoint 2007
       name: "Microsoft Powerpoint 2007"
       formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     text/rtf: # Rich Text Format
       name: "Rich Text Format"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.sun.xml.writer: # sxw OpenDocument XML Text
       name: "OpenDocument XML Text"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.sun.xml.calc: # sxc OpenDocument XML SpreadSheet
       name: "OpenDocument XML SpreadSheet"
       formats: SPREADSHEET_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.sun.xml.draw: # sxd OpenDocument XML Graphics
       name: "OpenDocument XML Graphics"
       formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.sun.xml.impress: # sxi OpenDocument XML Presentation
       name: "OpenDocument XML Presentation"
       formats: PRESENTATION_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.sun.xml.writer.global: # sxg
       name: "OpenDocument XML Master Document"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/applefile: #Apple Keynote
       name: "Apple Keynote"
-      formats: "PRESENTATION_EXPORT_FORMATS"
-      default_options: DEFAULT_OPTIONS
+      formats: PRESENTATION_EXPORT_FORMATS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     application/applefile: #Apple Numbers
       name: "Apple Numbers"
-      formats: "SPREADSHEET_EXPORT_FORMATS"
-      default_options: DEFAULT_OPTIONS
+      formats: SPREADSHEET_EXPORT_FORMATS
+      default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/applefile: #Apple Pages
       name: "Apple Pages"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     image/jpeg: # Joint Photographic Group
       name: "JPEG"
-      formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      formats: IMAGE_EXPORT_FORMATS
+      default_options: IMAGE_DEFAULT_OPTIONS
     image/png: # Portable Network Graphics
       name: "PNG"
-      formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      formats: IMAGE_EXPORT_FORMATS
+      default_options: IMAGE_DEFAULT_OPTIONS
+    image/tiff: # Tagged Image File
+      name: "TIFF"
+      formats: IMAGE_EXPORT_FORMATS
+      default_options: IMAGE_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.text: # LibreOffice Word
       name: "OpenDocument Text"
       formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DEFAULT_OPTIONS
+      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.spreadsheet: # LibreOffice Calc
       name: "OpenDocument SpreadSheet"
-      formats: "SPREADSHEET_EXPORT_FORMATS"
-      default_options: DEFAULT_OPTIONS
+      formats: SPREADSHEET_EXPORT_FORMATS
+      default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.presentation: # LibreOffice Impress
       name: "OpenDocument Presentation"
-      formats: "PRESENTATION_EXPORT_FORMATS"
-      default_options: DEFAULT_OPTIONS
+      formats: PRESENTATION_EXPORT_FORMATS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
       name: "OpenDocument Graphics"
-      formats: "PRESENTATION_EXPORT_FORMATS"
-      default_options: DEFAULT_OPTIONS
+      formats: PRESENTATION_EXPORT_FORMATS
+      default_options: PRESENTATION_DEFAULT_OPTIONS
 
-  OUTPUT_FILETYPES:
-    application/pdfa:
-      name: "PDF/A"
-      mimetype: "application/pdf"
-      format: "pdf"
+  OUTPUT_FILETYPE_PDF:
+    name: "PDF/A"
+    mimetype: "application/pdf"
+  OUTPUT_FILETYPE_DOCX: 
+    name: "Microsoft Word 2007"
+    mimetype: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  OUTPUT_FILETYPE_XLSX: 
+    name: "Microsoft Excel 2007"
+    mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  OUTPUT_FILETYPE_PPTX: 
+    name: "Microsoft Powerpoint 2007"
+    mimetype: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
-  DEFAULT_OPTIONS:
+  PDF_DEFAULT_OPTIONS: &DEFAULT_OPTIONS
     format: "pdf"
-  IMAGE_DEFAULT_OPTIONS:
-    format: "jpeg"
+    extra: "SelectPdfVersion=1"
+  DOCUMENT_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
+  SPREADSHEET_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
+  PRESENTATION_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
+  IMAGE_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
   AUDIO_DEFAULT_OPTIONS:
-    format: "flac"
+    format: "mp3"
   VIDEO_DEFAULT_OPTIONS:
     format: "mp4"
 

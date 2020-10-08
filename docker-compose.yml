@@ -33,7 +33,6 @@ services:
       - /media:/home/docsbox/media
     extra_hosts:
       - it1.integraatiopalvelu.fi:46.30.128.27
-      - logdev.om.fi:10.188.10.31
     command: rq worker -c docsbox
  
   nginx:
