@@ -69,7 +69,7 @@ def process_document_convertion(path, options, meta, current_task):
         # faster conversion and file size smaller, if XMP is not found a more forcefull conversion is made so file ends as a PDF/A
         os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --skip-text {0} {1}".format(path, output_path))
         if has_XMP(output_path) == False:
-            os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --force-ocr --skip-big 15 {0} {1}".format(path, output_path))
+            os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --force-ocr --skip-big 30 {0} {1}".format(path, output_path))
     else:
         with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
             with office.documentLoad(path) as original_document:  # open original document
