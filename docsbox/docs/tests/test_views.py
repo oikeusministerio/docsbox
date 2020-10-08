@@ -186,7 +186,7 @@ class DocumentDetectAndConvertTestCase(BaseTestCase):
             json = ujson.loads(response.data)
             self.assertEqual(response.status_code, 200)
             self.assertTrue(json.get("taskId"))
-            self.assertEqual(json.get("status"), "queued")
+            self.assertIsNotNone(json.get("status"))
 
             ttl = 15
             while (ttl > 0):
