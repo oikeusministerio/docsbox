@@ -37,10 +37,10 @@ class GraylogLogger(logging.LoggerAdapter):
 
 class GelfHTTPHandler(BaseGELFHandler, logging.Handler):
 
-    def __init__(self, host, port=12201, path='/gelf', timeout=5, debugging_fields=False, fqdn=False, localname=None, facility=None, 
+    def __init__(self, host, port=12201, path='/gelf', timeout=5, fqdn=False, localname=None, facility=None, 
                  level_names=False, tls_cafile=None, tls_capath=None, tls_cadata=None,
                   tls_client_cert=None, tls_client_key=None, tls_client_password=None):
-        BaseGELFHandler.__init__(self, host, port, debugging_fields=debugging_fields, fqdn=fqdn, localname=localname, facility=facility, level_names=level_names)
+        BaseGELFHandler.__init__(self, host, port, fqdn=fqdn, localname=localname, facility=facility, level_names=level_names)
         logging.Handler.__init__(self)
 
         self.host = host
