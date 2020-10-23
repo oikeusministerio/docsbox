@@ -1,5 +1,5 @@
 redis==3.5.3
-rq==1.4.3
+rq==1.5.2
 Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-RQ2==18.3
@@ -7,15 +7,16 @@ requests==2.24.0
 gunicorn==20.0.4
 pylokit==0.8.1
 filemagic==1.6
-cffi==1.14.0
-wand==0.4.5
-ujson==3.0.0
+cffi==1.14.3
+wand==0.6.3
+ujson==4.0.1
 nose==1.3.7
 nose-watch==0.9.2
-coverage==5.2
+coverage==5.3
 ordbok==0.1.9
 PyPDF2==1.26.0
-graypy==0.3.2
-img2pdf==0.3.6
-ocrmypdf==10.2.0
+graypy==2.1.0
+img2pdf==0.3.6 # >=0.4.0 will cause issues
+ocrmypdf==11.2.1
 python-xmp-toolkit==2.0.1
+Pillow==8.0.0

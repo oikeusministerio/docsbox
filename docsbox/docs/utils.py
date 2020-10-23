@@ -9,6 +9,7 @@ from PyPDF2 import PdfFileReader, xmp
 from PyPDF2.utils import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
+from PIL import Image as PIL_Image, ExifTags
 from docsbox import app
 
 
@@ -144,12 +145,32 @@ def has_XMP(file):
     else:
         return False
 
-def hasAlpha(image_path):
-    with Image(filename=image_path) as img:
-        alpha = img.alpha_channel
-        return alpha
+def removeAlpha(image_path):
+    with PIL_Image.open(image_path) as image:
+        if image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info):
+            alpha = image.convert('RGBA').getchannel('A')
+            bg = PIL_Image.new("RGB", image.size, (255,255,255,255))
+            bg.paste(image, mask=alpha)
+            bg.convert('RGB')
+            bg.save(image_path, 'JPEG')
 
-def removeAlpha(image_path, new_image_path):
-    with Image(filename=image_path) as img:
-        img.type = 'truecolor'
-        img.save(filename=new_image_path)
+def correct_orientation(image_path):
+    with PIL_Image.open(image_path) as image:
+        try:
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation]=='Orientation':
+                    break
+            
+            exif = image._getexif()
+            if exif:
+                if exif[orientation] == 3:
+                    image = image.rotate(180, expand=True)
+                elif exif[orientation] == 6:
+                    image = image.rotate(270, expand=True)
+                elif exif[orientation] == 8:
+                    image = image.rotate(90, expand=True)
+            else:
+                return
+        except (AttributeError, KeyError, IndexError):
+            # cases: image don't have getexif
+            pass

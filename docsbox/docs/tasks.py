@@ -10,7 +10,7 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_XMP, hasAlpha, removeAlpha
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_XMP, removeAlpha, correct_orientation
 from docsbox.docs.via_controller import save_file_on_via
 
 
@@ -92,10 +92,8 @@ def process_document_convertion(path, options, meta, current_task):
     return { "fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": fileSize, "has_failed": False }
 
 def process_image_convertion(path, options, meta, current_task):
-    if hasAlpha(path):
-        no_alpha = NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False)
-        removeAlpha(path, no_alpha.name)
-        copyfile(no_alpha.name, path)
+    removeAlpha(path)
+    correct_orientation(path)
 
     with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False) as tmp_file:
         tmp_file.write(imagesToPdf(path))
