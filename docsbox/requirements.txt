@@ -16,7 +16,7 @@ coverage==5.3
 ordbok==0.1.9
 PyPDF2==1.26.0
 graypy==2.1.0
-img2pdf==0.4.0
+img2pdf==0.3.6 # >=0.4.0 will cause issues
 ocrmypdf==11.2.1
 python-xmp-toolkit==2.0.1
 Pillow==8.0.0
