@@ -27,8 +27,7 @@ def remove_file(path):
 
 def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, delete=True):
     result = { "mimetype": None, "tmp_file": None }
-    suffix= os.path.splitext(filename)[1] if filename else None
-    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
+    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"]) as tmp_file:
         if stream:
             for chunk in original_file.iter_content(chunk_size=128):
                 tmp_file.write(chunk)
