@@ -5,8 +5,8 @@ import itertools
 import magic
 import re
 
-from PyPDF2 import PdfFileReader, xmp
-from PyPDF2.utils import PdfReadError
+from PyPDF3 import PdfFileReader, xmp
+from PyPDF3.utils import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image, ExifTags
