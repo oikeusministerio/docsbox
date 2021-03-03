@@ -200,7 +200,11 @@ COMMON: &common
     extra:
       system: 'Document Conversion Service'
       environment: 'DEV'
-    
+
+  GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-sPDFACompatibilityPolicy=1']
+  OCRMYPDF:
+    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
+    FORCE: ['--skip-text', '--force-ocr'] 
 
 DEVELOPMENT: &dev
   <<: *common
