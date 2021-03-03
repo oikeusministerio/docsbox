@@ -4,6 +4,7 @@ import ujson
 import itertools
 import magic
 import re
+import piexif
 
 from PyPDF3 import PdfFileReader, xmp
 from PyPDF3.utils import PdfReadError
@@ -134,15 +135,15 @@ def remove_XMPMeta(file):
     xmpfile.put_xmp(xmp)
     xmpfile.close_file()
 
-def has_XMP(file):
-    xmpfile = XMPFiles(file_path=file)
-    if xmpfile:
-        xmp = xmpfile.get_xmp()
-        if xmp:
-            return xmp.xmpptr != None
-        else:
-            return False
-    else:
+def has_PDFA_XMP(file):
+    with open(file, mode="rb") as fileData:
+        xmpfile = PdfFileReader(fileData, strict=False)
+        metadata = xmpfile.getXmpMetadata()
+        if metadata is not None:
+            pdfa=app.config["PDFA"]
+            nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+            if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                return True
         return False
 
 def removeAlpha(image_path):
@@ -169,6 +170,11 @@ def correct_orientation(image_path):
                     image = image.rotate(270, expand=True)
                 elif exif[orientation] == 8:
                     image = image.rotate(90, expand=True)
+                else:
+                    exif_dict = piexif.load(image.info['exif'])
+                    exif_dict['orientation'] = 1
+                    exif_bytes = piexif.dump(exif_dict)
+                    image.save(image_path, None, exif=exif_bytes)
             else:
                 return
         except (AttributeError, KeyError, IndexError):

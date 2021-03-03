@@ -239,9 +239,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                     self.assertTrue(json.get("taskId"))
                     self.assertEqual(json.get("status"), "queued")
 
-                    ttl = 10
+                    ttl = 50
                     while (ttl > 0):
-                        time.sleep(2)
+                        time.sleep(5)
                         response = self.status_file(json.get("taskId"))
                         json = ujson.loads(response.data)
                         self.assertEqual(response.status_code, 200)

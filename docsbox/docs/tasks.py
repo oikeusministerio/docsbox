@@ -1,8 +1,9 @@
 import os
 import datetime
-import subprocess
 import traceback
+import ghostscript
 
+from subprocess import run
 from shutil import copyfile
 from pylokit import Office
 from wand.image import Image
@@ -10,9 +11,13 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_XMP, removeAlpha, correct_orientation
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_PDFA_XMP, removeAlpha, correct_orientation
 from docsbox.docs.via_controller import save_file_on_via
 
+ghostScriptExec = ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB',
+                '-sDEVICE=pdfwrite', '-sPDFACompatibilityPolicy=1']
+ocrmypdfExec = ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
+ocrLvl = ['--skip-text', '--force-ocr']
 
 def get_task(task_id):
     queue = rq.get_queue()
@@ -65,10 +70,14 @@ def process_convertion(path, options, meta):
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
     if (meta["mimetype"] == "application/pdf"):
-        # faster conversion and file size smaller, if XMP is not found a more forcefull conversion is made so file ends as a PDF/A
-        os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --skip-text {0} {1}".format(path, output_path))
-        if has_XMP(output_path) == False:
-            os.system("ocrmypdf --tesseract-timeout=0 --optimize 0 --force-ocr --skip-big 30 {0} {1}".format(path, output_path))
+        run(ghostScriptExec + ['-sOutputFile=' + output_path, path])
+
+        force = 0
+        while has_PDFA_XMP(output_path) == False:
+            if (force > 1):
+                raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
+            run(ocrmypdfExec + [ocrLvl[force], output_path, output_path])
+            force += 1
     else:
         with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
             with office.documentLoad(path) as original_document:  # open original document
