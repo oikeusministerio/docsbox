@@ -14,11 +14,6 @@ from docsbox import app, rq
 from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_PDFA_XMP, removeAlpha, correct_orientation
 from docsbox.docs.via_controller import save_file_on_via
 
-ghostScriptExec = ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB',
-                '-sDEVICE=pdfwrite', '-sPDFACompatibilityPolicy=1']
-ocrmypdfExec = ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
-ocrLvl = ['--skip-text', '--force-ocr']
-
 def get_task(task_id):
     queue = rq.get_queue()
     return queue.fetch_job(task_id)
@@ -70,13 +65,13 @@ def process_convertion(path, options, meta):
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
     if (meta["mimetype"] == "application/pdf"):
-        run(ghostScriptExec + ['-sOutputFile=' + output_path, path])
+        run(app.config["GHOSTSCRIPT_EXEC"] + ['-sOutputFile=' + output_path, path])
 
         force = 0
         while has_PDFA_XMP(output_path) == False:
             if (force > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(ocrmypdfExec + [ocrLvl[force], output_path, output_path])
+            run(app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["FORCE"][force], output_path, output_path])
             force += 1
     else:
         with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
