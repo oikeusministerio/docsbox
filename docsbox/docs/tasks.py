@@ -27,7 +27,8 @@ def remove_file(path):
 
 def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, delete=True):
     result = { "mimetype": None, "tmp_file": None }
-    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"]) as tmp_file:
+    suffix = os.path.splitext(filename)[1] if filename else None
+    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
             for chunk in original_file.iter_content(chunk_size=128):
                 tmp_file.write(chunk)
@@ -98,7 +99,7 @@ def process_image_convertion(path, options, meta, current_task):
     removeAlpha(path)
     correct_orientation(path)
 
-    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False) as tmp_file:
+    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False, suffix='.pdf') as tmp_file:
         tmp_file.write(imagesToPdf(path))
         tmp_file.flush()
     remove_file(path)

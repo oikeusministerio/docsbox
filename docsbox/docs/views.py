@@ -95,13 +95,13 @@ class DocumentConvertView(Resource):
         result = {}
         try:
             if request.files and "file" in request.files:
-                filename = remove_extension(request.files["file"].filename)
+                filename = request.files["file"].filename
                 result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
                 via_allowed_users = None
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
-                    filename = remove_extension(request.headers['Content-Disposition'])
+                    filename = request.headers['Content-Disposition']
                     result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
 
                     if 'Via-Allowed-Users' in request.headers:
@@ -129,7 +129,7 @@ class DocumentConvertView(Resource):
                 options = set_options(request.form.get("options", None), mimetype)
 
                 task = process_convertion.queue(tmp_file.name, options, 
-                                                { "filename": filename, "mimetype": mimetype, 
+                                                { "filename": remove_extension(filename), "mimetype": mimetype, 
                                                 "via_allowed_users": via_allowed_users })
                 response = { "taskId": task.id, "status": task.get_status() }
 
