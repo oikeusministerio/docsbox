@@ -153,30 +153,22 @@ def removeAlpha(image_path):
             bg = PIL_Image.new("RGB", image.size, (255,255,255,255))
             bg.paste(image, mask=alpha)
             bg.convert('RGB')
-            bg.save(image_path, 'JPEG')
+            bg.save(image_path, image.format)
 
 def correct_orientation(image_path):
     with PIL_Image.open(image_path) as image:
-        try:
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation]=='Orientation':
-                    break
-            
-            exif = image._getexif()
-            if exif:
-                if exif[orientation] == 3:
-                    image = image.rotate(180, expand=True)
-                elif exif[orientation] == 6:
-                    image = image.rotate(270, expand=True)
-                elif exif[orientation] == 8:
-                    image = image.rotate(90, expand=True)
-                else:
-                    exif_dict = piexif.load(image.info['exif'])
-                    exif_dict['orientation'] = 1
-                    exif_bytes = piexif.dump(exif_dict)
-                    image.save(image_path, None, exif=exif_bytes)
-            else:
-                return
-        except (AttributeError, KeyError, IndexError):
-            # cases: image don't have getexif
-            pass
+        exif = image._getexif()
+        if exif:
+            exif_dict = piexif.load(image_path)
+            for tag, value in exif.items():
+                if ExifTags.TAGS.get(tag, tag) == "Orientation":
+                    if value == 0:
+                        exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
+                    elif value in (2, 4):
+                        exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
+                    elif value in (5, 7):
+                        exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
+
+            exif_bytes = piexif.dump(exif_dict)
+            image.save(image_path, image.format, exif=exif_bytes)
+                
