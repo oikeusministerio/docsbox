@@ -158,8 +158,8 @@ def removeAlpha(image_path):
 def correct_orientation(image_path):
     with PIL_Image.open(image_path) as image:
         exif = image._getexif()
-        exif_dict = piexif.load(image_path)
         if exif:
+            exif_dict = piexif.load(image_path)
             for tag, value in exif.items():
                 if ExifTags.TAGS.get(tag, tag) == "Orientation":
                     if value == 0:
@@ -169,6 +169,6 @@ def correct_orientation(image_path):
                     elif value in (5, 7):
                         exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
 
-        exif_bytes = piexif.dump(exif_dict)
-        image.save(image_path, image.format, exif=exif_bytes)
+            exif_bytes = piexif.dump(exif_dict)
+            image.save(image_path, image.format, exif=exif_bytes)
                 
