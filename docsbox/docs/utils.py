@@ -5,6 +5,7 @@ import itertools
 import magic
 import re
 import piexif
+import pikepdf
 
 from PyPDF3 import PdfFileReader, xmp
 from PyPDF3.utils import PdfReadError
@@ -121,7 +122,11 @@ def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
 
 def remove_XMPMeta(file):
-    xmpfile = XMPFiles( file_path=file, open_forupdate=True )
+    pdf = pikepdf.open(file, allow_overwriting_input=True)
+    del pdf.docinfo
+    pdf.save(file)
+
+    xmpfile = XMPFiles(file_path=file, open_forupdate=True)
     xmp = xmpfile.get_xmp()
     xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
     xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
@@ -160,6 +165,8 @@ def correct_orientation(image_path):
         exif = image._getexif()
         if exif:
             exif_dict = piexif.load(image_path)
+            del exif_dict["1st"]
+            del exif_dict["thumbnail"]
             for tag, value in exif.items():
                 if ExifTags.TAGS.get(tag, tag) == "Orientation":
                     if value == 0:
