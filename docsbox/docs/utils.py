@@ -5,7 +5,6 @@ import itertools
 import magic
 import re
 import piexif
-import pikepdf
 
 from PyPDF3 import PdfFileReader, xmp
 from PyPDF3.utils import PdfReadError
@@ -122,9 +121,6 @@ def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
 
 def remove_XMPMeta(file):
-    pdf = pikepdf.open(file, allow_overwriting_input=True)
-    del pdf.docinfo
-    pdf.save(file)
 
     xmpfile = XMPFiles(file_path=file, open_forupdate=True)
     xmp = xmpfile.get_xmp()
