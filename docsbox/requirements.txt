@@ -1,5 +1,5 @@
 redis==3.5.3
-rq==1.8.0
+rq==1.8.1
 Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-RQ2==18.3
