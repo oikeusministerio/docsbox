@@ -10,13 +10,15 @@ env:
     - secure: DU8w/C1sgO53JzG+1oxeinVxyxTpL29iLs1JNW+dBplpoK9ocg6SPefpgSNyYG1+wYYweVWyaBqOsOyHQhX1yKH+AUhAnWa0E3gGigSqdYa06FksWBiFbAlDN+GQHnQm8W2o1n3LOFCJ2ncpjcDOXOXzu/NV+/HvL89GLETDv9655Oo/A8p7k5bdTrobwuLRzOqciPs3PZv2wLPcrJRHEocGghhoXHuNkQ4ddmGkoMwtkCvI3dYXlGMU2Yzf+I79A2d166e9TUWkvaEf+Xcwm4iwnMeuegmVflueY+Re7qfjOhfogv7bK6g0eXlOhWB9dpLMKrjLj/rhdP1pQ8YZ07YUFz/oPdOxSSC6t6eXvJsu72c8ijBpVySFgfsA+tIYre42T4wKiLn+hK0IUC0qlIP5VFngKw+Sa39w69XBZ/J0+Yva5rVCsBi502O3PaJi9qkY6kv3VL2YMmg3MuL2CX90dDDBJvtHf5KBHiShXEoJj+MjdG1MAnRFmBaMvC818F4UVvHrIg7HWrGsgqPHVsOpIUhc/ZptxMO44qTLAZCmX7PR+a3yGI5zVGya3ihdFb4JkBAkSyaiaUyrBmPkBGfAZIB+w1O2LpPmIx10f6eASOv6khuQQ69D0sJnHHMv63hsEo/YvrKCwfoCCbnlr8bRKliMJwczQwYjwcZVD8E=
     # IMAGE_REPO
     - secure: ELhN67w744U/8uNIIrXmvRCsaA57Upx6/n874U45IaY3ki/XGApwXfwB4y+x2in5Z9ytuMd0ItNdCZWATycJPKOygHdi1d6ktqOBAiTGPX9jbM3ZlQDF3GwjAyOLQyequQroflwfxJzav6/NrbLVb6q6EBVh5tmSAGGWvzEfF8GRQYVYQLubmq76ftooOGYh6LWWb2Ut8L7Q3m7e6ebUrnkvcrqNOc2Nel7D+C99HHNX/o/3GV7/3cxq/wMey/8M0fpDqEBvI+K1F0YjMBFPq2P2svdAcqoqowVBPzA7duOgI60gmAb8KclayeD7QDxrWa4YhSetyUs/BmmB9/hDSuRoKLcf0bXCtSg7vhoi6PeapC72Ml+vknQFoZrRLsl5xScFCuweMaaEMXUb0w6Rx72C0UBGJttvnwfY4QQ2xEihFBFKVEc3eC3CJH6pYqll4Jbr8qt2ijcDdFmYBWkQK1Cnz2EjQDUARgckwk19MfqxfFNObctHmolB3QK1Jna+U+iYaM/yMdtii3R5UXW/OyzDZc/JPqiPSTuNagvVIqqXE3PTrMqUV0hu7zQMLS8shXqIIA7cy6IXeDLLaE0gs5z1c/AJhfa+EUqmhmquCph0R9+YhazWGC9rhI5BE1GryoRidA2y/oyR4nLUoc8Vt3yqLqgS7bgRoEzrHpuI3NM=
-  
+
+before_install:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+
 script:
   - docker-compose build
   - sudo TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 
 after_success:
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export TAG=`if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_BRANCH == "master" ]]; then echo "latest"; else echo "test"; fi`
   - docker tag $IMAGE_REPO $IMAGE_REPO:$TAG
   - docker push $IMAGE_REPO:$TAG
