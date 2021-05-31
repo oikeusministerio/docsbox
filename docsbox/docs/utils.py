@@ -137,14 +137,17 @@ def remove_XMPMeta(file):
     xmpfile.close_file()
 
 def has_PDFA_XMP(file):
-    with open(file, mode="rb") as fileData:
-        xmpfile = PdfFileReader(fileData, strict=False)
-        metadata = xmpfile.getXmpMetadata()
-        if metadata is not None:
-            pdfa=app.config["PDFA"]
-            nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
-            if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                return True
+    try:
+        with open(file, mode="rb") as fileData:
+            xmpfile = PdfFileReader(fileData, strict=False)
+            metadata = xmpfile.getXmpMetadata()
+            if metadata is not None:
+                pdfa=app.config["PDFA"]
+                nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+                if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                    return True
+            return False
+    except:
         return False
 
 def removeAlpha(image_path):
