@@ -201,9 +201,9 @@ COMMON: &common
       system: 'Document Conversion Service'
       environment: 'DEV'
 
-  GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-sPDFACompatibilityPolicy=1']
+  GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-sPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
   OCRMYPDF:
-    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
+    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=1']
     FORCE: ['--skip-text', '--force-ocr'] 
 
 DEVELOPMENT: &dev
