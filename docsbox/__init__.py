@@ -1,5 +1,3 @@
-import sys
-
 from os import environ
 from flask import Flask
 from flask_rq2 import RQ

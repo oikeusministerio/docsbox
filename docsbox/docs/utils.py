@@ -6,7 +6,7 @@ import magic
 import re
 import piexif
 
-from PyPDF3 import PdfFileReader, xmp
+from PyPDF3 import PdfFileReader
 from PyPDF3.utils import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
@@ -132,8 +132,11 @@ def remove_XMPMeta(file):
     xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
     xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
     xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
-
-    xmpfile.put_xmp(xmp)
+    try:
+        xmpfile.put_xmp(xmp)
+    except:
+        xmpfile.close_file()
+        return
     xmpfile.close_file()
 
 def has_PDFA_XMP(file):
