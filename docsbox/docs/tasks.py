@@ -1,10 +1,8 @@
 import os
 import datetime
 import traceback
-import ghostscript
 
 from subprocess import run
-from shutil import copyfile
 from pylokit import Office
 from wand.image import Image
 from img2pdf import convert as imagesToPdf
