@@ -1,7 +1,7 @@
-# docsbox [![Build Status](https://travis-ci.org/oikeusministerio/docsbox.svg?branch=master)](https://travis-ci.org/oikeusministerio/docsbox)
+# docsbox [![Build Status](https://app.travis-ci.com/oikeusministerio/docsbox.svg?branch=master)](https://app.travis-ci.com/github/oikeusministerio/docsbox)
 
 `docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into PDF/A, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
-`docsbox` uses **LibreOffice** 6.1 (via **LibreOfficeKit**) for document converting.
+`docsbox` uses **LibreOffice** 7.0 (via **LibreOfficeKit**) for document converting.
 
 # Install and Start
 Currently, installing powered by docker-compose:
