@@ -5,8 +5,11 @@ import itertools
 import magic
 import re
 import piexif
+import logging
 
+from xml.parsers.expat import ExpatError
 from PyPDF3 import PdfFileReader
+from PyPDF3.pdf import PageObject
 from PyPDF3.utils import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
@@ -100,12 +103,15 @@ def get_file_mimetype(file):
 
             if mimeTypeFile == "application/pdf":
                 input = PdfFileReader(fileData, strict=False)
-                metadata = input.getXmpMetadata()
-                if metadata is not None:
-                    pdfa=app.config["PDFA"]
-                    nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
-                    if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                        mimeTypeFile = "application/pdfa"
+                try:
+                    metadata = input.getXmpMetadata()
+                    if metadata is not None:
+                        pdfa=app.config["PDFA"]
+                        nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                            mimeTypeFile = "application/pdfa"
+                except (ExpatError):
+                    app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file.name))
             else:
                 for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
                     if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
@@ -180,4 +186,14 @@ def correct_orientation(image_path):
 
             exif_bytes = piexif.dump(exif_dict)
             image.save(image_path, image.format, exif=exif_bytes)
-                
+
+def check_file_content(original, converted):
+    original_pdf = PdfFileReader(open(original, mode="rb"), strict=False)
+    original_page_num = original_pdf.numPages
+
+    with open(converted, mode="rb") as converted_data:
+        converted_pdf = PdfFileReader(converted_data, strict=False)
+        page = PageObject(converted_data)
+        if (page.getContents() is None or original_page_num != converted_pdf.numPages):
+            return False
+    return True
