@@ -9,7 +9,7 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, has_PDFA_XMP, removeAlpha, correct_orientation
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, check_file_content, has_PDFA_XMP, removeAlpha, correct_orientation
 from docsbox.docs.via_controller import save_file_on_via
 
 def get_task(task_id):
@@ -63,14 +63,19 @@ def process_convertion(path, options, meta):
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
+    temp_path = output_path
     if (meta["mimetype"] == "application/pdf"):
         run(app.config["GHOSTSCRIPT_EXEC"] + ['-sOutputFile=' + output_path, path])
 
+        if check_file_content(path, output_path) == False:
+            temp_path = path
+            
         force = 0
-        while has_PDFA_XMP(output_path) == False:
+        while has_PDFA_XMP(temp_path) == False:
             if (force > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["FORCE"][force], output_path, output_path])
+            run(app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["FORCE"][force], temp_path, output_path])
+            temp_path= output_path
             force += 1
     else:
         with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
