@@ -12,8 +12,8 @@ services:
       - ./docsbox:/home/docsbox
       - /media:/home/docsbox/media
     extra_hosts:
-      - it1.integraatiopalvelu.fi:46.30.128.27
-      - logdev.om.fi:10.188.10.31
+      - it1.integraatiopalvelu.fi:0.0.0.0
+      - logdev.om.fi:0.0.0.0
     environment:
       GRAYLOG_HOST: 'logdev.om.fi'
       GRAYLOG_PORT: 444
@@ -31,8 +31,15 @@ services:
     volumes:
       - ./docsbox:/home/docsbox
       - /media:/home/docsbox/media
+      - /config:/root/.config/libreoffice/4/user
     extra_hosts:
-      - it1.integraatiopalvelu.fi:46.30.128.27
+      - it1.integraatiopalvelu.fi:0.0.0.0
+      - logdev.om.fi:0.0.0.0
+    environment:
+      GRAYLOG_HOST: 'logdev.om.fi'
+      GRAYLOG_PORT: 444
+      GRAYLOG_PATH: '/gelf'
+      GRAYLOG_SOURCE: conversion.service.dev
     command: rq worker -c docsbox
  
   nginx:

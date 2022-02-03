@@ -6,6 +6,7 @@ import magic
 import re
 import piexif
 import logging
+import exiftool
 
 from xml.parsers.expat import ExpatError
 from PyPDF3 import PdfFileReader
@@ -31,40 +32,51 @@ def make_zip_archive(uuid, tmp_dir):
                 output.write(path, path.split(tmp_dir)[1])
     return result_path, zipname
 
-def set_options(options, mimetype):
+def set_options(headers, mimetype):
     """
     Validates options
     """
-    if options:  # options validation
-        options = ujson.loads(options)
-        fmt = options.get("format", None)
-        if not fmt:
-            raise ValueError("Invalid 'format' value")
-        else:
-            supported = (fmt in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]])
-            if not supported:
-                message = "'{0}' mimetype can't be converted to '{1}'"
-                raise ValueError(message.format(mimetype, fmt))
-        # check for thumbnails options on request and if they are valid
-        thumbnails = options.get("thumbnails", None)
-        # THUMBNAILS_GENERATE is configured as False
-        if app.config["THUMBNAILS_GENERATE"] and thumbnails:
-            if not isinstance(thumbnails, dict):
-                raise ValueError("Invalid 'thumbnails' value")
+    options = app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["default_options"]]
+    if headers:
+        if 'conversion-format' in headers:
+            conversion_format = headers["conversion-format"]
+            if conversion_format in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]]:
+                options["format"] = conversion_format
             else:
-                thumbnails_size = thumbnails.get("size", None)
-                if not isinstance(thumbnails_size, str) or not thumbnails_size:
-                    raise ValueError("Invalid 'size' value")
+                message = "'{0}' mimetype can't be converted to '{1}'"
+                raise ValueError(message.format(mimetype, conversion_format))    
+        
+        if 'output-pdf-version' in headers:
+            output_pdf_version = headers["output-pdf-version"]
+            if output_pdf_version in ["1", "2"]:
+                options["output_pdf_version"] = output_pdf_version
+            else:
+                raise ValueError("Invalid 'output_pdf_version' value")
+
+        if 'Via-Allowed-Users' in headers:
+            options["via_allowed_users"] = headers['Via-Allowed-Users']
+        else:
+            options["via_allowed_users"] = app.config["VIA_ALLOWED_USERS"]
+
+        if 'thumbnails' in headers:
+            # check for thumbnails options on request and if they are valid
+            thumbnails = ujson.loads(headers["thumbnails"])
+            # THUMBNAILS_GENERATE is configured as False
+            if app.config["THUMBNAILS_GENERATE"] and thumbnails:
+                if not isinstance(thumbnails, dict):
+                    raise ValueError("Invalid 'thumbnails' value")
                 else:
-                    try:
-                        (width, height) = map(
-                            int, thumbnails_size.split("x"))
-                    except ValueError:
+                    thumbnails_size = thumbnails.get("size", None)
+                    if not isinstance(thumbnails_size, str) or not thumbnails_size:
                         raise ValueError("Invalid 'size' value")
                     else:
-                        options["thumbnails"]["size"] = (width, height)
-    else:
-        options = app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["default_options"]]
+                        try:
+                            (width, height) = map(
+                                int, thumbnails_size.split("x"))
+                        except ValueError:
+                            raise ValueError("Invalid 'size' value")
+                        else:
+                            options["thumbnails"]["size"] = (width, height)
     return options
 
 def make_thumbnails(image, tmp_dir, size):
@@ -95,29 +107,31 @@ def get_pdfa_version(nodes):
             conformance = x.firstChild.nodeValue
     return part + conformance
 
-def get_file_mimetype(file):
-    with open(file.name, mode="rb") as fileData:
-        try:
-            mimeTypeFile = magic.Magic(flags=magic.MAGIC_MIME_TYPE).id_filename(file.name)
-            documentTypeFile = magic.Magic().id_buffer(fileData.read(1024))
-
-            if mimeTypeFile == "application/pdf":
+def get_file_mimetype(file, format):
+    try:   
+        mimeTypeFile = exiftool.ExifToolHelper().get_metadata(file.name)[0]["File:MIMEType"]
+        if mimeTypeFile == "application/pdf":
+            with open(file.name, mode="rb") as fileData:
                 input = PdfFileReader(fileData, strict=False)
                 try:
                     metadata = input.getXmpMetadata()
-                    if metadata is not None:
+                    if metadata:
                         pdfa=app.config["PDFA"]
                         nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
                         if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
                             mimeTypeFile = "application/pdfa"
                 except (ExpatError):
                     app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file.name))
-            else:
-                for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
-                    if (any(x in mimeTypeFile for x in app.config["LIBMAGIC_MIMETYPES"]["content-type"]) and documentTypeFile in fileFormat):
-                        mimeTypeFile = fileMimetype
-        except (ValueError, PdfReadError):
-            mimeTypeFile = "Unknown/Corrupted"
+        elif mimeTypeFile == "application/zip" or mimeTypeFile == "text/plain":
+            mimeTypeFile = magic.from_file(file.name, mime=True)
+            if mimeTypeFile == "application/octet-stream":
+                with open(file.name, mode="rb") as fileData:
+                    documentTypeFile = magic.from_buffer(fileData.read(2048))
+                    for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
+                        if documentTypeFile in fileFormat:
+                            mimeTypeFile = fileMimetype
+    except (ValueError, PdfReadError):
+        mimeTypeFile = "Unknown/Corrupted"
     return mimeTypeFile
 
 def remove_extension(file):

@@ -1,6 +1,7 @@
 import os
-import datetime
+import shutil
 import traceback
+import re
 
 from subprocess import run
 from pylokit import Office
@@ -25,7 +26,7 @@ def remove_file(path):
 
 def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, delete=True):
     result = { "mimetype": None, "tmp_file": None }
-    suffix = os.path.splitext(filename)[1] if filename else None
+    suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
             for chunk in original_file.iter_content(chunk_size=128):
@@ -33,7 +34,7 @@ def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, dele
         else:
             original_file.save(tmp_file)
         tmp_file.flush()
-        result['mimetype'] = get_file_mimetype(tmp_file)
+        result['mimetype'] = get_file_mimetype(tmp_file, suffix[1:])
 
         if delete is False:    
             result['tmp_file'] = tmp_file
@@ -53,8 +54,8 @@ def process_convertion(path, options, meta):
         elif exportFormatType == "VIDEO_EXPORT_FORMATS":
             result= process_video_convertion(path, options, meta, current_task)
 
-        if result and meta["via_allowed_users"]:
-            r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], meta["via_allowed_users"])
+        if result and options["via_allowed_users"]:
+            r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
             result['fileId'] = r.headers.get("Document-id")
         return result
@@ -65,7 +66,10 @@ def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
     temp_path = output_path
     if (meta["mimetype"] == "application/pdf"):
-        run(app.config["GHOSTSCRIPT_EXEC"] + ['-sOutputFile=' + output_path, path])
+        script = app.config["GHOSTSCRIPT_EXEC"]
+        if options.get("output_pdf_version", None) != "1":
+            script[1] = script[1] + "=" + options.get("output_pdf_version", None)
+        run(script + ['-sOutputFile=' + output_path, path])
 
         if check_file_content(path, output_path) == False:
             temp_path = path
@@ -74,15 +78,28 @@ def process_document_convertion(path, options, meta, current_task):
         while has_PDFA_XMP(temp_path) == False:
             if (force > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["FORCE"][force], temp_path, output_path])
+            script = app.config["OCRMYPDF"]["EXEC"]
+            script[3] = script[3] + '-' + options.get("output_pdf_version", None)
+            run(script + [app.config["OCRMYPDF"]["FORCE"][force], temp_path, output_path])
             temp_path= output_path
             force += 1
     else:
-        with Office(app.config["LIBREOFFICE_PATH"]) as office:  # acquire libreoffice lock
-            with office.documentLoad(path) as original_document:  # open original document
-                if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
-                    original_document.saveAs(output_path, fmt=options["format"], options=options.get("extra", None))
+        if not os.path.isfile("/root/.config/libreoffice/4/user/registrymodifications.xcu"):
+            shutil.copyfile("/home/config/registrymodifications.xcu", "/root/.config/libreoffice/4/user/registrymodifications.xcu")
+        
+        #TODO Update when LibreOffice 7.4 becomes available since it will allow setings change in command
+        with open("/root/.config/libreoffice/4/user/registrymodifications.xcu", "r+") as reg:
+            data = reg.read()
+            pdf_version_string = re.search('(SelectPdfVersion.*\<value\>\d)', data).group(0)
+            if options.get("output_pdf_version", None) != pdf_version_string[-1]:
+                reg.seek(0, 0)
+                new_data = data.replace(pdf_version_string, pdf_version_string[:-1] + options.get("output_pdf_version", None))
+                reg.write(new_data)
 
+        if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
+            run(['soffice', '--headless', '--infilter=' + app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["name"], '--convert-to', options["format"], '--outdir', app.config["MEDIA_PATH"], path])
+            os.rename(os.path.splitext(path)[0] + '.' + options["format"], output_path)
+        
     output_filetype = app.config["OUTPUT_FILETYPE_" + options["format"].upper()]
     mimetype = output_filetype["mimetype"]
     filetype = output_filetype["name"]
@@ -90,8 +107,8 @@ def process_document_convertion(path, options, meta, current_task):
     if filetype == "PDF/A":
         remove_XMPMeta(output_path) #Removes XMP Metadata
 
-    if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
-        output_path, file_name = thumbnail_generator(path, options, meta, current_task, original_document)
+        if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None): # generate thumbnails
+            output_path, file_name = thumbnail_generator(path, options, meta, current_task, None)
 
     file_name = "{0}.{1}".format(meta["filename"], options["format"])
     fileSize = os.path.getsize(output_path)

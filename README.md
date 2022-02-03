@@ -137,6 +137,15 @@ $ curl -X DELETE http://localhost/conversion-service/delete-tmp-file/bbf78afd-01
 "finished"
 ```
 
+It's possible to add a header to specify the desired pdf version, for example:
+```bash
+$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/convert/0
+{
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
+    "status": "queued"
+}
+```
+
 # API
 ```
 POST    /conversion-service/get-file-type/{file_id}
@@ -171,9 +180,9 @@ Tests can be run with VIA or without, if connection to VIA is not possible, TEST
 ```
 
 # Supported filetypes
-| Type           | Format                                            | 
-| ---------------|-------------------------------------------------- |
-| Document       | `.docx` `.doc` `.kth` `.rtf` `.pdf` `.sxw` `.odt` |
-| Presentation   | `.pptx` `.ppt` `.pages` `.sxi` `.odp`             |
-| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`           |
-| Others         | `.sxd` `.sxg` `.odg`                              |
+| Type           | Format                                             | 
+| ---------------|--------------------------------------------------  |
+| Document       | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt`|
+| Presentation   | `.pptx` `.ppt` `.key` `.sxi` `.odp`                |
+| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`            |
+| Others         | `.sxd` `.sxg` `.odg`                               |
