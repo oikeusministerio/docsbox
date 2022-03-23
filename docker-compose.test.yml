@@ -11,7 +11,7 @@ services:
      - ./docsbox:/home/docsbox
      - /media:/home/docsbox/media
    extra_hosts:
-     - it1.integraatiopalvelu.fi:46.30.128.27
+     - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
    command: nosetests docsbox/docs/tests/test_views.py
    environment:
-    TEST_VIA: ${TEST_VIA}
+    TEST_VIA: ${TEST_VIA-false}

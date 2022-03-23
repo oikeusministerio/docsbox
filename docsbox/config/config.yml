@@ -31,79 +31,79 @@ COMMON: &common
 
   CONVERTABLE_MIMETYPES:
     application/pdf: # Portable Document Format
-      name: "PDF"
+      name: "PDF - Portable Document Format"
       formats: PDF_EXPORT_FORMATS
       default_options: PDF_DEFAULT_OPTIONS
     application/msword: # Microsoft Word 2003
-      name: "Microsoft Word"
+      name: "Microsoft Word 97/2000/XP"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.wordprocessingml.document: # Microsoft Word 2007
-      name: "Microsoft Word 2007"
+      name: "Microsoft Word 2007/2010 XML"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.ms-excel: # Microsoft Excel 2003
-      name: "Microsoft Excel"
+      name: "Microsoft Excel 97/2000/XP"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
-    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: # Microsoft Excel 2007
-      name: "Microsoft Excel 2007"
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: #Microsoft Excel 2007
+      name: "Microsoft Excel 2007/2010 XML"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.ms-powerpoint: # Microsoft Powerpoint 2003
-      name: "Microsoft Powerpoint"
+      name: "Microsoft PowerPoint 97/2000/XP"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.presentationml.presentation: # Microsoft Powerpoint 2007
-      name: "Microsoft Powerpoint 2007"
+      name: "Microsoft PowerPoint 2007/2010 XML"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     text/rtf: # Rich Text Format
       name: "Rich Text Format"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
-    application/vnd.sun.xml.writer: # sxw OpenDocument XML Text
-      name: "OpenDocument XML Text"
+    application/vnd.sun.xml.writer: # sxw OpenDocument Text
+      name: "OpenDocument Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
-    application/vnd.sun.xml.calc: # sxc OpenDocument XML SpreadSheet
-      name: "OpenDocument XML SpreadSheet"
+    application/vnd.sun.xml.calc: # sxc OpenDocument SpreadSheet
+      name: "OpenDocument SpreadSheet"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
-    application/vnd.sun.xml.draw: # sxd OpenDocument XML Graphics
-      name: "OpenDocument XML Graphics"
+    application/vnd.sun.xml.draw: # sxd OpenDocument Graphics
+      name: "OpenDocument Draw"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
-    application/vnd.sun.xml.impress: # sxi OpenDocument XML Presentation
-      name: "OpenDocument XML Presentation"
+    application/vnd.sun.xml.impress: # sxi OpenDocument Presentation
+      name: "OpenDocument Presentation"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.sun.xml.writer.global: # sxg
-      name: "OpenDocument XML Master Document"
+      name: "OpenDocument Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
-    application/applefile: #Apple Keynote
+    application/x-iwork-keynote-sffkey: #Apple Keynote
       name: "Apple Keynote"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
-    application/applefile: #Apple Numbers
+    application/x-iwork-numbers-sffnumbers: #Apple Numbers
       name: "Apple Numbers"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
-    application/applefile: #Apple Pages
+    application/x-iwork-pages-sffpages: #Apple Pages
       name: "Apple Pages"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     image/jpeg: # Joint Photographic Group
-      name: "JPEG"
+      name: "JPEG - Joint Photographic Experts Group"
       formats: IMAGE_EXPORT_FORMATS
       default_options: IMAGE_DEFAULT_OPTIONS
     image/png: # Portable Network Graphics
-      name: "PNG"
+      name: "PNG - Portable Network Graphics"
       formats: IMAGE_EXPORT_FORMATS
       default_options: IMAGE_DEFAULT_OPTIONS
     image/tiff: # Tagged Image File
-      name: "TIFF"
+      name: "TIFF - Tagged Image File Format"
       formats: IMAGE_EXPORT_FORMATS
       default_options: IMAGE_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.text: # LibreOffice Word
@@ -119,7 +119,7 @@ COMMON: &common
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
-      name: "OpenDocument Graphics"
+      name: "OpenDocument Draw"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
 
@@ -138,7 +138,8 @@ COMMON: &common
 
   PDF_DEFAULT_OPTIONS: &DEFAULT_OPTIONS
     format: "pdf"
-    extra: "SelectPdfVersion=1"
+    output_pdf_version: "1"
+    extra: ""
   DOCUMENT_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
   SPREADSHEET_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
   PRESENTATION_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
@@ -150,8 +151,6 @@ COMMON: &common
 
   FILEMIMETYPES: 
     [
-    "text/csv",
-    "application/applefile",
     "application/vnd.sun.xml.writer",
     "application/vnd.sun.xml.calc",
     "application/vnd.sun.xml.draw",
@@ -164,8 +163,6 @@ COMMON: &common
     ]
   FILEFORMATS: 
     [
-    "ASCII text, with CR line terminators",
-    "AppleDouble encoded Macintosh file",
     "OpenOffice.org 1.x Writer document",
     "OpenOffice.org 1.x Calc spreadsheet",
     "OpenOffice.org 1.x Draw document",
@@ -180,9 +177,7 @@ COMMON: &common
   PDFA:
     NAMESPACE: "http://www.aiim.org/pdfa/ns/id/"
     ACCEPTED_VERSIONS: ["1A", "1B", "2A", "2B", "2U", "3A", "3B", "3U"]
-  
-  LIBMAGIC_MIMETYPES:
-    content-type: ["application/octet-stream", "text/plain"]
+
   
   GRAYLOG_HOST: localhost
   GRAYLOG_PORT: 12001
@@ -203,7 +198,7 @@ COMMON: &common
 
   GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
   OCRMYPDF:
-    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
+    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0', '--output-type pdfa']
     FORCE: ['--skip-text', '--force-ocr'] 
 
 DEVELOPMENT: &dev

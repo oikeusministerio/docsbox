@@ -55,12 +55,11 @@ class DocumentTypeView(Resource):
         response = {}
         try:
             if request.files and "file" in request.files:
-                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None)['mimetype']
+                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], request.files["file"].filename)['mimetype']
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
-
                 if r.status_code == 200:
-                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
+                    mimetype = create_tmp_file_and_get_mimetype(r, request.headers['Content-Disposition'], stream=True)['mimetype']
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
                 else:
@@ -103,11 +102,6 @@ class DocumentConvertView(Resource):
                     filename = request.headers['Content-Disposition']
                     result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
 
-                    if 'Via-Allowed-Users' in request.headers:
-                        via_allowed_users = request.headers['Via-Allowed-Users']
-                    else:
-                        via_allowed_users = app.config["VIA_ALLOWED_USERS"]
-
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
                 else:
@@ -125,11 +119,10 @@ class DocumentConvertView(Resource):
                 else:
                     response = { "status": "non-convertable", "fileType": mimetype }
             else:
-                options = set_options(request.form.get("options", None), mimetype)
+                options = set_options(request.headers, mimetype)
 
                 task = process_convertion.queue(tmp_file.name, options, 
-                                                { "filename": remove_extension(filename), "mimetype": mimetype, 
-                                                "via_allowed_users": via_allowed_users })
+                                                { "filename": remove_extension(filename), "mimetype": mimetype })
                 response = { "taskId": task.id, "status": task.get_status() }
 
         except exceptions.Timeout:
