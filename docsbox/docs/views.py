@@ -55,11 +55,11 @@ class DocumentTypeView(Resource):
         response = {}
         try:
             if request.files and "file" in request.files:
-                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], request.files["file"].filename)['mimetype']
+                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], None)['mimetype']
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
-                    mimetype = create_tmp_file_and_get_mimetype(r, request.headers['Content-Disposition'], stream=True)['mimetype']
+                    mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
                 else:
@@ -95,7 +95,6 @@ class DocumentConvertView(Resource):
             if request.files and "file" in request.files:
                 filename = request.files["file"].filename
                 result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
-                via_allowed_users = None
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:

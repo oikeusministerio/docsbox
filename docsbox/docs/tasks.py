@@ -34,7 +34,7 @@ def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, dele
         else:
             original_file.save(tmp_file)
         tmp_file.flush()
-        result['mimetype'] = get_file_mimetype(tmp_file, suffix[1:])
+        result['mimetype'] = get_file_mimetype(tmp_file)
 
         if delete is False:    
             result['tmp_file'] = tmp_file

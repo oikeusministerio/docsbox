@@ -107,7 +107,7 @@ def get_pdfa_version(nodes):
             conformance = x.firstChild.nodeValue
     return part + conformance
 
-def get_file_mimetype(file, format):
+def get_file_mimetype(file):
     try:   
         mimeTypeFile = exiftool.ExifToolHelper().get_metadata(file.name)[0]["File:MIMEType"]
         if mimeTypeFile == "application/pdf":
