@@ -78,26 +78,26 @@ class BaseTestCase(unittest.TestCase):
         return response
 
 # Group of tests to test valid or invalid UUID
-# class DocumentUUIDTestCase(BaseTestCase):
-#     def test_get_task_by_valid_uuid(self):
-#         if self.via_run == "True":
-#             response = self.convert_file_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
-#         else:
-#             response = self.convert_file_nVIA(dep.filesConvertable[0]['fileNameExt']) 
-#         json = ujson.loads(response.data)
-#         self.assertEqual(response.status_code, 200)
-#         self.assertTrue(json.get("taskId"))
-#         self.assertEqual(json.get("status"), "queued")
+class DocumentUUIDTestCase(BaseTestCase):
+    def test_get_task_by_valid_uuid(self):
+        if self.via_run == "True":
+            response = self.convert_file_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
+        else:
+            response = self.convert_file_nVIA(dep.filesConvertable[0]['fileNameExt']) 
+        json = ujson.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(json.get("taskId"))
+        self.assertEqual(json.get("status"), "queued")
 
-#         time.sleep(5)
+        time.sleep(5)
 
-#         response = self.status_file(json.get("taskId"))
-#         self.assertEqual(response.status_code, 200)
-#         self.assertEqual(ujson.loads(response.data), {
-#             "taskId": json.get("taskId"),
-#             "status": "finished",
-#             "fileType": "PDF/A"
-#         })
+        response = self.status_file(json.get("taskId"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ujson.loads(response.data), {
+            "taskId": json.get("taskId"),
+            "status": "finished",
+            "fileType": "PDF/A"
+        })
     '''
     def test_get_task_by_invalid_uuid(self):
         # response = self.convert_file_VIA("8c286c7f-ce38-4693-1234-e5d2ab3ce595", "unknown") 
@@ -108,124 +108,19 @@ class BaseTestCase(unittest.TestCase):
         })   
     '''
      
-# Group of tests to test detection of type file and check if it's possible to convert
-# class DocumentDetectAndConvertTestCase(BaseTestCase):   
-
-#     def test_convert_invalid_formats(self):
-#         if self.via_run == "True":
-#             response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'],
-#             {
-#                 "Content-Disposition": dep.filesConvertable[0]['fileName'],
-#                 "Conversion-Format": "csv",
-#             })
-#         else:
-#             response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-#                 "Conversion-Format": "csv",
-#             })
-#         json = ujson.loads(response.data)
-#         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(json, {
-#             "message": "'application/vnd.sun.xml.writer' mimetype can't be converted to 'csv'"
-#         })
-
-#     def test_convert_invalid_pdf_version(self):
-#         if self.via_run == "True":
-#             response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'],
-#             {
-#                 "Content-Disposition": dep.filesConvertable[0]['fileName'],
-#                 "Output-Pdf-Version": "3",
-#             })
-#         else:
-#             response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-#                 "Output-Pdf-Version": "3",
-#             })
-#         json = ujson.loads(response.data)
-#         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(json, {
-#             "message": "Invalid 'output_pdf_version' value"
-#         })
-
-#     def test_detect_convert_file_not_convertable(self):
-#         for file in dep.filesNotConvertable:
-#             # Detect file type
-#             if self.via_run == "True":
-#                 response = self.detection_file_type_VIA(file['fileId'])
-#             else:
-#                 response = self.detection_file_type_nVIA(file['fileNameExt'])
-#             json = ujson.loads(response.data)  
-#             self.assertEqual(response.status_code, 200)
-#             self.assertEqual(json, {
-#                 "fileType": file['fileType'],
-#                 "convertable": False
-#             })
-
-#             # Convert file
-#             if self.via_run == "True":
-#                 response = self.convert_file_VIA(file['fileId'], file['fileName'])
-#             else:
-#                 response = self.convert_file_nVIA(file['fileNameExt']) 
-#             json = ujson.loads(response.data)
-#             self.assertEqual(response.status_code, 200)
-#             self.assertEqual(json,  {
-#                 "status": "non-convertable",
-#                 "fileType": file['mimeType']
-#             })
-
-    # def test_detect_convert_file(self):
-    #     for file in dep.filesConvertable:
-    #         # Detect file type
-    #         if self.via_run == "True":
-    #             response = self.detection_file_type_VIA(file['fileId'])
-    #         else:
-    #             response = self.detection_file_type_nVIA(file['fileNameExt'])
-    #         json = ujson.loads(response.data)  
-    #         self.assertEqual(response.status_code, 200)
-    #         self.assertEqual(json, {
-    #             "fileType": file['fileType'],
-    #             "convertable": True
-    #         }) 
-            
-    #         if self.via_run == "True":
-    #             response = self.convert_file_VIA(file['fileId'], file['fileName']) 
-    #         else:
-    #             response = self.convert_file_nVIA(file['fileNameExt']) 
-    #         json = ujson.loads(response.data)
-    #         self.assertEqual(response.status_code, 200)
-    #         self.assertTrue(json.get("taskId"))
-    #         self.assertIsNotNone(json.get("status"))
-
-    #         ttl = 15
-    #         while (ttl > 0):
-    #             time.sleep(2)
-    #             response = self.status_file(json.get("taskId"))
-    #             json = ujson.loads(response.data)
-    #             self.assertEqual(response.status_code, 200)
-    #             if (json.get("status") == "finished"):
-    #                 self.assertEqual(ujson.loads(response.data), {
-    #                 "taskId": json.get("taskId"),
-    #                 "status": "finished",
-    #                 "fileType": "PDF/A",
-    #                 })
-    #                 break
 
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
-        with open(os.path.join(self.app.config["MEDIA_PATH"], "test_log.txt"), 'a') as log:
-            log.write('VIA test: ' + str(self.via_run) + '\n')
         mergeLists = dep.filesConvertable + dep.filesNotConvertable
         for file in mergeLists:       
             # Detect file type   
             if self.via_run == "True":
                 via_response = self.save_file_to_VIA(file['fileNameExt'], file['mimeType'])
                 if (via_response.status_code == 415) :
-                    with open(os.path.join(self.app.config["MEDIA_PATH"], "test_log.txt"), 'a') as log:
-                        log.write(file['fileNameExt'] + ' - Not suported by VIA\n')
                     continue
                 self.assertEqual(via_response.status_code, 201)
                 file["fileId"] = via_response.headers.get("Document-id")
-                with open(os.path.join(self.app.config["MEDIA_PATH"], "test_log.txt"), 'a') as log:
-                    log.write(file['fileNameExt'] + ' - Saved in VIA with id: ' + file["fileId"] + '\n')
                 response = self.detection_file_type_VIA(file["fileId"])
             else:
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
