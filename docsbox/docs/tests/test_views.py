@@ -4,7 +4,7 @@ import unittest
 import docsbox
 import time
 import test_dependencies as dep
-from requests import get
+from requests import get, post
 
 # SetUp/EndPoints
 class BaseTestCase(unittest.TestCase):
@@ -33,8 +33,7 @@ class BaseTestCase(unittest.TestCase):
 
     # Convert File
     def convert_file_VIA(self, fileId, fileName):
-        self.headers['Content-Disposition'] = fileName
-        response = self.client.post("/conversion-service/convert/" + fileId, headers=self.headers)
+        response = self.client.post("/conversion-service/convert/" + fileId, headers={'Content-Disposition':fileName})
         return response
 
     def convert_file_nVIA(self, filename):
@@ -70,6 +69,14 @@ class BaseTestCase(unittest.TestCase):
         response = self.client.delete("/conversion-service/delete-tmp-file/" + taskId)
         return response
 
+    # Save File to VIA
+    def save_file_to_VIA(self, filename, mime_type):
+        with open(os.path.join(self.inputs, filename), "rb") as data:
+            cert = self.app.config["VIA_CERT_PATH"]
+            headers = { 'VIA_ALLOWED_USERS': self.app.config["VIA_ALLOWED_USERS"], 'Content-type': mime_type }
+            response = post(url=self.app.config["VIA_URL"], cert=cert, data=data, headers=headers, timeout=60)
+        return response
+
 # Group of tests to test valid or invalid UUID
 class DocumentUUIDTestCase(BaseTestCase):
     def test_get_task_by_valid_uuid(self):
@@ -101,105 +108,6 @@ class DocumentUUIDTestCase(BaseTestCase):
         })   
     '''
      
-# Group of tests to test detection of type file and check if it's possible to convert
-class DocumentDetectAndConvertTestCase(BaseTestCase):   
-
-    def test_convert_invalid_formats(self):
-        if self.via_run == "True":
-            response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'],
-            {
-                "Content-Disposition": dep.filesConvertable[0]['fileName'],
-                "Conversion-Format": "csv",
-            })
-        else:
-            response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-                "Conversion-Format": "csv",
-            })
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(json, {
-            "message": "'application/vnd.sun.xml.writer' mimetype can't be converted to 'csv'"
-        })
-
-    def test_convert_invalid_pdf_version(self):
-        if self.via_run == "True":
-            response = self.convert_file_with_options_VIA(dep.filesConvertable[0]['fileId'],
-            {
-                "Content-Disposition": dep.filesConvertable[0]['fileName'],
-                "Output-Pdf-Version": "3",
-            })
-        else:
-            response = self.convert_file_with_options_nVIA(dep.filesConvertable[0]['fileNameExt'], {
-                "Output-Pdf-Version": "3",
-            })
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(json, {
-            "message": "Invalid 'output_pdf_version' value"
-        })
-
-    def test_detect_convert_file_not_convertable(self):
-        for file in dep.filesNotConvertable:
-            # Detect file type
-            if self.via_run == "True":
-                response = self.detection_file_type_VIA(file['fileId'])
-            else:
-                response = self.detection_file_type_nVIA(file['fileNameExt'])
-            json = ujson.loads(response.data)  
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(json, {
-                "fileType": file['fileType'],
-                "convertable": False
-            })
-
-            # Convert file
-            if self.via_run == "True":
-                response = self.convert_file_VIA(file['fileId'], file['fileName'])
-            else:
-                response = self.convert_file_nVIA(file['fileNameExt']) 
-            json = ujson.loads(response.data)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(json,  {
-                "status": "non-convertable",
-                "fileType": file['mimeType']
-            })
-
-    def test_detect_convert_file(self):
-        for file in dep.filesConvertable:
-            # Detect file type
-            if self.via_run == "True":
-                response = self.detection_file_type_VIA(file['fileId'])
-            else:
-                response = self.detection_file_type_nVIA(file['fileNameExt'])
-            json = ujson.loads(response.data)  
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(json, {
-                "fileType": file['fileType'],
-                "convertable": True
-            }) 
-            
-            if self.via_run == "True":
-                response = self.convert_file_VIA(file['fileId'], file['fileName']) 
-            else:
-                response = self.convert_file_nVIA(file['fileNameExt']) 
-            json = ujson.loads(response.data)
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(json.get("taskId"))
-            self.assertIsNotNone(json.get("status"))
-
-            ttl = 15
-            while (ttl > 0):
-                time.sleep(2)
-                response = self.status_file(json.get("taskId"))
-                json = ujson.loads(response.data)
-                self.assertEqual(response.status_code, 200)
-                if (json.get("status") == "finished"):
-                    self.assertEqual(ujson.loads(response.data), {
-                    "taskId": json.get("taskId"),
-                    "status": "finished",
-                    "fileType": "PDF/A",
-                    })
-                    break
 
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
@@ -208,7 +116,12 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
         for file in mergeLists:       
             # Detect file type   
             if self.via_run == "True":
-                response = self.detection_file_type_VIA(file['fileId'])
+                via_response = self.save_file_to_VIA(file['fileNameExt'], file['mimeType'])
+                if (via_response.status_code == 415) :
+                    continue
+                self.assertEqual(via_response.status_code, 201)
+                file["fileId"] = via_response.headers.get("Document-id")
+                response = self.detection_file_type_VIA(file["fileId"])
             else:
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
             json = ujson.loads(response.data)  
@@ -229,24 +142,27 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
 
             # Convert file
             if self.via_run == "True":
-                response = self.convert_file_VIA(file['fileId'], file['fileName'])
+                with open(os.path.join(self.app.config["MEDIA_PATH"], "test_log.txt"), 'a') as log:
+                    log.write('converting file with id: ' + file["fileId"] + '\n')
+                response = self.convert_file_VIA(file['fileId'], file['fileNameExt'])
             else:
                 response = self.convert_file_nVIA(file['fileNameExt'])
             json = ujson.loads(response.data)
             if response.status_code == 200:
                 if isConvertable:
-                    self.assertTrue(json.get("taskId"))
+                    taskId = json.get("taskId")
+                    self.assertTrue(taskId)
                     self.assertEqual(json.get("status"), "queued")
 
                     ttl = 50
                     while (ttl > 0):
                         time.sleep(5)
-                        response = self.status_file(json.get("taskId"))
+                        response = self.status_file(taskId)
                         json = ujson.loads(response.data)
                         self.assertEqual(response.status_code, 200)
                         if (json.get("status") == "finished"):
                             self.assertEqual(ujson.loads(response.data), {
-                            "taskId": json.get("taskId"),
+                            "taskId": taskId,
                             "status": "finished",
                             "fileType": "PDF/A"
                             })
@@ -257,18 +173,18 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
 
                     if self.via_run == "True":
                         # Download file with VIA
-                        response = self.download_file(json.get("taskId"))
+                        response = self.download_file(taskId)
                         self.assertEqual(response.status_code, 200)
                         json = ujson.loads(response.data)
-                        print(json)
-                        self.assertEqual(ujson.loads(response.data), {
+                        self.assertEqual(json, {
+                            "taskId": taskId,
                             "status": "finished",
-                            "fileId": json.get("fileId"),
                             "convertable": True,
-                            "taskId": json.get("taskId"),
+                            "fileId": json.get("fileId"),
                             "fileType": "PDF/A",
                             "mimeType": "application/pdf",
-                            "fileName": file['fileName'] + ".pdf"
+                            "fileName": file['fileName'] + ".pdf",
+                            "fileSize": json.get("fileSize")
                         })
 
                         base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
@@ -285,7 +201,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         # Download file nVIA
                         base_dir = os.path.abspath(os.path.dirname(__file__)+'/outputs')
                         file_dir = os.path.join(base_dir, file['fileName']+".pdf")
-                        response = self.download_file(json.get("taskId"))  
+                        response = self.download_file(taskId)  
                         self.assertEqual(response.status_code, 200)
                         with open(file_dir, "wb") as file:
                             file.write(response.data)

@@ -59,7 +59,9 @@ class DocumentTypeView(Resource):
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
-                    mimetype = create_tmp_file_and_get_mimetype(r, request.headers['Content-Disposition'], stream=True)['mimetype']
+                    mimetype = r.headers['Content-Type']
+                    if mimetype == "application/pdf":
+                        mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
                 else:
@@ -95,22 +97,23 @@ class DocumentConvertView(Resource):
             if request.files and "file" in request.files:
                 filename = request.files["file"].filename
                 result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
-                via_allowed_users = None
+                mimetype = result['mimetype']
+                tmp_file = result['tmp_file']
             elif file_id and is_valid_uuid(file_id):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
                     filename = request.headers['Content-Disposition']
+                    mimetype = r.headers['Content-Type']
                     result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
-
+                    if mimetype == "application/pdf":
+                        mimetype = result['mimetype']
+                    tmp_file = result['tmp_file']
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
                 else:
                     return abort(r.status_code, r, request)
             else:
                 return abort(400, "No file has sent nor valid file_id given.", request)
-
-            mimetype = result['mimetype']
-            tmp_file = result['tmp_file']
                 
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                 remove_file(tmp_file.name)
