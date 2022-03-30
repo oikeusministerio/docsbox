@@ -142,8 +142,6 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
 
             # Convert file
             if self.via_run == "True":
-                with open(os.path.join(self.app.config["MEDIA_PATH"], "test_log.txt"), 'a') as log:
-                    log.write('converting file with id: ' + file["fileId"] + '\n')
                 response = self.convert_file_VIA(file['fileId'], file['fileNameExt'])
             else:
                 response = self.convert_file_nVIA(file['fileNameExt'])

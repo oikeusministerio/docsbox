@@ -4,7 +4,6 @@ import traceback
 import re
 
 from subprocess import run
-from pylokit import Office
 from wand.image import Image
 from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -64,22 +63,20 @@ def process_convertion(path, options, meta):
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
-    temp_path = output_path
     if (meta["mimetype"] == "application/pdf"):
         script = app.config["GHOSTSCRIPT_EXEC"]
         if options.get("output_pdf_version", None) != "1":
             script[1] = script[1] + "=" + options.get("output_pdf_version", None)
         run(script + ['-sOutputFile=' + output_path, path])
 
-        if check_file_content(path, output_path) == False:
-            temp_path = path
+        temp_path = path if not check_file_content(path, output_path) else output_path
             
         force = 0
         while has_PDFA_XMP(temp_path) == False:
-            if (force > 1):
+            if (force == 0):
+                script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
+            elif (force > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            script = app.config["OCRMYPDF"]["EXEC"]
-            script[3] = script[3] + '-' + options.get("output_pdf_version", None)
             run(script + [app.config["OCRMYPDF"]["FORCE"][force], temp_path, output_path])
             temp_path= output_path
             force += 1

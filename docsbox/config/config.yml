@@ -151,6 +151,7 @@ COMMON: &common
 
   FILEMIMETYPES: 
     [
+    "text/csv",
     "application/vnd.sun.xml.writer",
     "application/vnd.sun.xml.calc",
     "application/vnd.sun.xml.draw",
@@ -163,6 +164,7 @@ COMMON: &common
     ]
   FILEFORMATS: 
     [
+    "ASCII text, with CR line terminators",
     "OpenOffice.org 1.x Writer document",
     "OpenOffice.org 1.x Calc spreadsheet",
     "OpenOffice.org 1.x Draw document",
@@ -178,6 +180,7 @@ COMMON: &common
     NAMESPACE: "http://www.aiim.org/pdfa/ns/id/"
     ACCEPTED_VERSIONS: ["1A", "1B", "2A", "2B", "2U", "3A", "3B", "3U"]
 
+  GENERIC_MIMETYPES: ["application/octet-stream", "text/plain", "application/zip"]
   
   GRAYLOG_HOST: localhost
   GRAYLOG_PORT: 12001
@@ -198,7 +201,8 @@ COMMON: &common
 
   GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
   OCRMYPDF:
-    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0', '--output-type pdfa']
+    EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
+    OUT: '--output-type=pdfa'
     FORCE: ['--skip-text', '--force-ocr'] 
 
 DEVELOPMENT: &dev
