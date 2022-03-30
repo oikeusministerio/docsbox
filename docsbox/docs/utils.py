@@ -111,6 +111,7 @@ def get_file_mimetype(file):
     try:   
         mimeTypeFile = exiftool.ExifToolHelper().get_metadata(file.name)[0]["File:MIMEType"]
         if mimeTypeFile == "application/pdf":
+            #Check is PDFA and Version
             with open(file.name, mode="rb") as fileData:
                 input = PdfFileReader(fileData, strict=False)
                 try:
@@ -122,9 +123,10 @@ def get_file_mimetype(file):
                             mimeTypeFile = "application/pdfa"
                 except (ExpatError):
                     app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file.name))
-        elif mimeTypeFile == "application/zip" or mimeTypeFile == "text/plain":
+
+        elif mimeTypeFile in app.config["GENERIC_MIMETYPES"]:
             mimeTypeFile = magic.from_file(file.name, mime=True)
-            if mimeTypeFile == "application/octet-stream":
+            if mimeTypeFile in app.config["GENERIC_MIMETYPES"]:
                 with open(file.name, mode="rb") as fileData:
                     documentTypeFile = magic.from_buffer(fileData.read(2048))
                     for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 

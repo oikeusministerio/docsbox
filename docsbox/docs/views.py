@@ -60,7 +60,7 @@ class DocumentTypeView(Resource):
                 r = get_file_from_via(file_id)
                 if r.status_code == 200:
                     mimetype = r.headers['Content-Type']
-                    if mimetype == "application/pdf":
+                    if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
                         mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
                 elif r.status_code == 404:
                     return abort(404, "File id was not found.", request)
@@ -105,7 +105,7 @@ class DocumentConvertView(Resource):
                     filename = request.headers['Content-Disposition']
                     mimetype = r.headers['Content-Type']
                     result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
-                    if mimetype == "application/pdf":
+                    if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
                         mimetype = result['mimetype']
                     tmp_file = result['tmp_file']
                 elif r.status_code == 404:
