@@ -81,21 +81,13 @@ def process_document_convertion(path, options, meta, current_task):
             temp_path= output_path
             force += 1
     else:
-        if not os.path.isfile("/root/.config/libreoffice/4/user/registrymodifications.xcu"):
-            shutil.copyfile("/home/config/registrymodifications.xcu", "/root/.config/libreoffice/4/user/registrymodifications.xcu")
-        
-        #TODO Update when LibreOffice 7.4 becomes available since it will allow setings change in command
-        with open("/root/.config/libreoffice/4/user/registrymodifications.xcu", "r+") as reg:
-            data = reg.read()
-            pdf_version_string = re.search('(SelectPdfVersion.*\<value\>\d)', data).group(0)
-            if options.get("output_pdf_version", None) != pdf_version_string[-1]:
-                reg.seek(0, 0)
-                new_data = data.replace(pdf_version_string, pdf_version_string[:-1] + options.get("output_pdf_version", None))
-                reg.write(new_data)
+        with TemporaryDirectory() as tmp_dir:
+            os.mkdir(os.path.join(tmp_dir, "user"))
+            shutil.copyfile("/home/config/registrymodifications-SelectPdfVersion-" + options.get("output_pdf_version", None) + ".xcu", os.path.join(tmp_dir, "user/registrymodifications.xcu"))
 
-        if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
-            run(['soffice', '--headless', '--infilter=' + app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["name"], '--convert-to', options["format"], '--outdir', app.config["MEDIA_PATH"], path])
-            os.rename(os.path.splitext(path)[0] + '.' + options["format"], output_path)
+            if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
+                run(['soffice', '-env:UserInstallation=file://' + tmp_dir, '--headless', '--infilter=' + app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["name"], '--convert-to', options["format"], '--outdir', app.config["MEDIA_PATH"], path])
+                os.rename(os.path.splitext(path)[0] + '.' + options["format"], output_path)
         
     output_filetype = app.config["OUTPUT_FILETYPE_" + options["format"].upper()]
     mimetype = output_filetype["mimetype"]
