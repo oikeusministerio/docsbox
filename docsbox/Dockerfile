@@ -45,4 +45,5 @@ ADD . /home/docsbox
 WORKDIR /home/
 RUN pip3 install --upgrade pip \
     && pip3 install -r docsbox/requirements.txt
-COPY ./config/registrymodifications.xcu /home/config/registrymodifications.xcu
+COPY ./config/registrymodifications-SelectPdfVersion-1.xcu /home/config/registrymodifications-SelectPdfVersion-1.xcu
+COPY ./config/registrymodifications-SelectPdfVersion-2.xcu /home/config/registrymodifications-SelectPdfVersion-2.xcu
