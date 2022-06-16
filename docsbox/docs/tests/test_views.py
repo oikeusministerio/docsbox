@@ -87,7 +87,7 @@ class DocumentUUIDTestCase(BaseTestCase):
         json = ujson.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(json.get("taskId"))
-        self.assertEqual(json.get("status"), "queued")
+        self.assertIn(json.get("status"), {"queued", "started"})
 
         time.sleep(5)
 
@@ -150,7 +150,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 if isConvertable:
                     taskId = json.get("taskId")
                     self.assertTrue(taskId)
-                    self.assertEqual(json.get("status"), "queued")
+                    self.assertIn(json.get("status"), {"queued", "started"})
 
                     ttl = 50
                     while (ttl > 0):
@@ -211,14 +211,3 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         "status": "non-convertable",
                         "fileType": file['mimeType']
                     })
-            elif response.status_code == 400:
-                self.assertEqual(response.status_code, 400)
-                self.assertEqual(json, {
-                    "message": "File does not need to be converted."
-                })
-            else:
-                self.assertEqual(response.status_code, 415)
-                split_mimetype = json.get("message").split(":")
-                self.assertEqual(json, {
-                    "message": "Not supported mimetype:"+split_mimetype[1]
-                })

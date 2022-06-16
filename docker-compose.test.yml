@@ -1,17 +1,17 @@
 version: "3"
 services:
- test:
-   build: ./docsbox
-   image: oikeusministerio/common-conversion
-   depends_on:
-     - redis
-     - web
-     - rqworker
-   volumes:
-     - ./docsbox:/home/docsbox
-     - /media:/home/docsbox/media
-   extra_hosts:
-     - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
-   command: nosetests docsbox/docs/tests/test_views.py
-   environment:
-    TEST_VIA: ${TEST_VIA-false}
+  test:
+    build: ./docsbox
+    image: oikeusministerio/common-conversion
+    depends_on:
+      - redis
+      - web
+      - rqworker
+    volumes:
+      - ./docsbox:/home/docsbox
+      - /media:/home/docsbox/media
+    extra_hosts:
+      - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
+    command: nosetests docsbox/docs/tests/test_views.py
+    environment:
+      TEST_VIA: ${TEST_VIA-false}
