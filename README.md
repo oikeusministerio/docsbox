@@ -1,7 +1,7 @@
 # docsbox [![Build Status](https://app.travis-ci.com/oikeusministerio/docsbox.svg?branch=master)](https://app.travis-ci.com/github/oikeusministerio/docsbox)
 
 `docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into PDF/A, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
-`docsbox` uses **LibreOffice** 7.0 (via **LibreOfficeKit**) for document converting.
+`docsbox` uses **LibreOffice** 6.3 (via **LibreOfficeKit**) for document converting.
 
 # Install and Start
 Currently, installing powered by docker-compose:
@@ -42,30 +42,44 @@ GRAYLOG_SOURCE - Graylog name for the logger Host
 # Configuration
 The service can be configurable through the yml file `docsbox/config/config.yml`.
 
-# Test
+# REST API
 The conversion can be made using VIA or by sending the file appended to the request.
 
 If there is no file appended the conversion service connects with VIA fileservice where requests the file with the given id. To test it will be needed some VIA file id
 
-Checking File Type:
-```bash
+## Checking File Type
+
+### Request
+    POST    /conversion-service/get-file-type/{file_id}
+    
+### Response
+    Content-Type: application/json
+    
+    {
+        convertable: [true, false],
+        fileType: [Unknown/Corrupted, PDF/A, Microsoft Word, ...]
+    }
+
+fileType = 'Unknown/Corrupted' when mimetype library cannot identify file type. 
+    
+### Error Responses
+    400 - message: No file has sent nor valid file_id given.
+    404 - message: File id was not found.
+    504 - message: VIA service took too long to respond.
+
+### Examples:
+```
 $ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/get-file-type/0
 {
     "fileType": "Microsoft Word",
     "convertable": true
 }
 ```
-```bash
+```
 $ curl -X POST http://localhost/conversion-service/get-file-type/02127a06-d078-4935-a6f9-b7cbdbff4959
 {
     "fileType": "Microsoft Word",
     "convertable": true
-}
-```
-```bash
-curl -X POST -F "file=@test6.odt" http://localhost/conversion-service/convert/0
-{
-    "message": "File does not need to be converted."
 }
 ```
 ```bash
@@ -75,7 +89,32 @@ $ curl -X POST http://localhost/conversion-service/get-file-type/0123456789
 }
 ```
 
-Request conversion & checking conversion status:
+## Convert File
+
+### Request
+    POST    /conversion-service/convert/{file_id}
+    
+    Headers:    Conversion-Format: [pdf, docx, xlsx, pptx, jpeg, png] (default: pdf)
+                Output-Pdf-Version: [1, 2] (default: 1)
+                Via-Allowed-Users: (VIA user allowed to download converted file, only used if using VIA file ID)
+                Content-Disposition: filename (only used if using VIA file ID)
+    
+### Response
+    Content-Type: application/json
+    
+    {
+        taskId: task_id,
+        status: [queued, started]
+    }
+
+There is a possibilty that convert request can give status as 'started' if worker is available imediatly.
+    
+### Error Responses
+    400 - message: No file has sent nor valid file_id given.
+    404 - message: File id was not found.
+    504 - message: VIA service took too long to respond.
+
+### Examples:
 ```bash
 $ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/convert/0
 {
@@ -97,6 +136,34 @@ $ curl -X POST http://localhost/conversion-service/convert/0123456789
 }
 ```
 ```bash
+$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/convert/0
+{
+    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
+    "status": "queued"
+}
+```
+
+## Task Status
+
+### Request
+    GET    /conversion-service/status/{task_id}
+    
+### Response
+    Content-Type: application/json
+    
+    {
+        taskId: task_id,
+        status: [queued, started, finished, failed]
+        fileType: [PDF/A, Microsoft Word 2007/2010 XML, ...] (only given if task finished)
+    }
+    
+Status request response when conversion fails, will return status as 'failed' and send to graylog the error stacktrace.
+
+### Error Responses
+    404 - message: Unknown task_id.
+
+### Example:
+```bash
 $ curl -X GET http://localhost/conversion-service/status/bbf78afd-011c-4815-95da-17b810fa4f5f
 {
     "fileType": "PDF/A",
@@ -105,10 +172,39 @@ $ curl -X GET http://localhost/conversion-service/status/bbf78afd-011c-4815-95da
 }
 ```
 
-If the conversion service used a VIA file the converted file also will be saved in VIA and returns the new file id.
-If the file was sent directly to the conversion service, the converted file is sent when its requested 
+## Get Converted File
 
-Request converted file:
+If the conversion service used a VIA file the converted file also will be saved in VIA and returns the new file id.
+If the file was sent directly to the conversion service, the converted file is sent when its requested
+
+### Request
+    GET    /conversion-service/get-converted-file/{task_id}
+    
+### Response
+#### Using VIA
+    Content-Type: application/json
+
+    {
+        convertable: true,
+        fileId: via_file_id,
+        fileName: filename,
+        mimeType: [application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, ...],
+        fileType: [PDF/A, Microsoft Word 2007/2010 XML, ...],
+        status: finished,
+        taskId: task_id
+        fileSize: converted file size in bytes
+    }
+    
+#### Without VIA
+    Content-Type: {file_mimetype}
+    Content-Disposition: attachment; filename={filename}
+    Body: Raw Data
+
+### Error Responses
+    404 - message: Unknown task_id.
+
+### Examples:
+##### Using VIA file ID for conversion.
 ```bash
 $ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
 {
@@ -122,41 +218,12 @@ $ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-01
     "fileSize": "80325"
 }
 ```
+##### Non VIA conversion
 ```bash
 $ curl -X GET -O http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100   212  100   212    0     0  15142      0 --:--:-- --:--:-- --:--:-- 15142
-
-
-```
-
-Its is possible to request the deletion of the temp converted file as:
-```bash
-$ curl -X DELETE http://localhost/conversion-service/delete-tmp-file/bbf78afd-011c-4815-95da-17b810fa4f5f
-"finished"
-```
-
-It's possible to add a header to specify the desired pdf version, for example:
-```bash
-$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/convert/0
-{
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
-    "status": "queued"
-}
-```
-
-# API
-```
-POST    /conversion-service/get-file-type/{file_id}
-
-POST   /conversion-service/convert/{file_id}
-
-GET    /conversion-service/status/{task_id}
-
-GET    /conversion-service/get-converted-file/{task_id}
-
-DELETE /conversion-service/delete-tmp-file/{task_id}
 ```
 
 # Scaling
@@ -167,7 +234,7 @@ $ docker-compose scale web=4 rqworker=8
 The Application implements possibility for multi-host deployment using Docker Swarm it will be need the creation of a global syncronized volume (e.g. with flocker), global redis-server and mount it at `docker-compose.yml` file.
 
 
-# Run tests (Ubuntu)
+# Run tests
 Tests can be run with VIA or without, if connection to VIA is not possible, TEST_VIA must be set to False when running tests.
 
 ```
