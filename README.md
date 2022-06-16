@@ -107,7 +107,7 @@ $ curl -X POST http://localhost/conversion-service/get-file-type/0123456789
         status: [queued, started]
     }
 
-There is a possibilty that convert request can give status as 'started' if worker is available imediatly.
+There is a possibilty that convert request can give status as 'started' if worker is available immediately.
     
 ### Error Responses
     400 - message: No file has sent nor valid file_id given.
