@@ -204,8 +204,9 @@ def correct_orientation(image_path):
             image.save(image_path, image.format, exif=exif_bytes)
 
 def check_file_content(original, converted):
-    original_pdf = PdfFileReader(open(original, mode="rb"), strict=False)
-    original_page_num = original_pdf.numPages
+    with open(original, mode="rb") as original_data:
+        original_pdf = PdfFileReader(original_data, strict=False)
+        original_page_num = original_pdf.numPages
 
     with open(converted, mode="rb") as converted_data:
         converted_pdf = PdfFileReader(converted_data, strict=False)
