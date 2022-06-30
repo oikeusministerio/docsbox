@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 services:
   web:
     restart: always
@@ -25,6 +25,7 @@ services:
     restart: always
     build: ./docsbox
     image: oikeusministerio/common-conversion
+    init: true
     depends_on:
       - redis
       - web

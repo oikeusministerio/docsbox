@@ -15,7 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 
 # Fetch dependencies
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends locales build-essential \
+    && apt-get -y install locales build-essential \
     software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev \
     libexempi8 exempi autoconf automake libtool ghostscript icc-profiles-free \
     liblept5 libleptonica-dev libxml2 pngquant tesseract-ocr zlib1g zlib1g-dev ocrmypdf git \
@@ -24,6 +24,7 @@ RUN apt-get update \
     curl ttf-mscorefonts-installer fonts-dejavu-extra fonts-freefont-otf fonts-freefont-ttf \ 
     fonts-lmodern fonts-lyx fonts-sil-gentium fonts-dustin fonts-fanwood \
     fonts-3270 fonts-font-awesome fonts-bpg-georgian fonts-opensymbol \
+    texlive-fonts-recommended texlive-plain-generic texlive-latex-extra \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
