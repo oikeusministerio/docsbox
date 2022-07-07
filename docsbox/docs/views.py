@@ -9,14 +9,15 @@ from docsbox.docs.tasks import process_convertion, create_tmp_file_and_get_mimet
 from docsbox.docs.utils import remove_extension, set_options, is_valid_uuid
 from docsbox.docs.via_controller import get_file_from_via  
 
-def abort(status_code, message, request):
+def abort(status_code, message, request, traceback=None):
     if status_code >= 500:
         error_level = logging.CRITICAL
     elif status_code >= 400:
         error_level = logging.ERROR
-    app.logger.log(error_level, message, extra={ "request": request, "status": str(status_code) })
-    response = jsonify( { 'message': message } )
+    app.errlog.log(error_level, message, extra={ "request": request, "status": str(status_code) })
+    response = jsonify( { "request": str(request), "status": str(status_code), "message": str(message), "traceback": str(traceback) } )
     response.status_code = status_code
+    response.content_type = "application/json"
     return response
 
 class DocumentStatusView(Resource):
@@ -42,7 +43,7 @@ class DocumentStatusView(Resource):
             else:
                 return abort(404, "Unknown task_id", request)
         except Exception as e:
-            return abort(500, "{0}\n{1}".format(e, traceback.format_exc()), request)
+            return abort(500, e, request, traceback.format_exc())
         return response
 
 class DocumentTypeView(Resource):
@@ -81,7 +82,7 @@ class DocumentTypeView(Resource):
         except exceptions.Timeout:
             return abort(504, "VIA service took too long to respond.", request)
         except Exception as e:
-            return abort(500, "{0}\n{1}".format(e, traceback.format_exc()), request)
+            return abort(500, e, request, traceback.format_exc())
 
         app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
@@ -135,7 +136,7 @@ class DocumentConvertView(Resource):
                 remove_file(tmp_file.name)
             return abort(400, err.args[0], request)
         except Exception as e:
-            return abort(500, "{0}\n{1}".format(e, traceback.format_exc()), request)
+            return abort(500, e, request, traceback.format_exc())
 
         app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
         return response
@@ -179,6 +180,6 @@ class DocumentDownloadView(Resource):
         except exceptions.Timeout:
             return abort(504, "VIA service took too long to respond.", request)
         except Exception as e:
-            return abort(500, "{0}\n{1}".format(e, traceback.format_exc()), request)
+            return abort(500, e, request, traceback.format_exc())
 
         return response
