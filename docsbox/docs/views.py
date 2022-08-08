@@ -54,20 +54,22 @@ class DocumentTypeView(Resource):
         """
         response = {}
         try:
-            if request.files and "file" in request.files:
-                mimetype = create_tmp_file_and_get_mimetype(request.files["file"], request.files["file"].filename)['mimetype']
-            elif file_id and is_valid_uuid(file_id):
-                r = get_file_from_via(file_id)
-                if r.status_code == 200:
-                    mimetype = r.headers['Content-Type']
-                    if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
-                        mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
-                elif r.status_code == 404:
-                    return abort(404, "File id was not found.", request)
+            mimetype = request.headers['Content-Type']
+            if mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+                if request.files and "file" in request.files:
+                    mimetype = create_tmp_file_and_get_mimetype(request.files["file"], request.files["file"].filename)['mimetype']
+                elif file_id and is_valid_uuid(file_id):
+                    r = get_file_from_via(file_id)
+                    if r.status_code == 200:
+                        mimetype = r.headers['Content-Type']
+                        if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
+                            mimetype = create_tmp_file_and_get_mimetype(r, None, stream=True)['mimetype']
+                    elif r.status_code == 404:
+                        return abort(404, "File id was not found.", request)
+                    else:
+                        return abort(r.status_code, r, request)                
                 else:
-                    return abort(r.status_code, r, request)                
-            else:
-                return abort(400, "No file has sent nor valid file_id given.", request)
+                    return abort(400, "No file has sent nor valid file_id given.", request)
 
             response["convertable"] = mimetype in app.config["CONVERTABLE_MIMETYPES"]
             if response["convertable"]:
@@ -94,26 +96,28 @@ class DocumentConvertView(Resource):
         """
         result = {}
         try:
-            if request.files and "file" in request.files:
-                filename = request.files["file"].filename
-                result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
-                mimetype = result['mimetype']
-                tmp_file = result['tmp_file']
-            elif file_id and is_valid_uuid(file_id):
-                r = get_file_from_via(file_id)
-                if r.status_code == 200:
-                    filename = request.headers['Content-Disposition']
-                    mimetype = r.headers['Content-Type']
-                    result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
-                    if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
-                        mimetype = result['mimetype']
+            mimetype = request.headers['Content-Type']
+            if mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+                if request.files and "file" in request.files:
+                    filename = request.files["file"].filename
+                    result = create_tmp_file_and_get_mimetype(request.files["file"], filename, delete=False)
+                    mimetype = result['mimetype']
                     tmp_file = result['tmp_file']
-                elif r.status_code == 404:
-                    return abort(404, "File id was not found.", request)
+                elif file_id and is_valid_uuid(file_id):
+                    r = get_file_from_via(file_id)
+                    if r.status_code == 200:
+                        filename = request.headers['Content-Disposition']
+                        mimetype = r.headers['Content-Type']
+                        result = create_tmp_file_and_get_mimetype(r, filename, stream=True, delete=False)
+                        if mimetype == "application/pdf" or mimetype in app.config["GENERIC_MIMETYPES"]:
+                            mimetype = result['mimetype']
+                        tmp_file = result['tmp_file']
+                    elif r.status_code == 404:
+                        return abort(404, "File id was not found.", request)
+                    else:
+                        return abort(r.status_code, r, request)
                 else:
-                    return abort(r.status_code, r, request)
-            else:
-                return abort(400, "No file has sent nor valid file_id given.", request)
+                    return abort(400, "No file has sent nor valid file_id given.", request)
                 
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                 remove_file(tmp_file.name)
