@@ -146,14 +146,15 @@ def remove_XMPMeta(file):
 
     xmpfile = XMPFiles(file_path=file, open_forupdate=True)
     xmp = xmpfile.get_xmp()
-    xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
-    xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
-    xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
+    if xmp:
+        xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
+        xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
+        xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
 
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
-    xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
+        xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
+        xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
+        xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
+        xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
     try:
         xmpfile.put_xmp(xmp)
     except:
@@ -199,7 +200,7 @@ def correct_orientation(image_path):
                         exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
                     elif value in (5, 7):
                         exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
-
+            exif_dict['Exif'][41729] = b'1' # work around to avoid type error
             exif_bytes = piexif.dump(exif_dict)
             image.save(image_path, image.format, exif=exif_bytes)
 

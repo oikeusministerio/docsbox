@@ -48,11 +48,8 @@ def process_convertion(path, options, meta):
             result= process_document_convertion(path, options, meta, current_task)
         elif exportFormatType == "IMAGE_EXPORT_FORMATS":
             result= process_image_convertion(path, options, meta, current_task)
-        elif exportFormatType == "AUDIO_EXPORT_FORMATS":
-            result= process_audio_convertion(path, options, meta, current_task)
-        elif exportFormatType == "VIDEO_EXPORT_FORMATS":
-            result= process_video_convertion(path, options, meta, current_task)
-
+        else:
+            return { "has_failed": True, "message": "Conversion for {0} is not supported".format(exportFormatType)}
         if result and options["via_allowed_users"]:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
@@ -114,12 +111,6 @@ def process_image_convertion(path, options, meta, current_task):
     remove_file(path)
     meta["mimetype"] = "application/pdf"
     return process_document_convertion(tmp_file.name, options, meta, current_task)
-
-def process_audio_convertion(path, options, meta, current_task):
-    return "NOT IMPLEMENTED"
-
-def process_video_convertion(path, options, meta, current_task):
-    return "NOT IMPLEMENTED"
 
 def thumbnail_generator(path, options, meta, current_task, original_document):
     with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
