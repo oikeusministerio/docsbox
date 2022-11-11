@@ -17,8 +17,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 RUN apt-get update \
     && apt-get -y install locales build-essential \
     software-properties-common dialog apt-utils libffi-dev libmagic-dev libmagickwand-dev \
-    libexempi8 exempi autoconf automake libtool ghostscript icc-profiles-free \
-    liblept5 libleptonica-dev libxml2 pngquant tesseract-ocr zlib1g zlib1g-dev ocrmypdf git \
+    libexempi8 exempi autoconf automake libtool ghostscript ghostscript-x icc-profiles-free \
+    liblept5 libleptonica-dev libxml2 pngquant unpaper tesseract-ocr tesseract-ocr-eng \ 
+    tesseract-ocr-fin tesseract-ocr-swe zlib1g zlib1g-dev ocrmypdf img2pdf git \
     python3-dev python3-pip python3-cffi python3-reportlab python3-distutils python3-pkg-resources python3-magic \
     libreoffice libreofficekit-dev hyphen-fi hyphen-sv hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-pl hyphen-ru \
     curl ttf-mscorefonts-installer fonts-dejavu-extra fonts-freefont-otf fonts-freefont-ttf \ 
@@ -35,12 +36,12 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
 # Install and build ExifTool
-RUN curl --remote-name https://exiftool.org/Image-ExifTool-12.40.tar.gz \
-    && gzip -dc Image-ExifTool-12.40.tar.gz | tar -xf - \
-    && cd Image-ExifTool-12.40 \
+RUN curl --remote-name https://exiftool.org/Image-ExifTool-12.49.tar.gz \
+    && gzip -dc Image-ExifTool-12.49.tar.gz | tar -xf - \
+    && cd Image-ExifTool-12.49 \
     && perl Makefile.PL && make install \
     && cd .. \
-    && rm Image-ExifTool-12.40.tar.gz
+    && rm Image-ExifTool-12.49.tar.gz
 
 # Install docsbox
 ADD . /home/docsbox

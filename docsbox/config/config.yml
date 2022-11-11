@@ -199,7 +199,7 @@ COMMON: &common
       system: 'Document Conversion Service'
       environment: 'DEV'
 
-  GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
+  GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
   OCRMYPDF:
     EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
     OUT: '--output-type=pdfa'
