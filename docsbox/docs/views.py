@@ -32,9 +32,12 @@ class DocumentStatusView(Resource):
             if task:
                 response["taskId"] = task.id
                 if task.result:
-                    if task.result["has_failed"]:
+                    if not isinstance(task.result, dict):
                         response["status"] = "failed"
-                        app.errlog.log(logging.ERROR, ("{0}\nError:{1}\n{2}").format(response, task.result["message"], task.result["traceback"]), extra={ "request": request, "status": str(500) })
+                        app.errlog.log(logging.ERROR, ('{0}\nError: {1}').format(response, str(task.result)), extra={ "request": request, "status": str(500) })
+                    elif task.result["has_failed"]:
+                        response["status"] = "failed"
+                        app.errlog.log(logging.ERROR, ('{0}\nError: {1}\n{2}').format(response, task.result["message"], task.result["traceback"]), extra={ "request": request, "status": str(500) })
                     else:
                         response["status"] = task.get_status()
                         response["fileType"] = task.result["fileType"]
@@ -171,7 +174,7 @@ class DocumentDownloadView(Resource):
                             }
                             app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
                         else:
-                            response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, attachment_filename=task.result["fileName"])
+                            response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, download_name=task.result["fileName"])
                             remove_file(app.config["MEDIA_PATH"] + task.id)
                             app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={ "request": request, "status": "200" })
                             

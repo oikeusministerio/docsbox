@@ -1,7 +1,7 @@
 import os
 import shutil
 import traceback
-import re
+
 
 from subprocess import run
 from wand.image import Image
@@ -68,15 +68,15 @@ def process_document_convertion(path, options, meta, current_task):
 
         temp_path = path if not check_file_content(path, output_path) else output_path
             
-        force = 0
+        force_ocr = 0
         while has_PDFA_XMP(temp_path) == False:
-            if (force == 0):
+            if (force_ocr == 0):
                 script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
-            elif (force > 1):
+            elif (force_ocr > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(script + [app.config["OCRMYPDF"]["FORCE"][force], temp_path, output_path])
+            run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
             temp_path= output_path
-            force += 1
+            force_ocr += 1
     else:
         with TemporaryDirectory() as tmp_dir:
             os.mkdir(os.path.join(tmp_dir, "user"))
@@ -85,7 +85,7 @@ def process_document_convertion(path, options, meta, current_task):
             if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
                 run(['soffice', '-env:UserInstallation=file://' + tmp_dir, '--headless', '--infilter=' + app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["name"], '--convert-to', options["format"], '--outdir', app.config["MEDIA_PATH"], path])
                 os.rename(os.path.splitext(path)[0] + '.' + options["format"], output_path)
-        
+
     output_filetype = app.config["OUTPUT_FILETYPE_" + options["format"].upper()]
     mimetype = output_filetype["mimetype"]
     filetype = output_filetype["name"]

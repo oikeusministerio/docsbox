@@ -9,9 +9,8 @@ import logging
 import exiftool
 
 from xml.parsers.expat import ExpatError
-from PyPDF3 import PdfFileReader
-from PyPDF3.pdf import PageObject
-from PyPDF3.utils import PdfReadError
+from PyPDF2 import PdfReader, PageObject
+from PyPDF2.errors import PyPdfError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image, ExifTags
@@ -113,12 +112,12 @@ def get_file_mimetype(file):
         if mimeTypeFile == "application/pdf":
             #Check is PDFA and Version
             with open(file.name, mode="rb") as fileData:
-                input = PdfFileReader(fileData, strict=False)
+                input = PdfReader(fileData, strict=False)
                 try:
-                    metadata = input.getXmpMetadata()
+                    metadata = input.xmp_metadata
                     if metadata:
                         pdfa=app.config["PDFA"]
-                        nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+                        nodes = metadata.get_nodes_in_namespace("", pdfa["NAMESPACE"])
                         if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
                             mimeTypeFile = "application/pdfa"
                 except (ExpatError):
@@ -132,7 +131,7 @@ def get_file_mimetype(file):
                     for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
                         if documentTypeFile in fileFormat:
                             mimeTypeFile = fileMimetype
-    except (ValueError, PdfReadError):
+    except (ValueError, PyPdfError):
         mimeTypeFile = "Unknown/Corrupted"
     return mimeTypeFile
 
@@ -165,7 +164,7 @@ def remove_XMPMeta(file):
 def has_PDFA_XMP(file):
     try:
         with open(file, mode="rb") as fileData:
-            xmpfile = PdfFileReader(fileData, strict=False)
+            xmpfile = PdfReader(fileData, strict=False)
             metadata = xmpfile.getXmpMetadata()
             if metadata is not None:
                 pdfa=app.config["PDFA"]
@@ -206,12 +205,12 @@ def correct_orientation(image_path):
 
 def check_file_content(original, converted):
     with open(original, mode="rb") as original_data:
-        original_pdf = PdfFileReader(original_data, strict=False)
+        original_pdf = PdfReader(original_data, strict=False)
         original_page_num = original_pdf.numPages
 
     with open(converted, mode="rb") as converted_data:
-        converted_pdf = PdfFileReader(converted_data, strict=False)
+        converted_pdf = PdfReader(converted_data, strict=False)
         page = PageObject(converted_data)
-        if (page.getContents() is None or original_page_num != converted_pdf.numPages):
+        if (page.getContents() is None or original_page_num != len(converted_pdf.pages)):
             return False
     return True
