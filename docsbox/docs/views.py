@@ -161,7 +161,11 @@ class DocumentDownloadView(Resource):
             if task:
                 if task.get_status() == "finished":
                     if task.result:
-                        if "fileId" in task.result:
+                        if not isinstance(task.result, dict):
+                            return abort(404, "Task result not dictionary: " + str(task.result), request)
+                        elif task.result["has_failed"]:
+                            return abort(404, "Task has failed: " + task.result["message"], request)
+                        elif "fileId" in task.result:
                             response = { 
                                 "taskId": task.id,
                                 "status": task.get_status(),
@@ -172,12 +176,11 @@ class DocumentDownloadView(Resource):
                                 "fileName": task.result["fileName"],
                                 "fileSize": task.result["fileSize"]
                             }
-                            app.logger.log(logging.INFO, response, extra={ "request": request, "status": "200" })
+                            app.logger.log(logging.INFO, response, extra={"request": request, "status": "200"})
                         else:
                             response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, download_name=task.result["fileName"])
                             remove_file(app.config["MEDIA_PATH"] + task.id)
-                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={ "request": request, "status": "200" })
-                            
+                            app.logger.log(logging.INFO, "file: %s"%(task.result["fileName"]), extra={"request": request, "status": "200"})
                     else:
                         return abort(404, "Task with no result", request)
                 else:
