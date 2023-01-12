@@ -1,11 +1,8 @@
 import logging
 import ssl
-import socket
-import sys
 
 from http.client import HTTPSConnection
 from graypy.handler import BaseGELFHandler
-from flask.logging import default_handler
 
 
 class GraylogLogger(logging.LoggerAdapter):

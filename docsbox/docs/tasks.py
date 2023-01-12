@@ -1,7 +1,6 @@
 import os
 import shutil
 import traceback
-import logging
 
 from subprocess import run
 from wand.image import Image
@@ -45,19 +44,18 @@ def process_convertion(path, options, meta):
         current_task = get_current_job()
         exportFormatType = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
         if exportFormatType in app.config["DOCUMENT_CONVERTION_FORMATS"]:
-            result= process_document_convertion(path, options, meta, current_task)
+            result = process_document_convertion(path, options, meta, current_task)
         elif exportFormatType == "IMAGE_EXPORT_FORMATS":
-            result= process_image_convertion(path, options, meta, current_task)
+            result = process_image_convertion(path, options, meta, current_task)
         else:
             return { "has_failed": True, "message": "Conversion for {0} is not supported".format(exportFormatType)}
         if result and options["via_allowed_users"]:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
             result['fileId'] = r.headers.get("Document-id")
-        app.logger.log(logging.INFO, str(result))
         return result
     except Exception as e:
-        return { "has_failed": True, "message": e , "traceback": traceback.format_exc() }
+        return { "has_failed": True, "message": str(e), "traceback": traceback.format_exc() }
 
 def process_document_convertion(path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
