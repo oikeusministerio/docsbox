@@ -12,6 +12,7 @@ COMMON: &common
   VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
   VIA_CERT_PATH: /home/docsbox/certificate.pem
   VIA_ALLOWED_USERS: 
+  VIA_RETRY_MAX: 5
 
   THUMBNAILS_GENERATE: False
   THUMBNAILS_DPI": 90
