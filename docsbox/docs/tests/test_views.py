@@ -33,7 +33,7 @@ class BaseTestCase(unittest.TestCase):
 
     # Convert File
     def convert_file_VIA(self, fileId, fileName):
-        response = self.client.post("/conversion-service/convert/" + fileId, headers={'Content-Disposition':fileName})
+        response = self.client.post("/conversion-service/convert/" + fileId, headers={'Content-Disposition':fileName, 'Via-Allowed-Users':'test'})
         return response
 
     def convert_file_nVIA(self, filename):
@@ -152,9 +152,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                     self.assertTrue(taskId)
                     self.assertIn(json.get("status"), {"queued", "started"})
 
-                    ttl = 50
+                    ttl = 25
                     while (ttl > 0):
-                        time.sleep(5)
+                        time.sleep(10)
                         response = self.status_file(taskId)
                         json = ujson.loads(response.data)
                         self.assertEqual(response.status_code, 200)
@@ -166,7 +166,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                             })
                             break
                         if (json.get("status") == "failed"):
-                            self.fail()
+                            self.fail("status failed - " + json.get("message"))
                         ttl-=1
 
                     if self.via_run == "True":

@@ -151,7 +151,6 @@ def remove_XMPMeta(file):
         xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
 
         xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
-        xmp.delete_property(consts.XMP_NS_DC, 'dc:title')
         xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
         xmp.delete_property(consts.XMP_NS_DC, 'dc:description')
     try:

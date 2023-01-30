@@ -11,7 +11,7 @@ COMMON: &common
 
   VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
   VIA_CERT_PATH: /home/docsbox/certificate.pem
-  VIA_ALLOWED_USERS: 
+  VIA_ALLOWED_USERS:
   VIA_RETRY_MAX: 5
 
   THUMBNAILS_GENERATE: False
@@ -33,66 +33,77 @@ COMMON: &common
   CONVERTABLE_MIMETYPES:
     application/pdf: # Portable Document Format
       name: "PDF - Portable Document Format"
+      filter: "writer_pdf_import"
       formats: PDF_EXPORT_FORMATS
       default_options: PDF_DEFAULT_OPTIONS
     application/msword: # Microsoft Word 2003
       name: "Microsoft Word 97/2000/XP"
+      filter: "MS Word 97"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.wordprocessingml.document: # Microsoft Word 2007
       name: "Microsoft Word 2007/2010 XML"
+      filter: "Office Open XML Text"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.ms-excel: # Microsoft Excel 2003
       name: "Microsoft Excel 97/2000/XP"
+      filter: "MS Excel 97"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: #Microsoft Excel 2007
       name: "Microsoft Excel 2007/2010 XML"
+      filter: "Calc Office Open XML"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.ms-powerpoint: # Microsoft Powerpoint 2003
       name: "Microsoft PowerPoint 97/2000/XP"
+      filter: "MS PowerPoint 97"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.openxmlformats-officedocument.presentationml.presentation: # Microsoft Powerpoint 2007
       name: "Microsoft PowerPoint 2007/2010 XML"
+      filter: "Impress Office Open XML"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     text/rtf: # Rich Text Format
       name: "Rich Text Format"
+      filter: "Rich Text Format"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.sun.xml.writer: # sxw OpenDocument Text
       name: "OpenDocument Text"
+      filter: "StarOffice XML (Writer)"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.sun.xml.calc: # sxc OpenDocument SpreadSheet
       name: "OpenDocument SpreadSheet"
+      filter: "StarOffice XML (Calc)"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.sun.xml.draw: # sxd OpenDocument Graphics
       name: "OpenDocument Draw"
+      filter: "impress_StarOffice_XML_Draw"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.sun.xml.impress: # sxi OpenDocument Presentation
       name: "OpenDocument Presentation"
+      filter: "StarOffice XML (Impress)"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
-    application/vnd.sun.xml.writer.global: # sxg
-      name: "OpenDocument Text"
-      formats: DOCUMENT_EXPORT_FORMATS
-      default_options: DOCUMENT_DEFAULT_OPTIONS
     application/x-iwork-keynote-sffkey: #Apple Keynote
       name: "Apple Keynote"
+      filter: "Apple Keynote"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/x-iwork-numbers-sffnumbers: #Apple Numbers
       name: "Apple Numbers"
+      filter: "Apple Numbers"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/x-iwork-pages-sffpages: #Apple Pages
       name: "Apple Pages"
+      filter: "Apple Pages"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     image/jpeg: # Joint Photographic Group
@@ -109,18 +120,22 @@ COMMON: &common
       default_options: IMAGE_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.text: # LibreOffice Word
       name: "OpenDocument Text"
+      filter: "writer8"
       formats: DOCUMENT_EXPORT_FORMATS
       default_options: DOCUMENT_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.spreadsheet: # LibreOffice Calc
       name: "OpenDocument SpreadSheet"
+      filter: "calc8"
       formats: SPREADSHEET_EXPORT_FORMATS
       default_options: SPREADSHEET_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.presentation: # LibreOffice Impress
       name: "OpenDocument Presentation"
+      filter: "impress8"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
     application/vnd.oasis.opendocument.graphics: # LibreOffice Draw
       name: "OpenDocument Draw"
+      filter: "draw8"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
 
@@ -139,16 +154,29 @@ COMMON: &common
 
   PDF_DEFAULT_OPTIONS: &DEFAULT_OPTIONS
     format: "pdf"
+    filter: "writer_pdf_Export"
     output_pdf_version: "1"
-    extra: ""
-  DOCUMENT_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
-  SPREADSHEET_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
-  PRESENTATION_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
-  IMAGE_DEFAULT_OPTIONS: *DEFAULT_OPTIONS
+  DOCUMENT_DEFAULT_OPTIONS: 
+    <<: *DEFAULT_OPTIONS
+    filter: "writer_pdf_Export"
+  SPREADSHEET_DEFAULT_OPTIONS:
+    <<: *DEFAULT_OPTIONS
+    filter: "calc_pdf_Export"
+  PRESENTATION_DEFAULT_OPTIONS: 
+    <<: *DEFAULT_OPTIONS
+    filter: "impress_pdf_Export"
+  IMAGE_DEFAULT_OPTIONS:
+    <<: *DEFAULT_OPTIONS
+    filter: "draw_pdf_Export"
   AUDIO_DEFAULT_OPTIONS:
     format: "mp3"
   VIDEO_DEFAULT_OPTIONS:
     format: "mp4"
+  
+  PDF_EXPORT_PARAMS:
+    SelectPdfVersion:
+      type: "long"
+      value: "1"
 
   FILEMIMETYPES: 
     [
