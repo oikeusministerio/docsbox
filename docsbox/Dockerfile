@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y software-properties-common \
 # Define fonts
 RUN echo debconf debconf/frontend select Noninteractive | debconf-set-selections \
     && echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
-RUN add-apt-repository ppa:libreoffice/libreoffice-still
+RUN add-apt-repository ppa:libreoffice/ppa
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone
 
@@ -48,5 +48,4 @@ ADD . /home/docsbox
 WORKDIR /home/
 RUN pip3 install --upgrade pip \
     && pip3 install -r docsbox/requirements.txt
-COPY ./config/registrymodifications-SelectPdfVersion-1.xcu /home/config/registrymodifications-SelectPdfVersion-1.xcu
-COPY ./config/registrymodifications-SelectPdfVersion-2.xcu /home/config/registrymodifications-SelectPdfVersion-2.xcu
+COPY ./config/registrymodifications.xcu /root/.config/libreoffice/4/user/registrymodifications.xcu
