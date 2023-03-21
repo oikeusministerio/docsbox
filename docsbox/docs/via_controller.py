@@ -30,3 +30,9 @@ def retry(call, max = int(app.config["VIA_RETRY_MAX"]), count = 0):
         logging.warn('Error in VIA call, retrying... : ' + str(e))
         time.sleep(1)
         return retry(call, max, count + 1)
+
+class VIAException(Exception):
+   
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message

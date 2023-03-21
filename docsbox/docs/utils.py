@@ -14,6 +14,7 @@ from PyPDF2.errors import PyPdfError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image, ExifTags
+from tempfile import NamedTemporaryFile
 from docsbox import app
 
 
@@ -106,12 +107,18 @@ def get_pdfa_version(nodes):
             conformance = x.firstChild.nodeValue
     return part + conformance
 
+def get_file_mimetype_from_data(data):
+    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"]) as tmp_file:
+        data.save(tmp_file)
+        tmp_file.flush()
+        return get_file_mimetype(tmp_file.name)
+
 def get_file_mimetype(file):
     try:   
-        mimeTypeFile = exiftool.ExifToolHelper().get_metadata(file.name)[0]["File:MIMEType"]
+        mimeTypeFile = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
         if mimeTypeFile == "application/pdf":
             #Check is PDFA and Version
-            with open(file.name, mode="rb") as fileData:
+            with open(file, mode="rb") as fileData:
                 input = PdfReader(fileData, strict=False)
                 try:
                     metadata = input.xmp_metadata
@@ -121,12 +128,12 @@ def get_file_mimetype(file):
                         if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
                             mimeTypeFile = "application/pdfa"
                 except (ExpatError):
-                    app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file.name))
+                    app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file))
 
         elif mimeTypeFile in app.config["GENERIC_MIMETYPES"]:
-            mimeTypeFile = magic.from_file(file.name, mime=True)
+            mimeTypeFile = magic.from_file(file, mime=True)
             if mimeTypeFile in app.config["GENERIC_MIMETYPES"]:
-                with open(file.name, mode="rb") as fileData:
+                with open(file, mode="rb") as fileData:
                     documentTypeFile = magic.from_buffer(fileData.read(2048))
                     for (fileMimetype, fileFormat) in itertools.zip_longest(app.config["FILEMIMETYPES"], app.config["FILEFORMATS"]): 
                         if documentTypeFile in fileFormat:
@@ -163,15 +170,16 @@ def remove_XMPMeta(file):
 def has_PDFA_XMP(file):
     try:
         with open(file, mode="rb") as fileData:
-            xmpfile = PdfReader(fileData, strict=False)
-            metadata = xmpfile.getXmpMetadata()
+            reader = PdfReader(fileData, strict=False)
+            metadata = reader.xmp_metadata
             if metadata is not None:
                 pdfa=app.config["PDFA"]
-                nodes = metadata.getNodesInNamespace("", pdfa["NAMESPACE"])
+                nodes = metadata.get_nodes_in_namespace("", pdfa["NAMESPACE"])
                 if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
                     return True
             return False
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 def removeAlpha(image_path):
@@ -203,13 +211,18 @@ def correct_orientation(image_path):
             image.save(image_path, image.format, exif=exif_bytes)
 
 def check_file_content(original, converted):
+    original_page_num = 0
+    converted_page_num = 0
+    has_content = False
     with open(original, mode="rb") as original_data:
-        original_pdf = PdfReader(original_data, strict=False)
-        original_page_num = original_pdf.numPages
+        original_reader = PdfReader(original_data, strict=False)
+        original_page_num = len(original_reader.pages)
 
     with open(converted, mode="rb") as converted_data:
-        converted_pdf = PdfReader(converted_data, strict=False)
-        page = PageObject(converted_data)
-        if (page.getContents() is None or original_page_num != len(converted_pdf.pages)):
-            return False
-    return True
+        converted_reader = PdfReader(converted_data, strict=False)
+        has_content = converted_reader.pages[0].get_contents()
+        converted_page_num = len(converted_reader.pages)
+    return has_content and original_page_num != 0 and converted_page_num != 0 and original_page_num == converted_page_num
+
+def check_file_path(path):
+    return os.path.exists(path)

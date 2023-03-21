@@ -6,8 +6,10 @@ COMMON: &common
   
   REDIS_URL: "redis://redis:6379/0"
   REDIS_JOB_TIMEOUT: 300
-  ORIGINAL_FILE_TTL: 300
   RESULT_FILE_TTL: 86400
+
+  CLEANER_JOB_INTREVAL: 900
+  FILE_TTL: 600
 
   VIA_URL: https://it1.integraatiopalvelu.fi/Tallennuspalvelu
   VIA_CERT_PATH: /home/docsbox/certificate.pem

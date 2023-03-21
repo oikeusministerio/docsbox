@@ -1,5 +1,4 @@
 import os
-import shutil
 import traceback
 import json
 
@@ -9,7 +8,7 @@ from img2pdf import convert as imagesToPdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
 from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, get_file_mimetype, remove_XMPMeta, check_file_content, has_PDFA_XMP, removeAlpha, correct_orientation
+from docsbox.docs.utils import make_zip_archive, make_thumbnails, remove_XMPMeta, check_file_content, has_PDFA_XMP, removeAlpha, correct_orientation
 from docsbox.docs.via_controller import save_file_on_via
 
 def get_task(task_id):
@@ -23,21 +22,16 @@ def remove_file(path):
     """
     return os.remove(path)
 
-def create_tmp_file_and_get_mimetype(original_file, filename, stream=False, delete=True):
-    result = { "mimetype": None, "tmp_file": None }
+def store_file(data, filename, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
-    with NamedTemporaryFile(delete=delete, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
+    with NamedTemporaryFile(delete=False, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
-            for chunk in original_file.iter_content(chunk_size=128):
+            for chunk in data.iter_content(chunk_size=128):
                 tmp_file.write(chunk)
         else:
-            original_file.save(tmp_file)
-        tmp_file.flush()
-        result['mimetype'] = get_file_mimetype(tmp_file)
+            data.save(tmp_file)
+    return tmp_file.name
 
-        if delete is False:    
-            result['tmp_file'] = tmp_file
-    return result
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def process_convertion(path, options, meta):
@@ -50,10 +44,10 @@ def process_convertion(path, options, meta):
             result = process_image_convertion(path, options, meta, current_task)
         else:
             return { "has_failed": True, "message": "Conversion for {0} is not supported".format(exportFormatType)}
-        if result and options["via_allowed_users"]:
+        if result and meta["save_in_via"]:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
-            result['fileId'] = r.headers.get("Document-id")
+            result['fileId'] = r.headers.get("Document-id")        
         return result
     except Exception as e:
         return { "has_failed": True, "message": str(e), "traceback": traceback.format_exc() }
@@ -64,9 +58,11 @@ def process_document_convertion(input_path, options, meta, current_task):
         script = app.config["GHOSTSCRIPT_EXEC"]
         if options.get("output_pdf_version", None) != "1":
             script[1] = script[1] + "=" + options.get("output_pdf_version", None)
+        print("Running ghostscript:")
         run(script + ['-sOutputFile=' + output_path, input_path])
 
-        temp_path = input_path if not check_file_content(input_path, output_path) else output_path
+        temp_path = input_path if check_file_content(input_path, output_path) == False else output_path
+        print("Temporary file is " + temp_path)
 
         force_ocr = 0
         while has_PDFA_XMP(temp_path) == False:
@@ -74,6 +70,7 @@ def process_document_convertion(input_path, options, meta, current_task):
                 script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
             elif (force_ocr > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
+            print("Running OCR My PDF as " + app.config["OCRMYPDF"]["FORCE"][force_ocr])
             run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
             temp_path= output_path
             force_ocr += 1
