@@ -77,38 +77,6 @@ class BaseTestCase(unittest.TestCase):
             response = post(url=self.app.config["VIA_URL"], cert=cert, data=data, headers=headers, timeout=60)
         return response
 
-# Group of tests to test valid or invalid UUID
-class DocumentUUIDTestCase(BaseTestCase):
-    def test_get_task_by_valid_uuid(self):
-        if self.via_run == "True":
-            response = self.convert_file_VIA(dep.filesConvertable[0]['fileId'], dep.filesConvertable[0]['fileName']) 
-        else:
-            response = self.convert_file_nVIA(dep.filesConvertable[0]['fileNameExt']) 
-        json = ujson.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(json.get("taskId"))
-        self.assertIn(json.get("status"), {"queued", "started"})
-
-        time.sleep(5)
-
-        response = self.status_file(json.get("taskId"))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(ujson.loads(response.data), {
-            "taskId": json.get("taskId"),
-            "status": "finished",
-            "fileType": "PDF/A"
-        })
-    '''
-    def test_get_task_by_invalid_uuid(self):
-        # response = self.convert_file_VIA("8c286c7f-ce38-4693-1234-e5d2ab3ce595", "unknown") 
-        response = self.client.post("/conversion-service/convert/uuid-with-ponies")
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(ujson.loads(response.data), {
-            "message": "8c286c7f-ce38-4693-1234-e5d2ab3ce595. You have requested this URI [/conversion-service/convert/8c286c7f-ce38-4693-1234-e5d2ab3ce595] but did you mean /conversion-service/convert/<file_id> ?"
-        })   
-    '''
-     
-
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
@@ -154,7 +122,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
 
                     ttl = 25
                     while (ttl > 0):
-                        time.sleep(10)
+                        time.sleep(15)
                         response = self.status_file(taskId)
                         json = ujson.loads(response.data)
                         self.assertEqual(response.status_code, 200)

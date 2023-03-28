@@ -58,11 +58,9 @@ def process_document_convertion(input_path, options, meta, current_task):
         script = app.config["GHOSTSCRIPT_EXEC"]
         if options.get("output_pdf_version", None) != "1":
             script[1] = script[1] + "=" + options.get("output_pdf_version", None)
-        print("Running ghostscript:")
         run(script + ['-sOutputFile=' + output_path, input_path])
 
         temp_path = input_path if check_file_content(input_path, output_path) == False else output_path
-        print("Temporary file is " + temp_path)
 
         force_ocr = 0
         while has_PDFA_XMP(temp_path) == False:
@@ -70,7 +68,6 @@ def process_document_convertion(input_path, options, meta, current_task):
                 script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
             elif (force_ocr > 1):
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            print("Running OCR My PDF as " + app.config["OCRMYPDF"]["FORCE"][force_ocr])
             run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
             temp_path= output_path
             force_ocr += 1
