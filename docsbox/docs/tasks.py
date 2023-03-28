@@ -47,7 +47,7 @@ def process_convertion(path, options, meta):
         if result and meta["save_in_via"]:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
-            result['fileId'] = r.headers.get("Document-id")        
+            result['fileId'] = r.headers.get("Document-id")
         return result
     except Exception as e:
         return { "has_failed": True, "message": str(e), "traceback": traceback.format_exc() }

@@ -179,7 +179,7 @@ def has_PDFA_XMP(file):
                     return True
             return False
     except Exception as e:
-        print(e)
+        app.errlog.log(logging.ERROR, str(e))
         return False
 
 def removeAlpha(image_path):
