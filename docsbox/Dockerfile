@@ -35,13 +35,13 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Install and build ExifTool
-RUN curl --remote-name https://exiftool.org/Image-ExifTool-12.49.tar.gz \
-    && gzip -dc Image-ExifTool-12.49.tar.gz | tar -xf - \
-    && cd Image-ExifTool-12.49 \
+# Install and build ExifTool 
+RUN curl --remote-name https://exiftool.org/Image-ExifTool-12.58.tar.gz \
+    && gzip -dc Image-ExifTool-12.58.tar.gz | tar -xf - \
+    && cd Image-ExifTool-12.58 \
     && perl Makefile.PL && make install \
     && cd .. \
-    && rm Image-ExifTool-12.49.tar.gz
+    && rm Image-ExifTool-12.58.tar.gz
 
 # Install docsbox
 ADD . /home/docsbox

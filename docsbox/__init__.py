@@ -1,11 +1,13 @@
+import redis
 from os import environ
 from flask import Flask
 from flask_rq2 import RQ
 from flask_restful import Api
 from ordbok.flask_helper import FlaskOrdbok
 from docsbox.logs import GraylogLogger
+from apscheduler.schedulers.background import BackgroundScheduler
 
-app = Flask(__name__)   
+app = Flask(__name__)
 ordbok = FlaskOrdbok()
 
 ordbok.init_app(app)
@@ -26,13 +28,21 @@ app.config.update({
     "GRAYLOG_SOURCE": environ.get("GRAYLOG_SOURCE", app.config["GRAYLOG_SOURCE"])
     })
 
+db = redis.Redis.from_url(REDIS_URL)
 api = Api(app)
 rq = RQ(app)
 if app.config["GRAYLOG_HOST"]:
-    app.logger = GraylogLogger("docsbox.access", app, "access")
-    app.errlog = GraylogLogger("docsbox.error", app, "error")
+    app.logger = GraylogLogger("docsbox.access", app.config, "access")
+    app.errlog = GraylogLogger("docsbox.error", app.config, "error")
 else:
     app.errlog = app.logger
+
+from docsbox.cleaner import cleaning_job
+
+# Creates a default Background Scheduler for file cleaning
+sched = BackgroundScheduler()
+sched.add_job(cleaning_job, 'interval', seconds=app.config["CLEANER_JOB_INTREVAL"])
+sched.start()
 
 from docsbox.docs.views import *
     

@@ -7,13 +7,13 @@ from graypy.handler import BaseGELFHandler
 
 class GraylogLogger(logging.LoggerAdapter):
 
-    def __init__(self, name, app, logtype):
-        logging_cfg = app.config["LOGGING"]
+    def __init__(self, name, config, logtype):
+        logging_cfg = config["LOGGING"]
         logger = logging.getLogger(name)
         logger.setLevel(logging._checkLevel(logging_cfg[logtype]["level"]))
 
-        httpsHandler = GelfHTTPHandler(host=app.config["GRAYLOG_HOST"], port=app.config["GRAYLOG_PORT"],
-                                        path=app.config["GRAYLOG_PATH"], localname=app.config["GRAYLOG_SOURCE"])
+        httpsHandler = GelfHTTPHandler(host=config["GRAYLOG_HOST"], port=config["GRAYLOG_PORT"],
+                                        path=config["GRAYLOG_PATH"], localname=config["GRAYLOG_SOURCE"])
         logger.addHandler(httpsHandler)
 
         self.logger = logger
