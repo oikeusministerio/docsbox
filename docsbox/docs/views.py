@@ -1,5 +1,3 @@
-import logging
-import traceback
 import json
 
 from datetime import datetime
@@ -11,16 +9,18 @@ from docsbox.docs.tasks import *
 from docsbox.docs.utils import *
 from docsbox.docs.via_controller import *
 
+
 def abort(status_code, message, request, traceback=None):
     if status_code >= 500:
         error_level = logging.CRITICAL
     elif status_code >= 400:
         error_level = logging.ERROR
-    app.errlog.log(error_level, message, extra={ "request": request, "status": str(status_code) })
-    response = jsonify( { "request": str(request), "status": str(status_code), "message": str(message), "traceback": str(traceback) } )
+    app.errlog.log(error_level, message, extra={"request": request, "status": str(status_code)})
+    response = jsonify({"request": str(request), "status": str(status_code), "message": str(message), "traceback": str(traceback)})
     response.status_code = status_code
     response.content_type = "application/json"
     return response
+
 
 class DocumentStatusView(Resource):
 
@@ -36,10 +36,10 @@ class DocumentStatusView(Resource):
                 if task.result:
                     if not isinstance(task.result, dict):
                         response["status"] = "failed"
-                        app.errlog.log(logging.ERROR, 'Error: %s'%str(task.result), extra={ "response":response, "request": request, "status": str(500) })
+                        app.errlog.log(logging.ERROR, 'Error: %s' % str(task.result), extra={"response": response, "request": request, "status": str(500)})
                     elif task.result["has_failed"]:
                         response["status"] = "failed"
-                        app.errlog.log(logging.ERROR, 'Error: %s %s'%(task.result["message"], task.result["traceback"]), extra={ "response":response, "request": request, "status": str(500) })
+                        app.errlog.log(logging.ERROR, 'Error: %s %s' % (task.result["message"], task.result["traceback"]), extra={"response": response, "request": request, "status": str(500)})
                     else:
                         response["status"] = task.get_status()
                         response["fileType"] = task.result["fileType"]
@@ -50,6 +50,7 @@ class DocumentStatusView(Resource):
         except Exception as e:
             return abort(500, e, request, traceback.format_exc())
         return response
+
 
 class DocumentTypeView(Resource):
 
@@ -75,13 +76,14 @@ class DocumentTypeView(Resource):
                     response["fileType"] = "PDF/A"
                 else:
                     response["fileType"] = mimetype
-        except VIAException as viaEr:
-            return abort(viaEr.code, viaEr.message, request, traceback.format_exc())
+        except VIAException as via_err:
+            return abort(via_err.code, via_err.message, request, traceback.format_exc())
         except Exception as e:
             return abort(500, e, request, traceback.format_exc())
         
         return response
-             
+
+
 class DocumentConvertView(Resource):
 
     def post(self, file_id):
@@ -94,7 +96,7 @@ class DocumentConvertView(Resource):
                 filename = request.files["file"].filename
                 file_path = store_file(request.files["file"], filename)
                 mimetype = get_file_mimetype(file_path)
-                save_in_via= False
+                save_in_via = False
 
             elif file_id and is_valid_uuid(file_id):
                 file_info = get_file_info(request, file_id)
@@ -105,13 +107,13 @@ class DocumentConvertView(Resource):
                 save_in_via = True
             else:
                 return abort(400, "No file has sent nor valid file_id given.", request)
-            
+
             if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                response = { "status": "corrupted" if mimetype == "Unknown/Corrupted" else "non-convertable", "fileType": mimetype }
+                response = {"status": "corrupted" if mimetype == "Unknown/Corrupted" else "non-convertable", "fileType": mimetype}
             else:
-                task = process_convertion.queue(file_path, set_options(request.headers, mimetype), { "filename": remove_extension(filename), "mimetype": mimetype, "save_in_via": save_in_via})
-                response = { "taskId": task.id, "status": task.get_status() }
-                app.logger.log(logging.INFO, "Queued conversion task %s"%task.id, extra={ "request": request, "status": "200" })
+                task = process_convertion.queue(file_path, set_options(request.headers, mimetype), {"filename": remove_extension(filename), "mimetype": mimetype, "save_in_via": save_in_via})
+                response = {"taskId": task.id, "status": task.get_status()}
+                app.logger.log(logging.INFO, "Queued conversion task %s" % task.id, extra={"request": request, "status": "200"})
         except ValueError as err:
             return abort(400, err.args[0], request)
         except VIAException as viaEr:
@@ -119,6 +121,7 @@ class DocumentConvertView(Resource):
         except Exception as e:
             return abort(500, e, request, traceback.format_exc())
         return response
+
 
 class DocumentDownloadView(Resource):
 
@@ -146,13 +149,13 @@ class DocumentDownloadView(Resource):
                                 "fileType": task.result["fileType"],
                                 "mimeType": task.result["mimeType"],
                                 "fileName": task.result["fileName"],
-                                "fileSize": task.result["fileSize"]
+                                "fileSize": task.result["fileSize"],
                             }
-                            app.logger.log(logging.INFO, "Conversion task %s finalized"%task.id, extra={"response": response, "request": request, "status": "200"})
+                            app.logger.log(logging.INFO, "Conversion task %s finalized" % task.id, extra={"response": response, "request": request, "status": "200"})
                         else:
-                            response= send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, download_name=task.result["fileName"])
+                            response = send_from_directory(app.config["MEDIA_PATH"], task.id, as_attachment=True, download_name=task.result["fileName"])
                             remove_file(app.config["MEDIA_PATH"] + task.id)
-                            app.logger.log(logging.INFO, "Conversion task %s finalized"%task.id, extra={"request": request, "status": "200"})
+                            app.logger.log(logging.INFO, "Conversion task %s finalized" % task.id, extra={"request": request, "status": "200"})
                     else:
                         return abort(404, "Task with no result", request)
                 else:
@@ -166,27 +169,29 @@ class DocumentDownloadView(Resource):
 
         return response
 
-def get_file_info(request, file_id):
+
+def get_file_info(req, file_id):
     file_info = {}
-    mimetype = request.headers.get('Content-Type')
-    if mimetype == None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+    mimetype = req.headers.get('Content-Type')
+    if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
         if db.exists('fileId:' + file_id) == 0:
             filename, tmp_file_path, mimetype = via_comunication(file_id)
             file_info = {"file_path": tmp_file_path, "mimetype": mimetype, "filename": filename, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
             db.set('fileId:' + file_id, json.dumps(file_info))
         else:
             file_info = json.loads(db.get('fileId:' + file_id))
-            if check_file_path(file_info["file_path"]) ==  False:
+            if not check_file_path(file_info["file_path"]):
                 filename, tmp_file_path, mimetype = via_comunication(file_id)
                 file_info = {"file_path": tmp_file_path, "mimetype": mimetype, "filename": filename, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
                 db.set('fileId:' + file_id, json.dumps(file_info))
-            elif file_info["filename"] == "" and request.headers.get('Content-Disposition'):
-                file_info["filename"] = request.headers.get('Content-Disposition')
+            elif file_info["filename"] == "" and req.headers.get('Content-Disposition'):
+                file_info["filename"] = req.headers.get('Content-Disposition')
                 file_info["datetime"] = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
                 db.set('fileId:' + file_id, json.dumps(file_info))
     else:
         file_info["mimetype"] = mimetype
     return file_info
+
 
 def via_comunication(file_id):
     try:
@@ -195,7 +200,7 @@ def via_comunication(file_id):
             filename = request.headers.get('Content-Disposition') if request.headers.get('Content-Disposition') else ""
             tmp_file_path = store_file(via_response, filename, stream=True)
             mimetype = via_response.headers.get('Content-Type')
-            if mimetype == None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+            if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                 mimetype = get_file_mimetype(tmp_file_path)
             return filename, tmp_file_path, mimetype
         elif via_response.status_code == 404:

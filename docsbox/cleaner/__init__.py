@@ -4,6 +4,7 @@ from docsbox import app, db
 from docsbox.docs.utils import check_file_path
 from datetime import datetime, timedelta
 
+
 def cleaning_job():
     file_ttl = datetime.now() - timedelta(seconds=app.config["FILE_TTL"])
     keys = db.keys('fileId:*')
