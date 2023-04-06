@@ -28,12 +28,6 @@ class UnoConverter:
         self.desktop = self.service.createInstanceWithContext(
             "com.sun.star.frame.Desktop", self.context
         )
-        self.filter_service = self.service.createInstanceWithContext(
-            "com.sun.star.document.FilterFactory", self.context
-        )
-        self.type_service = self.service.createInstanceWithContext(
-            "com.sun.star.document.TypeDetection", self.context
-        )
 
     def convert(self, inpath, outfilter, pdf_version, outpath):
         input_props = (PropertyValue(Name="ReadOnly", Value=True),)
