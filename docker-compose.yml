@@ -23,7 +23,6 @@ services:
 
   rqworker:
     restart: always
-    build: ./docsbox
     image: oikeusministerio/common-conversion
     init: true
     depends_on:

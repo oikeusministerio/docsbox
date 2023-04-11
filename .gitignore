@@ -56,3 +56,5 @@ docs/_build
 
 *.pem
 **/outputs/*.pdf
+
+.idea
