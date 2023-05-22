@@ -8,7 +8,7 @@ from flask_restful import Api
 from ordbok.flask_helper import FlaskOrdbok
 from docsbox.logs import GraylogLogger
 from apscheduler.schedulers.background import BackgroundScheduler
-from docsbox.docs.unoconv import UnoServer, UnoConverter
+from docsbox.docs.unoconv import UnoServer
 
 app = Flask(__name__)
 ordbok = FlaskOrdbok()
@@ -53,6 +53,7 @@ api.add_resource(DocumentTypeView, "/conversion-service/get-file-type/<file_id>"
 api.add_resource(DocumentConvertView, "/conversion-service/convert/<file_id>")
 api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")
 api.add_resource(DocumentDownloadView, "/conversion-service/get-converted-file/<task_id>")
+api.add_resource(DocumentConvertViewV2, "/conversion-service/v2/convert/<file_id>")
 
 if 'worker' in os.path.basename(sys.argv[1]):
     UnoServer()

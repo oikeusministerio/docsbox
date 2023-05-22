@@ -1,21 +1,22 @@
 import os
 import traceback
+import json
 
 from subprocess import run
 from wand.image import Image
 from img2pdf import convert as images_to_pdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
-from docsbox import app, rq
-from docsbox.docs.utils import make_zip_archive, make_thumbnails, remove_xmp_meta, check_file_content, has_PDFA_XMP, remove_alpha, correct_orientation
-from docsbox.docs.via_controller import save_file_on_via
+from datetime import datetime
+from docsbox import app, rq, db
 from docsbox.docs.unoconv import UnoConverter
+from docsbox.docs.utils import *
+from docsbox.docs.via_controller import *
 
 
 def get_task(task_id):
     queue = rq.get_queue()
     return queue.fetch_job(task_id)
-
 
 def remove_file(path):
     """
@@ -24,20 +25,40 @@ def remove_file(path):
     """
     return os.remove(path)
 
-
-def store_file(data, filename, stream=False):
-    suffix = os.path.splitext(filename)[1] if filename else ""
-    with NamedTemporaryFile(delete=False, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
-        if stream:
-            for chunk in data.iter_content(chunk_size=128):
-                tmp_file.write(chunk)
+@rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
+def process_convertion_by_id(file_id, headers):
+    try:
+        if db.exists('fileId:' + file_id) != 0:
+            file_info = json.loads(db.get('fileId:' + file_id))
+            if "file_path" not in file_info:
+                via_response = get_file_from_via(file_id)
+                if via_response.status_code == 200:
+                    file_info["file_path"] = store_file(via_response, file_info["filename"], stream=True)
+                else:
+                    return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
         else:
-            data.save(tmp_file)
-    return tmp_file.name
-
+            filename = headers.get('Content-Disposition')
+            mimetype = headers.get('Content-Type')
+            via_response = get_file_from_via(file_id)
+            if via_response.status_code == 200:
+                file_path = store_file(via_response, filename, stream=True)
+                if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+                    mimetype = get_file_mimetype(file_path)
+            else:
+                return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
+            file_info = {"file_id": file_id, "mimetype": mimetype, "filename": filename, "file_path": file_path, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
+        db.set('fileId:' + file_id, json.dumps(file_info))
+        return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": remove_extension(file_info["filename"]), "mimetype": file_info["mimetype"], "save_in_via": True})
+    except Exception as e:
+        return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def process_convertion(path, options, meta):
+    if meta["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
+        status = "corrupted" if meta["mimetype"] == "Unknown/Corrupted" else "non-convertable"
+        message = "Conversion is not possible for filetype " + meta["mimetype"]
+        return {"has_failed": True, "status": status, "message": message, "traceback": ""}
+
     try:
         current_task = get_current_job()
         export_format_type = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
@@ -47,7 +68,7 @@ def process_convertion(path, options, meta):
             result = process_image_convertion(path, options, meta, current_task)
         else:
             return {"has_failed": True, "message": "Conversion for {0} is not supported".format(export_format_type)}
-        if result and meta["save_in_via"]:
+        if meta["save_in_via"] is True:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
             result['fileId'] = r.headers.get("Document-id")
@@ -102,6 +123,11 @@ def process_document_convertion(input_path, options, meta, current_task):
 
 
 def process_image_convertion(input_path, options, meta, current_task):
+    if meta["mimetype"] == "image/heif":
+        tmp_path = heic_to_png(input_path)
+        remove_file(input_path)
+        input_path = tmp_path
+
     remove_alpha(input_path)
     correct_orientation(input_path)
 

@@ -15,7 +15,7 @@ def cleaning_job():
     for key in keys :
         file_info = json.loads(db.get(key))
         if datetime.strptime(file_info["datetime"], '%Y/%m/%d-%H:%M:%S') < file_ttl:
-            if check_file_path(file_info["file_path"]):
+            if "file_path" in file_info and check_file_path(file_info["file_path"]):
                 os.remove(file_info["file_path"])
             keys_to_remove.append(key)
 

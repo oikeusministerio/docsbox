@@ -1,15 +1,17 @@
 version: "3.7"
 services:
   test:
-    build: ./docsbox
     image: oikeusministerio/common-conversion
     depends_on:
       - redis
       - web
+      - nginx
       - rqworker
     volumes:
       - ./docsbox:/home/docsbox
-      - /media:/home/docsbox/media
+      - ./media:/home/docsbox/media
+    networks:
+      - conversion-network
     extra_hosts:
       - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
     command: nosetests docsbox/docs/tests/test_views.py

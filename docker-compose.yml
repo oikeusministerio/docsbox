@@ -10,7 +10,9 @@ services:
       - "8000:8000"
     volumes:
       - ./docsbox:/home/docsbox
-      - /media:/home/docsbox/media
+      - ./media:/home/docsbox/media
+    networks:
+      - conversion-network
     extra_hosts:
       - it1.integraatiopalvelu.fi:0.0.0.0
       - logdev.om.fi:0.0.0.0
@@ -30,8 +32,10 @@ services:
       - web
     volumes:
       - ./docsbox:/home/docsbox
-      - /media:/home/docsbox/media
+      - ./media:/home/docsbox/media
       - /config:/root/.config/libreoffice/4/user
+    networks:
+      - conversion-network
     extra_hosts:
       - it1.integraatiopalvelu.fi:0.0.0.0
       - logdev.om.fi:0.0.0.0
@@ -47,6 +51,8 @@ services:
     image: nginx
     depends_on:
       - web
+    networks:
+      - conversion-network
     ports:
       - "80:80"
     volumes:
@@ -55,6 +61,8 @@ services:
   redis:
     restart: always
     image: redis:latest
+    networks:
+      - conversion-network
     ports:
       - "6379:6379"
     volumes:
@@ -62,3 +70,6 @@ services:
 
 volumes:
   redisdata:
+
+networks:
+  conversion-network:
