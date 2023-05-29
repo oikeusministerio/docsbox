@@ -1,5 +1,4 @@
 import os
-import ujson
 import unittest
 import docsbox
 import time
@@ -18,55 +17,47 @@ class BaseTestCase(unittest.TestCase):
         self.inputs = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),"inputs/"
         )
-        self.client = docsbox.app.test_client()
 
     # Check File Type
     def detection_file_type_VIA(self, fileId):
-        response = self.client.post("/conversion-service/get-file-type/" + fileId)
+        response = post(url="http://nginx:80/conversion-service/get-file-type/" + fileId)
         return response
 
     def detection_file_type_nVIA(self, filename):
-        response = self.client.post("/conversion-service/get-file-type/0", data={
-            "file": (open(os.path.join(self.inputs, filename), "rb"), filename)
-        })
+        with open(os.path.join(self.inputs, filename), "rb") as data:
+            response = post(url="http://nginx:80/conversion-service/get-file-type/0", files={"file": data})
         return response
 
     # Convert File
     def convert_file_VIA(self, fileId, fileName):
-        response = self.client.post("/conversion-service/convert/" + fileId, headers={'Content-Disposition':fileName, 'Via-Allowed-Users':'test'})
+        response = post(url="http://nginx:80/conversion-service/convert/" + fileId, headers={'Content-Disposition':fileName, 'Via-Allowed-Users':'test'})
         return response
 
     def convert_file_nVIA(self, filename):
         if filename:
-            response = self.client.post("/conversion-service/convert/0", data={
-                "file": (open(os.path.join(self.inputs, filename), "rb"), filename)
-            })
+            with open(os.path.join(self.inputs, filename), "rb") as data:
+                response = post(url="http://nginx:80/conversion-service/convert/0", files={"file": data})
         else:
-            response = self.client.post("/conversion-service/convert/0")
+            response = post(url="http://nginx:80/conversion-service/convert/0")
         return response
 
     def convert_file_with_options_VIA(self, fileId, headers):
-        response = self.client.post("/conversion-service/convert/" + fileId, headers=headers)
+        response = post(url="http://nginx:80/conversion-service/convert/" + fileId, headers=headers)
         return response
 
     def convert_file_with_options_nVIA(self, filename, headers):
-        response = self.client.post("/conversion-service/convert/0", data={
-            "file": (open(os.path.join(self.inputs, filename), "rb"), filename)}, headers=headers)
+        with open(os.path.join(self.inputs, filename), "rb") as data:
+            response = post(url="http://nginx:80/conversion-service/convert/0", files={"file": data}, headers=headers)
         return response
 
     # File Status
     def status_file(self, taskId):
-        response = self.client.get("/conversion-service/status/" + taskId)
+        response = get(url="http://nginx:80/conversion-service/status/" + taskId)
         return response
 
     # Download File
     def download_file(self, taskId):
-        response = self.client.get("/conversion-service/get-converted-file/" + taskId)
-        return response
-
-    # Delete Temporary Files
-    def delete_temporary_file(self, taskId):
-        response = self.client.delete("/conversion-service/delete-tmp-file/" + taskId)
+        response = get(url="http://nginx:80/conversion-service/get-converted-file/" + taskId)
         return response
 
     # Save File to VIA
@@ -92,8 +83,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 response = self.detection_file_type_VIA(file["fileId"])
             else:
                 response = self.detection_file_type_nVIA(file['fileNameExt']) 
-            json = ujson.loads(response.data)  
-
+            json = response.json()
             self.assertEqual(response.status_code, 200)
 
             isConvertable = json.get("convertable")
@@ -113,7 +103,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                 response = self.convert_file_VIA(file['fileId'], file['fileNameExt'])
             else:
                 response = self.convert_file_nVIA(file['fileNameExt'])
-            json = ujson.loads(response.data)
+            json = response.json()
             if response.status_code == 200:
                 if isConvertable:
                     taskId = json.get("taskId")
@@ -124,10 +114,10 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                     while (ttl > 0):
                         time.sleep(15)
                         response = self.status_file(taskId)
-                        json = ujson.loads(response.data)
+                        json = response.json()
                         self.assertEqual(response.status_code, 200)
                         if (json.get("status") == "finished"):
-                            self.assertEqual(ujson.loads(response.data), {
+                            self.assertEqual(json, {
                             "taskId": taskId,
                             "status": "finished",
                             "fileType": "PDF/A"
@@ -141,7 +131,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         # Download file with VIA
                         response = self.download_file(taskId)
                         self.assertEqual(response.status_code, 200)
-                        json = ujson.loads(response.data)
+                        json = response.json()
                         self.assertEqual(json, {
                             "taskId": taskId,
                             "status": "finished",
@@ -170,7 +160,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         response = self.download_file(taskId)  
                         self.assertEqual(response.status_code, 200)
                         with open(file_dir, "wb") as file:
-                            file.write(response.data)
+                            file.write(response.content)
                         existFile = os.path.exists(file_dir)
                         self.assertEqual(existFile, True)
                         self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))

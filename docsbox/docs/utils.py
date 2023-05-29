@@ -1,3 +1,4 @@
+import sys
 import os
 import zipfile
 import ujson
@@ -8,15 +9,20 @@ import piexif
 import logging
 import exiftool
 
+from requests import exceptions
 from xml.parsers.expat import ExpatError
-from PyPDF2 import PdfReader, PageObject
+from PyPDF2 import PdfReader
 from PyPDF2.errors import PyPdfError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image, ExifTags
+from pillow_heif import register_heif_opener
 from tempfile import NamedTemporaryFile
 from docsbox import app
+from docsbox.docs.via_controller import *
 
+if 'worker' in os.path.basename(sys.argv[1]):
+    register_heif_opener()
 
 def make_zip_archive(uuid, tmp_dir):
     """
@@ -37,11 +43,14 @@ def set_options(headers, mimetype):
     """
     Validates options
     """
-    options = app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["default_options"]]
+    if mimetype in app.config["CONVERTABLE_MIMETYPES"]:
+        options = app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["default_options"]]
+    else:
+        options = app.config["PDF_DEFAULT_OPTIONS"]
     if headers:
         if 'conversion-format' in headers:
             conversion_format = headers["conversion-format"]
-            if conversion_format in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]]:
+            if mimetype in app.config["CONVERTABLE_MIMETYPES"] and conversion_format in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]]:
                 options["format"] = conversion_format
             else:
                 message = "'{0}' mimetype can't be converted to '{1}'"
@@ -110,12 +119,54 @@ def get_pdfa_version(nodes):
             conformance = x.firstChild.nodeValue
     return part + conformance
 
+def store_file_from_id(file_id, filename):
+    try:
+        via_response = get_file_from_via(file_id)
+        if via_response.status_code == 200:
+            return store_file(via_response, filename, True)
+        elif via_response.status_code == 404:
+            raise VIAException(404, "File id was not found.")
+        else:
+            raise VIAException(via_response.status_code, via_response)
+    except exceptions.Timeout:
+        raise VIAException(504, "VIA service took too long to respond.")
 
-def get_file_mimetype_from_data(data):
-    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"]) as tmp_file:
-        data.save(tmp_file)
+def store_file(data, filename, stream=False):
+    suffix = os.path.splitext(filename)[1] if filename else ""
+    with NamedTemporaryFile(delete=False, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
+        if stream:
+            for chunk in data.iter_content(chunk_size=8192):
+                tmp_file.write(chunk)
+        else:
+            data.save(tmp_file)
+    return tmp_file.name
+
+def get_file_mimetype_from_id(file_id, filename=None):
+    try:
+        via_response = get_file_from_via(file_id)
+        if via_response.status_code == 200:
+            mimetype = via_response.headers.get('Content-Type')
+            if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+                mimetype = get_file_mimetype_from_data(via_response, filename, stream=True)
+            return mimetype
+        elif via_response.status_code == 404:
+            raise VIAException(404, "File id was not found.")
+        else:
+            raise VIAException(via_response.status_code, via_response)
+    except exceptions.Timeout:
+        raise VIAException(504, "VIA service took too long to respond.")
+
+def get_file_mimetype_from_data(data, filename, stream=False):
+    suffix = os.path.splitext(filename)[1] if filename else ""
+    with NamedTemporaryFile(suffix=suffix) as tmp_file:
+        if stream:
+            for chunk in data.iter_content(chunk_size=8192):
+                tmp_file.write(chunk)
+        else:
+            data.save(tmp_file)
         tmp_file.flush()
-        return get_file_mimetype(tmp_file.name)
+        mimetype = get_file_mimetype(tmp_file.name)
+    return mimetype
 
 
 def get_file_mimetype(file):
@@ -237,6 +288,12 @@ def check_file_content(original, converted):
         converted_page_num = len(converted_reader.pages)
 
     return has_content and original_page_num != 0 and converted_page_num != 0 and original_page_num == converted_page_num
+
+def heic_to_png(path):
+    tmp_file = app.config["MEDIA_PATH"] + "tmp"
+    with PIL_Image.open(path) as image:
+        image.save(tmp_file, "png")
+    return tmp_file
 
 
 def check_file_path(path):

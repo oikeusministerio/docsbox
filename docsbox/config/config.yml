@@ -140,6 +140,10 @@ COMMON: &common
       filter: "draw8"
       formats: PRESENTATION_EXPORT_FORMATS
       default_options: PRESENTATION_DEFAULT_OPTIONS
+    image/heif: # HEIC
+      name: HEIC - High Efficiency Image File Format
+      formats: IMAGE_EXPORT_FORMATS
+      default_options: IMAGE_DEFAULT_OPTIONS
 
   OUTPUT_FILETYPE_PDF:
     name: "PDF/A"
