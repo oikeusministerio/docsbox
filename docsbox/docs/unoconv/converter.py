@@ -44,7 +44,18 @@ class UnoConverter:
 
         try:
             filter_data = uno.Any("[]com.sun.star.beans.PropertyValue",
-                                  tuple([PropertyValue(Name="SelectPdfVersion", Value=int(pdf_version))]))
+                                  tuple([
+                                      PropertyValue(Name="SelectPdfVersion", Value=int(pdf_version)),
+                                      PropertyValue(Name="ExportFormFields", Value=False),
+                                      PropertyValue(Name="ConvertOOoTargetToPDFTarget", Value=True),
+                                      PropertyValue(Name="ExportNotes", Value=True),
+                                      PropertyValue(Name="FormsType", Value=1),
+                                      PropertyValue(Name="MaxImageResolution", Value=300),
+                                      PropertyValue(Name="Quality", Value=80),
+                                      PropertyValue(Name="ReduceImageResolution", Value=True),
+                                      PropertyValue(Name="PDFUACompliance", Value=False),
+                                      PropertyValue(Name="UseTaggedPDF", Value=True)
+                                  ]))
             output_props = (
                 PropertyValue(Name="FilterName", Value=outfilter),
                 PropertyValue(Name="FilterData", Value=filter_data),
