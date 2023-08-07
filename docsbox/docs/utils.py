@@ -18,10 +18,10 @@ from wand.image import Image
 from PIL import Image as PIL_Image, ExifTags
 from pillow_heif import register_heif_opener
 from tempfile import NamedTemporaryFile
-from docsbox import app
+from docsbox import app, is_worker
 from docsbox.docs.via_controller import *
 
-if 'worker' in os.path.basename(sys.argv[1]):
+if is_worker:
     register_heif_opener()
 
 def make_zip_archive(uuid, tmp_dir):
@@ -240,7 +240,7 @@ def has_PDFA_XMP(file):
                     return True
             return False
     except Exception as e:
-        app.errlog.log(logging.ERROR, str(e))
+        app.logger.log(logging.ERROR, str(e))
         return False
 
 

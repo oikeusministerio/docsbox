@@ -1,9 +1,7 @@
-
 #------------------------------------------------------------------------------
 # $File: msooxml,v 1.19 2023/03/14 19:46:15 christos Exp $
 # msooxml:  file(1) magic for Microsoft Office XML
 # From: Ralf Brown <ralf.brown@gmail.com>
-
 # .docx, .pptx, and .xlsx are XML plus other files inside a ZIP
 #   archive.  The first member file is normally "[Content_Types].xml".
 #   but some libreoffice generated files put this later. Perhaps skip
@@ -11,7 +9,6 @@
 # Since MSOOXML doesn't have anything like the uncompressed "mimetype"
 #   file of ePub or OpenDocument, we'll have to scan for a filename
 #   which can distinguish between the three types
-
 0		name		msooxml
 >0		string		word/		Microsoft Word 2007+
 !:mime application/vnd.openxmlformats-officedocument.wordprocessingml.document
@@ -26,7 +23,6 @@
 !:mime application/vnd.ms-visio.drawing.main+xml
 >0		string		AppManifest.xaml	Microsoft Silverlight Application
 !:mime application/x-silverlight-app
-
 # start by checking for ZIP local file header signature
 0		string		PK\003\004
 !:strength +10

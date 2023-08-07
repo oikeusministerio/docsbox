@@ -1,34 +1,32 @@
 import logging
 import ssl
+import graypy
+import socket
 
+from logging.handlers import SocketHandler
 from http.client import HTTPSConnection
 from graypy.handler import BaseGELFHandler
 
-
 class GraylogLogger(logging.LoggerAdapter):
 
-    def __init__(self, name, config, logtype):
+    def __init__(self, name, config, facility):
         logging_cfg = config["LOGGING"]
-        logger = logging.getLogger(name)
-        logger.setLevel(logging._checkLevel(logging_cfg[logtype]["level"]))
+        self.logger = logging.getLogger(name)
+        self.setLevel(logging._checkLevel(logging_cfg["level"]))
 
-        httpsHandler = GelfHTTPHandler(host=config["GRAYLOG_HOST"], port=config["GRAYLOG_PORT"],
-                                        path=config["GRAYLOG_PATH"], localname=config["GRAYLOG_SOURCE"])
-        logger.addHandler(httpsHandler)
+        self.logger.addHandler(GelfHTTPHandler(host=config["GRAYLOG_HOST"], port=config["GRAYLOG_PORT"],
+                                        path=config["GRAYLOG_PATH"], localname=config["GRAYLOG_SOURCE"], facility=facility))
 
-        self.logger = logger
-        self.extra = { **logging_cfg["extra"], **logging_cfg[logtype]["extra"]}
+        self.extra = { **logging_cfg["extra"] }
 
-    def log(self, level, msg, extra= None, *args, **kwargs):
-        kwargs["extra"]= self.extra
-        if extra:
-            if "request" in extra:
-                kwargs["extra"]["user"]= '%s - "%s"' % (extra["request"].remote_addr, extra["request"].user_agent.string)
-                kwargs["extra"]["request"]= '%s - "%s"' % (extra["request"].method, extra["request"].path)
-            if "status" in extra:
-                kwargs["extra"]["status"]= extra["status"]
-
+    def log(self, level, msg, request=None, extra= None, *args, **kwargs):
         if self.isEnabledFor(level):
+            kwargs["extra"] = {**self.extra}
+            if request:
+                kwargs["extra"]["user"]= '%s - "%s"' % (request.remote_addr, request.user_agent.string)
+                kwargs["extra"]["request"]= '%s - "%s"' % (request.method, request.path)
+            if extra and isinstance(extra, dict):
+                kwargs["extra"].update(extra)
             self.logger.log(level, msg, *args, **kwargs)
 
 

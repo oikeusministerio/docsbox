@@ -222,14 +222,7 @@ COMMON: &common
   GRAYLOG_PATH: '/gelf'
   GRAYLOG_SOURCE: 
   LOGGING:
-    access:
-      level: 'INFO'
-      extra:
-        logtype: 'access'
-    error:
-      level: 'WARNING'
-      extra:
-        logtype: 'error'
+    level: 'DEBUG'
     extra:
       system: 'Document Conversion Service'
       environment: 'DEV'
