@@ -7,7 +7,7 @@ from wand.image import Image
 from img2pdf import convert as images_to_pdf
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from rq import get_current_job
-from datetime import datetime
+from datetime import datetime, timezone
 from docsbox import app, rq, db
 from docsbox.docs.unoconv import UnoConverter
 from docsbox.docs.utils import *
@@ -48,7 +48,7 @@ def process_convertion_by_id(file_id, headers):
                 return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
             file_info = {"file_id": file_id, "mimetype": mimetype, "filename": filename, "file_path": file_path, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
         db.set('fileId:' + file_id, json.dumps(file_info))
-        return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": remove_extension(file_info["filename"]), "mimetype": file_info["mimetype"], "save_in_via": True})
+        return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": file_info["filename"], "mimetype": file_info["mimetype"], "file_id": file_info["file_id"], "save_in_via": True})
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
 
@@ -58,7 +58,6 @@ def process_convertion(path, options, meta):
         status = "corrupted" if meta["mimetype"] == "Unknown/Corrupted" else "non-convertable"
         message = "Conversion is not possible for filetype " + meta["mimetype"]
         return {"has_failed": True, "status": status, "message": message, "traceback": ""}
-
     try:
         current_task = get_current_job()
         export_format_type = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
@@ -72,6 +71,7 @@ def process_convertion(path, options, meta):
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
             result['fileId'] = r.headers.get("Document-id")
+        log_task_completion(current_task, result, meta)
         return result
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
@@ -116,7 +116,7 @@ def process_document_convertion(input_path, options, meta, current_task):
         if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None):
             output_path, file_name = thumbnail_generator(input_path, options, meta, current_task, None)
 
-    file_name = "{0}.{1}".format(meta["filename"], options["format"])
+    file_name = "{0}.{1}".format(remove_extension(meta["filename"]), options["format"])
     file_size = os.path.getsize(output_path)
     remove_file(input_path)
     return {"fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": file_size, "has_failed": False}
@@ -135,7 +135,8 @@ def process_image_convertion(input_path, options, meta, current_task):
         tmp_file.write(images_to_pdf(input_path))
         tmp_file.flush()
     remove_file(input_path)
-    meta["mimetype"] = "application/pdf"
+    new_metadata = {**meta}
+    new_metadata["mimetype"] = "application/pdf"
     return process_document_convertion(tmp_file.name, options, meta, current_task)
 
 
@@ -156,3 +157,19 @@ def thumbnail_generator(input_path, options, meta, current_task, original_docume
             pdf_tmp_file.close()
         thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
         return make_zip_archive(current_task.id, tmp_dir)
+
+def log_task_completion(task, result, meta):
+    task_time = datetime.now(timezone.utc) - task.started_at.replace(tzinfo=timezone.utc)
+    extra = { "task_id" : task.id,
+            "converted_file_size": str(result["fileSize"]),
+            "conversion_time": str(task_time),
+            "original_filename": meta["filename"],
+            "original_mimetype": meta["mimetype"],
+            "converted_filename": result["fileName"],
+            "converted_mimetype": result["mimeType"]}
+    if "file_id" in meta:
+        extra["original_file_id"] = meta["file_id"]
+    if "fileId" in result:
+        extra["converted_file_id"] = result["fileId"]
+
+    app.logger.log(logging.INFO, "Finished conversion task: %s" % task.id, extra=extra)
