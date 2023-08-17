@@ -43,6 +43,7 @@ class UnoConverter:
         )
 
         try:
+            # https://wiki.openoffice.org/wiki/API/Tutorials/PDF_export
             filter_data = uno.Any("[]com.sun.star.beans.PropertyValue",
                                   tuple([
                                       PropertyValue(Name="SelectPdfVersion", Value=int(pdf_version)),
@@ -62,5 +63,7 @@ class UnoConverter:
                 PropertyValue(Name="Overwrite", Value=True),
             )
             document.storeToURL(uno.systemPathToFileUrl(os.path.abspath(outpath)), output_props)
+        except Exception as e:
+            print(repr(e))
         finally:
             document.close(True)
