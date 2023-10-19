@@ -1,0 +1,4 @@
+.env*
+docsbox/certificate.pem
+docsbox/media
+docsbox/docs/tests

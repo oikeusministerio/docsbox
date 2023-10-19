@@ -1,11 +1,10 @@
-import json
 
-from datetime import datetime
 from flask import request, send_from_directory, jsonify
 from flask_restful import Resource
 from docsbox import app, db
 from docsbox.docs.tasks import *
 from docsbox.docs.utils import *
+
 
 def abort(status_code, message, request=None, extras={}, traceback=None):
     if status_code >= 500:
@@ -21,7 +20,8 @@ def abort(status_code, message, request=None, extras={}, traceback=None):
 
 class DocumentStatusView(Resource):
 
-    def get(self, task_id):
+    @staticmethod
+    def get(task_id):
         """
         Returns information about task status.
         """
@@ -52,7 +52,8 @@ class DocumentStatusView(Resource):
 
 class DocumentTypeView(Resource):
 
-    def post(self, file_id):
+    @staticmethod
+    def post(file_id):
         """
         Requests from VIA fileservice the file with given id.
         Returns the File Mimetype
@@ -84,7 +85,8 @@ class DocumentTypeView(Resource):
 
 class DocumentConvertView(Resource):
 
-    def post(self, file_id):
+    @staticmethod
+    def post(file_id):
         """
         Checks file mimetype and creates converting task of given file
         """
@@ -120,9 +122,11 @@ class DocumentConvertView(Resource):
             return abort(500, e, request, traceback=traceback.format_exc())
         return response
 
+
 class DocumentConvertViewV2(Resource):
 
-    def post(self, file_id):
+    @staticmethod
+    def post(file_id):
         """
         Creates converting task of given file
         """
@@ -150,9 +154,11 @@ class DocumentConvertViewV2(Resource):
             return abort(500, e, request, traceback=traceback.format_exc())
         return response
 
+
 class DocumentDownloadView(Resource):
 
-    def get(self, task_id):
+    @staticmethod
+    def get(task_id):
         """
         If task with given id is finished saves the new converted file to Via fileservice
         and returns the respective file id
