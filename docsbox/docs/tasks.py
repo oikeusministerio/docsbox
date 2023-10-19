@@ -1,11 +1,9 @@
-import os
 import traceback
 import json
 
 from subprocess import run
-from wand.image import Image
 from img2pdf import convert as images_to_pdf
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from rq import get_current_job
 from datetime import datetime, timezone
 from docsbox import app, rq, db
@@ -18,12 +16,14 @@ def get_task(task_id):
     queue = rq.get_queue()
     return queue.fetch_job(task_id)
 
+
 def remove_file(path):
     """
     Just removes a file.
     Used for deleting original files (uploaded by user) and result files (result of converting)
     """
     return os.remove(path)
+
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def process_convertion_by_id(file_id, headers):
@@ -51,6 +51,7 @@ def process_convertion_by_id(file_id, headers):
         return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": file_info["filename"], "mimetype": file_info["mimetype"], "file_id": file_info["file_id"], "save_in_via": True})
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
+
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
 def process_convertion(path, options, meta):
@@ -88,7 +89,7 @@ def process_document_convertion(input_path, options, meta, current_task):
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
 
         force_ocr = 0
-        while not has_PDFA_XMP(temp_path):
+        while not has_pdfa_xmp(temp_path):
             if force_ocr == 0:
                 script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
             elif force_ocr > 1:
@@ -135,13 +136,12 @@ def process_image_convertion(input_path, options, meta, current_task):
         tmp_file.write(images_to_pdf(input_path))
         tmp_file.flush()
     remove_file(input_path)
-    new_metadata = {**meta}
-    new_metadata["mimetype"] = "application/pdf"
-    return process_document_convertion(tmp_file.name, options, meta, current_task)
+    new_metadata = {**meta, "mimetype": "application/pdf"}  # Creates the PDF using Ghostscript instead of LO
+    return process_document_convertion(tmp_file.name, options, new_metadata, current_task)
 
 
 def thumbnail_generator(input_path, options, meta, current_task, original_document):
-    with TemporaryDirectory() as tmp_dir:  # create temp dir where output'll be stored
+    with TemporaryDirectory() as tmp_dir:
         is_created = False
         if meta["mimetype"] == "application/pdf":
             pdf_path = input_path
@@ -155,18 +155,22 @@ def thumbnail_generator(input_path, options, meta, current_task, original_docume
         image = Image(filename=pdf_path, resolution=app.config["THUMBNAILS_DPI"])
         if is_created:
             pdf_tmp_file.close()
-        thumbnails = make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
+        make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
         return make_zip_archive(current_task.id, tmp_dir)
+
 
 def log_task_completion(task, result, meta):
     task_time = datetime.now(timezone.utc) - task.started_at.replace(tzinfo=timezone.utc)
-    extra = { "task_id" : task.id,
-            "converted_file_size": str(result["fileSize"]),
-            "conversion_time": str(task_time),
-            "original_filename": meta["filename"],
-            "original_mimetype": meta["mimetype"],
-            "converted_filename": result["fileName"],
-            "converted_mimetype": result["mimeType"]}
+    extra = {
+        "task_id": task.id,
+        "converted_file_size": str(result["fileSize"]),
+        "conversion_time": str(task_time),
+        "original_filename": meta["filename"],
+        "original_mimetype": meta["mimetype"],
+        "converted_filename": result["fileName"],
+        "converted_mimetype": result["mimeType"],
+    }
+
     if "file_id" in meta:
         extra["original_file_id"] = meta["file_id"]
     if "fileId" in result:

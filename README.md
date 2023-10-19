@@ -1,31 +1,18 @@
 # docsbox [![Build Status](https://app.travis-ci.com/oikeusministerio/docsbox.svg?branch=master)](https://app.travis-ci.com/github/oikeusministerio/docsbox)
 
-`docsbox` is a standalone service that allows you convert office documents, like .docx and .pptx, into PDF/A, for viewing it in browser with PDF.js, or HTML for organizing full-text search of document content.  
-`docsbox` uses **LibreOffice** 6.3 (via **LibreOfficeKit**) for document converting.
+`docsbox` is a standalone service that allows you convert different types of files to PDF/A formats, including document, presentation, spreadsheet and image formats.
 
 # Install and Start
-Currently, installing powered by docker-compose:
+Set the required configuration by copying the .env.example to .env and setting up the parameters accordingly.
 
 ```
-1 - git clone https://github.com/oikeusministerio/docsbox.git
-2 - cd docsbox
-3 - docker-compose build
-4 - docker-compose up
+docker build -t oikeusministerio/common-conversion:test docsbox
+docker-compose up -d
 ```
 
-It'll start this services:
+# Settings
+The service can be configurable through the yml file `docsbox/config/config.yml`. These can be overridden with Docker environment variables. Some examples:
 
-```bash
-$ docker ps
-CONTAINER ID  IMAGE                                      COMMAND                 CREATED             STATUS             PORTS                   NAMES
-f6b55773c71d  oikeusministerio/common-conversion:latest  "rq worker -c docsbox"  About a minute ago  Up About a minute                          docsbox_rqworker_1
-662b08daefea  oikeusministerio/common-conversion:latest  "rqscheduler -H redis"  About a minute ago  Up About a minute                          docsbox_rqscheduler_1
-0364df126b36  oikeusministerio/common-conversion:latest  "gunicorn -b :8000 do"  About a minute ago  Up About a minute  0.0.0.0:8000->8000/tcp  docsbox_web_1
-7ce674173732  docsbox_nginx                              "/usr/sbin/nginx"       About a minute ago  Up About a minute  0.0.0.0:80->80/tcp      docsbox_nginx_1
-5e8c8481e288  redis:latest                               "docker-entrypoint.sh"  About a minute ago  Up About a minute  0.0.0.0:6379->6379/tcp  docsbox_redis_1
-```
-
-# Settings (env)
 ```
 REDIS_URL - Redis Server url (default: redis://redis:6379/0)
 
@@ -38,9 +25,6 @@ GRAYLOG_PORT - Graylog server input port (default: 12001)
 GRAYLOG_PATH - Graylog server input path (default: '/gelf')
 GRAYLOG_SOURCE - Graylog name for the logger Host
 ```
-
-# Configuration
-The service can be configurable through the yml file `docsbox/config/config.yml`.
 
 # REST API
 The conversion can be made using VIA or by sending the file appended to the request.
@@ -92,7 +76,7 @@ $ curl -X POST http://localhost/conversion-service/get-file-type/0123456789
 ## Convert File
 
 ### Request
-    POST    /conversion-service/convert/{file_id}
+    POST    /conversion-service/v2/convert/{file_id}
     
     Headers:    Conversion-Format: [pdf, docx, xlsx, pptx, jpeg, png] (default: pdf)
                 Output-Pdf-Version: [1, 2] (default: 1)
@@ -116,27 +100,27 @@ There is a possibilty that convert request can give status as 'started' if worke
 
 ### Examples:
 ```bash
-$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/convert/0
+$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/v2/convert/0
 {
     "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
     "status": "queued"
 }
 ```
 ```bash
-$ curl -X POST --header "Content-Disposition: filename.doc" http://localhost/conversion-service/convert/02127a06-d078-4935-a6f9-b7cbdbff4959
+$ curl -X POST --header "Content-Disposition: filename.doc" http://localhost/conversion-service/v2/convert/02127a06-d078-4935-a6f9-b7cbdbff4959
 {
     "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
     "status": "queued"
 }
 ```
 ```bash
-$ curl -X POST http://localhost/conversion-service/convert/0123456789
+$ curl -X POST http://localhost/conversion-service/v2/convert/0123456789
 {
     "message": "No file has sent nor valid file_id given."
 }
 ```
 ```bash
-$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/convert/0
+$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/v2/convert/0
 {
     "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
     "status": "queued"
@@ -229,27 +213,25 @@ $ curl -X GET -O http://localhost/conversion-service/get-converted-file/bbf78afd
 # Scaling
 Within a single physical server, docsbox can be scaled by docker-compose:
 ```bash
-$ docker-compose scale web=4 rqworker=8
+$ docker-compose scale rqworker=8
 ```
-The Application implements possibility for multi-host deployment using Docker Swarm it will be need the creation of a global syncronized volume (e.g. with flocker), global redis-server and mount it at `docker-compose.yml` file.
+In order to scale to multiple hosts, the hosts need a shared disk and a shared redis. The application does not support a redis cluster.
 
 
 # Run tests
 Tests can be run with VIA or without, if connection to VIA is not possible, TEST_VIA must be set to False when running tests.
 
+The input files are saved in the /docsbox/docs/tests/inputs and the conversion outputs will be saved to the /docsbox/docs/tests/inputs directory.
+
 ```
-1 - cd docsbox
-2 - docker-compose build
-3 - sudo TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
-4 - The tests are run on the docker container and the run result is returned on the console
-5 - Folder Inputs to input files for conversion
-6 - Folder Outputs to output the converted files
+TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 ```
 
 # Supported filetypes
-| Type           | Format                                             | 
-| ---------------|--------------------------------------------------  |
-| Document       | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt`|
-| Presentation   | `.pptx` `.ppt` `.key` `.sxi` `.odp`                |
-| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`            |
-| Others         | `.sxd` `.sxg` `.odg`                               |
+| Type           | Format                                              | 
+| ---------------|-----------------------------------------------------|
+| Document       | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt` |
+| Presentation   | `.pptx` `.ppt` `.key` `.sxi` `.odp`                 |
+| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`             |
+| Images         | `.jpg` `.png` `.tiff` `.webp` `.heif`               |
+| Others         | `.sxd` `.sxg` `.odg`                                |

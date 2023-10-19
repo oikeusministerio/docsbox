@@ -1,4 +1,3 @@
-import sys
 import os
 import zipfile
 import ujson
@@ -6,8 +5,8 @@ import itertools
 import magic
 import re
 import piexif
-import logging
 import exiftool
+from piexif import InvalidImageDataError
 
 from requests import exceptions
 from xml.parsers.expat import ExpatError
@@ -23,6 +22,7 @@ from docsbox.docs.via_controller import *
 
 if is_worker:
     register_heif_opener()
+
 
 def make_zip_archive(uuid, tmp_dir):
     """
@@ -107,7 +107,6 @@ def make_thumbnails(image, tmp_dir, size):
             page.save(filename=filename)
     else:
         image.close()
-    return index
 
 
 def get_pdfa_version(nodes):
@@ -118,6 +117,7 @@ def get_pdfa_version(nodes):
         if x.nodeName == "pdfaid:conformance":
             conformance = x.firstChild.nodeValue
     return part + conformance
+
 
 def store_file_from_id(file_id, filename):
     try:
@@ -131,6 +131,7 @@ def store_file_from_id(file_id, filename):
     except exceptions.Timeout:
         raise VIAException(504, "VIA service took too long to respond.")
 
+
 def store_file(data, filename, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(delete=False, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
@@ -140,6 +141,7 @@ def store_file(data, filename, stream=False):
         else:
             data.save(tmp_file)
     return tmp_file.name
+
 
 def get_file_mimetype_from_id(file_id, filename=None):
     try:
@@ -156,6 +158,7 @@ def get_file_mimetype_from_id(file_id, filename=None):
     except exceptions.Timeout:
         raise VIAException(504, "VIA service took too long to respond.")
 
+
 def get_file_mimetype_from_data(data, filename, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(suffix=suffix) as tmp_file:
@@ -170,7 +173,7 @@ def get_file_mimetype_from_data(data, filename, stream=False):
 
 
 def get_file_mimetype(file):
-    try:   
+    try:
         mime_type_file = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
         if mime_type_file == "application/pdf":
             # Check is PDF/A and Version
@@ -228,7 +231,7 @@ def remove_xmp_meta(file):
     xmpfile.close_file()
 
 
-def has_PDFA_XMP(file):
+def has_pdfa_xmp(file):
     try:
         with open(file, mode="rb") as fileData:
             reader = PdfReader(fileData, strict=False)
@@ -248,30 +251,35 @@ def remove_alpha(image_path):
     with PIL_Image.open(image_path) as image:
         if image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info):
             alpha = image.convert('RGBA').getchannel('A')
-            bg = PIL_Image.new("RGB", image.size, (255,255,255,255))
+            bg = PIL_Image.new("RGB", image.size, (255, 255, 255, 255))
             bg.paste(image, mask=alpha)
             bg.convert('RGB')
             bg.save(image_path, image.format)
 
 
 def correct_orientation(image_path):
-    with PIL_Image.open(image_path) as image:
-        exif = image._getexif()
-        if exif:
-            exif_dict = piexif.load(image_path)
-            del exif_dict["1st"]
-            del exif_dict["thumbnail"]
-            for tag, value in exif.items():
-                if ExifTags.TAGS.get(tag, tag) == "Orientation":
-                    if value == 0:
-                        exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
-                    elif value in (2, 4):
-                        exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
-                    elif value in (5, 7):
-                        exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
-            exif_dict['Exif'][41729] = b'1'  # workaround to avoid type error
-            exif_bytes = piexif.dump(exif_dict)
-            image.save(image_path, image.format, exif=exif_bytes)
+    try:
+        with PIL_Image.open(image_path) as image:
+            if hasattr(image, '__getexif'):
+                exif = image._getexif()
+                if exif:
+                    exif_dict = piexif.load(image_path)
+                    del exif_dict["1st"]
+                    del exif_dict["thumbnail"]
+                    for tag, value in exif.items():
+                        if ExifTags.TAGS.get(tag, tag) == "Orientation":
+                            if value == 0:
+                                exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
+                            elif value in (2, 4):
+                                exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
+                            elif value in (5, 7):
+                                exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
+                    exif_dict['Exif'][41729] = b'1'  # workaround to avoid type error
+                    exif_bytes = piexif.dump(exif_dict)
+                    image.save(image_path, image.format, exif=exif_bytes)
+    except InvalidImageDataError:
+        # Image format is not supported, ignore the error and move on
+        pass
 
 
 def check_file_content(original, converted):
@@ -288,6 +296,7 @@ def check_file_content(original, converted):
         converted_page_num = len(converted_reader.pages)
 
     return has_content and original_page_num != 0 and converted_page_num != 0 and original_page_num == converted_page_num
+
 
 def heic_to_png(path):
     tmp_file = app.config["MEDIA_PATH"] + "tmp"

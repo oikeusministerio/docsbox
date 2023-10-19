@@ -48,7 +48,7 @@ sched.add_job(cleaning_job, 'interval', seconds=app.config["CLEANER_JOB_INTREVAL
 sched.start()
 
 from docsbox.docs.views import *
-    
+
 api.add_resource(DocumentTypeView, "/conversion-service/get-file-type/<file_id>")
 api.add_resource(DocumentConvertView, "/conversion-service/convert/<file_id>")
 api.add_resource(DocumentStatusView, "/conversion-service/status/<task_id>")

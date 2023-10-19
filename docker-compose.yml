@@ -3,21 +3,21 @@ services:
   web:
     restart: always
     build: ./docsbox
-    image: oikeusministerio/common-conversion
+    image: oikeusministerio/common-conversion:test
     depends_on:
       - redis
     ports:
       - "8000:8000"
     volumes:
-      - ./docsbox:/home/docsbox
+      - ./docsbox/certificate.pem:/home/docsbox/certificate.pem
       - ./media:/home/docsbox/media
     networks:
       - conversion-network
     extra_hosts:
-      - it1.integraatiopalvelu.fi:0.0.0.0
-      - logdev.om.fi:0.0.0.0
+      - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
+      - logdev.om.fi:${GRAYLOG_IP:-0.0.0.0}
     environment:
-      GRAYLOG_HOST: 'logdev.om.fi'
+      GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
       GRAYLOG_PORT: 444
       GRAYLOG_PATH: '/gelf'
       GRAYLOG_SOURCE: conversion.service.dev
@@ -25,22 +25,22 @@ services:
 
   rqworker:
     restart: always
-    image: oikeusministerio/common-conversion
+    image: oikeusministerio/common-conversion:test
     init: true
     depends_on:
       - redis
       - web
     volumes:
-      - ./docsbox:/home/docsbox
+      - ./docsbox/certificate.pem:/home/docsbox/certificate.pem
       - ./media:/home/docsbox/media
       - /config:/root/.config/libreoffice/4/user
     networks:
       - conversion-network
     extra_hosts:
-      - it1.integraatiopalvelu.fi:0.0.0.0
-      - logdev.om.fi:0.0.0.0
+      - it1.integraatiopalvelu.fi:${VIA_IP:-0.0.0.0}
+      - logdev.om.fi:${GRAYLOG_IP:-0.0.0.0}
     environment:
-      GRAYLOG_HOST: 'logdev.om.fi'
+      GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
       GRAYLOG_PORT: 444
       GRAYLOG_PATH: '/gelf'
       GRAYLOG_SOURCE: conversion.service.dev
