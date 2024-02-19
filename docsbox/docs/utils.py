@@ -260,8 +260,8 @@ def remove_alpha(image_path):
 def correct_orientation(image_path):
     try:
         with PIL_Image.open(image_path) as image:
-            if hasattr(image, '__getexif'):
-                exif = image._getexif()
+            if hasattr(image, 'getexif'):
+                exif = image.getexif()
                 if exif:
                     exif_dict = piexif.load(image_path)
                     del exif_dict["1st"]
@@ -274,9 +274,17 @@ def correct_orientation(image_path):
                                 exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
                             elif value in (5, 7):
                                 exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
-                    exif_dict['Exif'][41729] = b'1'  # workaround to avoid type error
-                    exif_bytes = piexif.dump(exif_dict)
-                    image.save(image_path, image.format, exif=exif_bytes)
+
+                    # https://github.com/hMatoba/Piexif/issues/95
+                    if piexif.ExifIFD.SceneType in exif_dict['Exif'] and isinstance(exif_dict['Exif'][piexif.ExifIFD.SceneType], int):
+                        exif_dict['Exif'][piexif.ExifIFD.SceneType] = str(exif_dict['Exif'][piexif.ExifIFD.SceneType]).encode('utf-8')
+
+                    try:
+                        exif_bytes = piexif.dump(exif_dict)
+                        image.save(image_path, image.format, exif=exif_bytes)
+                    except Exception:
+                        # Do not fail the conversion if we fail here
+                        pass
     except InvalidImageDataError:
         # Image format is not supported, ignore the error and move on
         pass
