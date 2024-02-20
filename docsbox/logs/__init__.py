@@ -27,7 +27,10 @@ class GraylogLogger(logging.LoggerAdapter):
                 kwargs["extra"]["request"]= '%s - "%s"' % (request.method, request.path)
             if extra and isinstance(extra, dict):
                 kwargs["extra"].update(extra)
-            self.logger.log(level, msg, *args, **kwargs)
+            if level >= logging.ERROR:
+                self.logger.error(level, msg, *args, **kwargs)
+            else:
+                self.logger.log(level, msg, *args, **kwargs)
 
 
 class GelfHTTPHandler(BaseGELFHandler, logging.Handler):

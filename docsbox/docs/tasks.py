@@ -130,7 +130,7 @@ def process_image_convertion(input_path, options, meta, current_task):
         input_path = tmp_path
 
     remove_alpha(input_path)
-    correct_orientation(input_path)
+    sanitize_metadata(input_path)
 
     with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False, suffix='.pdf') as tmp_file:
         tmp_file.write(images_to_pdf(input_path))

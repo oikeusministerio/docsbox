@@ -243,7 +243,7 @@ def has_pdfa_xmp(file):
                     return True
             return False
     except Exception as e:
-        app.logger.log(logging.ERROR, str(e))
+        app.logger.log(logging.ERROR, repr(e))
         return False
 
 
@@ -257,23 +257,55 @@ def remove_alpha(image_path):
             bg.save(image_path, image.format)
 
 
-def correct_orientation(image_path):
+def sanitize_metadata(image_path):
     try:
         with PIL_Image.open(image_path) as image:
             if hasattr(image, 'getexif'):
                 exif = image.getexif()
                 if exif:
                     exif_dict = piexif.load(image_path)
+
+                    # Remove unneeded metadata to save bytes
                     del exif_dict["1st"]
                     del exif_dict["thumbnail"]
-                    for tag, value in exif.items():
-                        if ExifTags.TAGS.get(tag, tag) == "Orientation":
-                            if value == 0:
-                                exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
-                            elif value in (2, 4):
-                                exif_dict["0th"][piexif.ImageIFD.Orientation] = value - 1
-                            elif value in (5, 7):
-                                exif_dict["0th"][piexif.ImageIFD.Orientation] = value + 1
+
+                    for ifd_name in exif_dict.keys():
+                        for tag in dict(exif_dict[ifd_name]):
+                            tag_info = piexif.TAGS[ifd_name].get(tag)
+                            value = exif_dict[ifd_name][tag]
+
+                            # Check that all integer values are within signed 32bit
+                            # since piexif requires them to be signed and some image files
+                            # might contain unsigned values for signed types
+                            if tag_info:
+                                type = tag_info['type']
+                                if type == piexif.TYPES.SRational:
+                                    if isinstance(value, tuple) and len(value) == 2:
+                                        exif_dict[ifd_name][tag] = tuple(unsigned_to_signed(n, 32) for n in value)
+                                elif type == piexif.TYPES.SLong:
+                                    if isinstance(value, int):
+                                        exif_dict[ifd_name][tag] = unsigned_to_signed(value, 32)
+                                elif type == piexif.TYPES.SShort:
+                                    if isinstance(value, int):
+                                        exif_dict[ifd_name][tag] = unsigned_to_signed(value, 16)
+                                elif type == piexif.TYPES.SByte:
+                                    if isinstance(value, int):
+                                        exif_dict[ifd_name][tag] = unsigned_to_signed(value, 8)
+
+                            # Correct orientation for mirrored images since img2pdf does not support
+                            # mirrored images so we will change the orientation for these to be not
+                            # mirrored instead of failin the conversion. We could also modify the image by
+                            # using another library for the mirrored ones to maintain their integrity.
+                            # With this implementation, they will be mirrored in a non-natural way
+                            # https://www.daveperrett.com/articles/2012/07/28/exif-orientation-handling-is-a-ghetto/
+                            # https://github.com/recurser/exif-orientation-examples
+                            if tag == piexif.ImageIFD.Orientation:
+                                if value == 0:
+                                    exif_dict[ifd_name][tag] = 1
+                                elif value in (2, 4):
+                                    exif_dict[ifd_name][tag] = value - 1
+                                elif value in (5, 7):
+                                    exif_dict[ifd_name][tag] = value + 1
 
                     # https://github.com/hMatoba/Piexif/issues/95
                     if piexif.ExifIFD.SceneType in exif_dict['Exif'] and isinstance(exif_dict['Exif'][piexif.ExifIFD.SceneType], int):
@@ -282,12 +314,22 @@ def correct_orientation(image_path):
                     try:
                         exif_bytes = piexif.dump(exif_dict)
                         image.save(image_path, image.format, exif=exif_bytes)
-                    except Exception:
+                    except Exception as e:
                         # Do not fail the conversion if we fail here
+                        app.logger.log(logging.ERROR, repr(e))
                         pass
-    except InvalidImageDataError:
+    except InvalidImageDataError as e:
+        app.logger.log(logging.ERROR, repr(e))
         # Image format is not supported, ignore the error and move on
         pass
+
+
+def unsigned_to_signed(value, bit_count):
+    MAX_INT = 2**(bit_count - 1) - 1
+    if value > MAX_INT:
+        return value - 2**bit_count
+    else:
+        return value
 
 
 def check_file_content(original, converted):
