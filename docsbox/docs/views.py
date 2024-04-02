@@ -47,12 +47,15 @@ class DocumentStatusView(Resource):
                     else:
                         response["status"] = task.get_status()
                         response["fileType"] = task.result["fileType"]
-                else: 
+                        response["mimeType"] = task.result["mimeType"]
+                        response["pdfVersion"] = task.result["pdfVersion"]
+                else:
                     response["status"] = task.get_status()
             else:
                 return abort(404, "Unknown task", request, extras={"task_id": task_id})
         except Exception as e:
             return abort(500, e, request, traceback=traceback.format_exc())
+
         return response
 
 
@@ -67,25 +70,30 @@ class DocumentTypeView(Resource):
         response = {}
         try:
             if request.files and "file" in request.files:
-                mimetype = get_file_mimetype_from_data(request.files["file"], request.files["file"].filename)
+                mimetype, version = get_file_mimetype_from_data(request.files["file"], request.files["file"].filename)
             elif file_id and is_valid_uuid(file_id):
-                mimetype = get_file_info(file_id, request.headers.get('Content-Disposition'))["mimetype"]
+                file_info = get_file_info(file_id, request.headers.get('Content-Disposition'))
+                mimetype = file_info["mimetype"]
+                version = file_info["pdf_version"]
             else:
-                return abort(400, "No file has sent nor valid file id given.", request)
-            
+                return abort(400, "No file was sent nor valid file id given", request)
+
             response["convertable"] = mimetype in app.config["CONVERTABLE_MIMETYPES"]
-            if response["convertable"]:
+            response["mimeType"] = mimetype
+            response["pdfVersion"] = version
+            is_pdfa = mimetype == "application/pdf" and version
+            if is_pdfa:
+                response["fileType"] = "PDF/A"
+            elif response["convertable"]:
                 response["fileType"] = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
             else:
-                if mimetype == "application/pdfa":
-                    response["fileType"] = "PDF/A"
-                else:
-                    response["fileType"] = mimetype
+                response["fileType"] = "Unknown/Corrupted"
+                response["message"] = "The file type is not supported or the file is corrupted"
         except VIAException as via_err:
             return abort(via_err.code, via_err.message, request, extras={"original_file_id": file_id}, traceback=traceback.format_exc())
         except Exception as e:
             return abort(500, e, request, traceback=traceback.format_exc())
-        
+
         return response
 
 
@@ -96,14 +104,13 @@ class DocumentConvertView(Resource):
         """
         Checks file mimetype and creates converting task of given file
         """
-        response = {}
         try:
+            version = ""
             if request.files and "file" in request.files:
                 filename = request.files["file"].filename
                 file_path = store_file(request.files["file"], filename)
-                mimetype = get_file_mimetype(file_path)
+                mimetype, version = get_file_mimetype(file_path)
                 save_in_via = False
-
             elif file_id and is_valid_uuid(file_id):
                 file_info = get_file_info(file_id, request.headers.get('Content-Disposition'), save_file=True)
                 filename = file_info["filename"]
@@ -113,11 +120,28 @@ class DocumentConvertView(Resource):
             else:
                 return abort(400, "No file has sent nor valid file id given.", request)
 
-            if mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                return {"status": "corrupted" if mimetype == "Unknown/Corrupted" else "non-convertable", "fileType": mimetype}
+            options = set_options(request.headers, mimetype)
+            output_pdf_version = options.get("output_pdf_version", "1")
+            is_pdfa = mimetype == "application/pdf" and version
+            req_same_version = mimetype == "application/pdf" and version and version[0] == output_pdf_version
 
-            task = process_convertion.queue(file_path, set_options(request.headers, mimetype), {"filename": filename, "mimetype": mimetype, "file_id": file_id, "save_in_via": save_in_via})
-            response = {"taskId": task.id, "status": task.get_status()}
+            if mimetype not in app.config["CONVERTABLE_MIMETYPES"] or (mimetype == "application/pdf" and req_same_version):
+                return {
+                    "status": "corrupted" if mimetype == "Unknown/Corrupted" else "non-convertable",
+                    "mimeType": mimetype,
+                    "pdfVersion": version,
+                    "fileType": "PDF/A" if is_pdfa else "Unknown/Corrupted"
+                }
+
+            task = process_convertion.queue(file_path, options, {"filename": filename, "mimetype": mimetype, "file_id": file_id, "save_in_via": save_in_via})
+            response = {
+                "taskId": task.id,
+                "status": task.get_status(),
+                "mimeType": mimetype,
+                "pdfVersion": version,
+                "fileType": app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
+            }
+
             app.logger.log(logging.INFO, "Queued conversion with task id: %s" % task.id, request, 
                            extra={"original_filename": filename, "original_mimetype": mimetype, "original_file_id": file_id})
         except ValueError as err:
@@ -126,6 +150,7 @@ class DocumentConvertView(Resource):
             return abort(viaEr.code, viaEr.message, request, extras={"file_id": file_id}, traceback=traceback.format_exc())
         except Exception as e:
             return abort(500, e, request, traceback=traceback.format_exc())
+
         return response
 
 
@@ -136,13 +161,25 @@ class DocumentConvertViewV2(Resource):
         """
         Creates converting task of given file
         """
-        response = {}
         try:
             if request.files and "file" in request.files:
                 filename = request.files["file"].filename
                 file_path = store_file(request.files["file"], filename)
-                mimetype = get_file_mimetype(file_path)
-                task = process_convertion.queue(file_path, set_options(request.headers, mimetype), {"filename": filename, "mimetype": mimetype, "save_in_via": False})
+                mimetype, version = get_file_mimetype(file_path)
+
+                options = set_options(request.headers, mimetype)
+                output_pdf_version = options.get("output_pdf_version", "1")
+                is_pdfa = mimetype == "application/pdf" and version
+                req_same_version = mimetype == "application/pdf" and version and version[0] == output_pdf_version
+                if mimetype not in app.config["CONVERTABLE_MIMETYPES"] or (mimetype == "application/pdf" and req_same_version):
+                    return {
+                        "status": "corrupted" if mimetype == "Unknown/Corrupted" else "non-convertable",
+                        "mimeType": mimetype,
+                        "pdfVersion": version,
+                        "fileType": "PDF/A" if is_pdfa else "Unknown/Corrupted"
+                    }
+
+                task = process_convertion.queue(file_path, options, {"filename": filename, "mimetype": mimetype, "pdfVersion": version, "save_in_via": False})
                 app.logger.log(logging.INFO, "Queued conversion with task id: %s" % task.id, request,
                                extra={"original_filename": filename, "original_mimetype": mimetype})
             elif file_id and is_valid_uuid(file_id):
@@ -158,6 +195,7 @@ class DocumentConvertViewV2(Resource):
             return abort(viaEr.code, viaEr.message, request, extras={"file_id": file_id}, traceback=traceback.format_exc())
         except Exception as e:
             return abort(500, e, request, traceback=traceback.format_exc())
+
         return response
 
 
@@ -169,7 +207,6 @@ class DocumentDownloadView(Resource):
         If task with given id is finished saves the new converted file to Via fileservice
         and returns the respective file id
         """
-        response = {}
         try:
             task = get_task(task_id)
             if task:
@@ -187,6 +224,7 @@ class DocumentDownloadView(Resource):
                                 "fileId": task.result["fileId"],
                                 "fileType": task.result["fileType"],
                                 "mimeType": task.result["mimeType"],
+                                "pdfVersion": task.result["pdfVersion"],
                                 "fileName": task.result["fileName"],
                                 "fileSize": task.result["fileSize"],
                             }
@@ -206,14 +244,13 @@ class DocumentDownloadView(Resource):
 
 
 def get_file_info(file_id, filename="", save_file=False):
-    file_info = {}
     if db.exists('fileId:' + file_id) == 0:
         file_info = {"file_id": file_id, "mimetype": "", "filename": filename, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
         if save_file:
             file_info["file_path"] = store_file_from_id(file_id, filename)
-            file_info["mimetype"] = get_file_mimetype(file_info["file_path"])
+            file_info["mimetype"], file_info["pdf_version"] = get_file_mimetype(file_info["file_path"])
         else:
-            file_info["mimetype"] = get_file_mimetype_from_id(file_id, filename)   
+            file_info["mimetype"], file_info["pdf_version"] = get_file_mimetype_from_id(file_id, filename)
         db.set('fileId:' + file_id, json.dumps(file_info))
     else:
         file_info = json.loads(db.get('fileId:' + file_id))

@@ -127,6 +127,10 @@ CONVERTABLE_MIMETYPES:
     name: HEIC - High Efficiency Image File Format
     formats: IMAGE_EXPORT_FORMATS
     default_options: IMAGE_DEFAULT_OPTIONS
+  image/heic:
+    name: HEIC - High Efficiency Image File Format
+    formats: IMAGE_EXPORT_FORMATS
+    default_options: IMAGE_DEFAULT_OPTIONS
   application/vnd.oasis.opendocument.text: # LibreOffice Word
     name: "OpenDocument Text"
     filter: "writer8"
@@ -182,11 +186,6 @@ AUDIO_DEFAULT_OPTIONS:
 VIDEO_DEFAULT_OPTIONS:
   format: "mp4"
 
-PDF_EXPORT_PARAMS:
-  SelectPdfVersion:
-    type: "long"
-    value: "1"
-
 FILEMIMETYPES:
   [
   "text/csv",
@@ -230,8 +229,7 @@ LOGGING:
     system: 'Document Conversion Service'
     environment: 'DEV'
 
-GHOSTSCRIPT_EXEC: ['gs', '-dPDFA', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
+GHOSTSCRIPT_EXEC: ['gs', '-dPDFA=$pdfVersion', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
 OCRMYPDF:
-  EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0']
-  OUT: '--output-type=pdfa'
+  EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0', '--output-type=pdfa-$pdfVersion']
   FORCE: ['--skip-text', '--force-ocr']

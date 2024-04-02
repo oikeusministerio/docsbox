@@ -1,5 +1,7 @@
 import os
 import zipfile
+
+import pikepdf
 import ujson
 import itertools
 import magic
@@ -10,11 +12,11 @@ from piexif import InvalidImageDataError
 
 from requests import exceptions
 from xml.parsers.expat import ExpatError
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PyPdfError
+from pypdf import PdfReader
+from pypdf.errors import PyPdfError
 from libxmp import XMPFiles, consts
 from wand.image import Image
-from PIL import Image as PIL_Image, ExifTags
+from PIL import Image as PIL_Image
 from pillow_heif import register_heif_opener
 from tempfile import NamedTemporaryFile
 from docsbox import app, is_worker
@@ -55,10 +57,10 @@ def set_options(headers, mimetype):
             else:
                 message = "'{0}' mimetype can't be converted to '{1}'"
                 raise ValueError(message.format(mimetype, conversion_format))    
-        
+
         if 'output-pdf-version' in headers:
             output_pdf_version = headers["output-pdf-version"]
-            if output_pdf_version in ["1", "2"]:
+            if output_pdf_version in ["1", "2", "3"]:
                 options["output_pdf_version"] = output_pdf_version
             else:
                 raise ValueError("Invalid 'output_pdf_version' value")
@@ -113,7 +115,7 @@ def get_pdfa_version(nodes):
     part, conformance = "", ""
     for x in nodes:
         if x.nodeName == "pdfaid:part":
-            part =  x.firstChild.nodeValue
+            part = x.firstChild.nodeValue
         if x.nodeName == "pdfaid:conformance":
             conformance = x.firstChild.nodeValue
     return part + conformance
@@ -148,9 +150,10 @@ def get_file_mimetype_from_id(file_id, filename=None):
         via_response = get_file_from_via(file_id)
         if via_response.status_code == 200:
             mimetype = via_response.headers.get('Content-Type')
+            version = ""
             if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                mimetype = get_file_mimetype_from_data(via_response, filename, stream=True)
-            return mimetype
+                mimetype, version = get_file_mimetype_from_data(via_response, filename, stream=True)
+            return mimetype, version
         elif via_response.status_code == 404:
             raise VIAException(404, "File id was not found.")
         else:
@@ -168,26 +171,16 @@ def get_file_mimetype_from_data(data, filename, stream=False):
         else:
             data.save(tmp_file)
         tmp_file.flush()
-        mimetype = get_file_mimetype(tmp_file.name)
-    return mimetype
+        mimetype, version = get_file_mimetype(tmp_file.name)
+    return mimetype, version
 
 
 def get_file_mimetype(file):
+    version = ""
     try:
         mime_type_file = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
         if mime_type_file == "application/pdf":
-            # Check is PDF/A and Version
-            with open(file, mode="rb") as file_data:
-                input = PdfReader(file_data, strict=False)
-                try:
-                    metadata = input.xmp_metadata
-                    if metadata:
-                        pdfa = app.config["PDFA"]
-                        nodes = metadata.get_nodes_in_namespace("", pdfa["NAMESPACE"])
-                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
-                            mime_type_file = "application/pdfa"
-                except ExpatError:
-                    app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file))
+            version = read_pdf_version(file)
 
         elif mime_type_file in app.config["GENERIC_MIMETYPES"]:
             mime_type_file = magic.from_file(file, mime=True)
@@ -201,7 +194,25 @@ def get_file_mimetype(file):
                             mime_type_file = file_mimetype
     except (ValueError, PyPdfError):
         mime_type_file = "Unknown/Corrupted"
-    return mime_type_file
+    return mime_type_file, version
+
+
+def read_pdf_version(file):
+    version = ""
+    with open(file, mode="rb") as file_data:
+        pdf = PdfReader(file_data, strict=False)
+        try:
+            metadata = pdf.xmp_metadata
+            if metadata:
+                pdfa_config = app.config["PDFA"]
+                nodes = metadata.get_nodes_in_namespace("", pdfa_config["NAMESPACE"])
+                version = get_pdfa_version(nodes)
+        except ExpatError:
+            app.logger.log(
+                logging.WARNING,
+                "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A DOCINFO.".format(file))
+
+    return version
 
 
 def remove_extension(file):
@@ -212,13 +223,13 @@ def is_valid_uuid(uuid):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
 
 
-def remove_xmp_meta(file):
+def remove_xmp_meta(file, task_id):
     xmpfile = XMPFiles(file_path=file, open_forupdate=True)
     xmp = xmpfile.get_xmp()
     if xmp:
-        xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Document Converter')
-        xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'Document Converter')
-        xmp.set_property(consts.XMP_NS_XMP_MM , 'xmpMM:DocumentID', '')
+        xmp.set_property(consts.XMP_NS_PDF, 'pdf:Producer', 'Oikeusministeriö, asiakirjojen konversiopalvelu')
+        xmp.set_property(consts.XMP_NS_XMP, 'xmp:CreatorTool', 'DCS')
+        xmp.set_property(consts.XMP_NS_XMP_MM, 'xmpMM:DocumentID', task_id)
 
         xmp.delete_property(consts.XMP_NS_DC, 'dc:format')
         xmp.delete_property(consts.XMP_NS_DC, 'dc:creator')
@@ -226,9 +237,9 @@ def remove_xmp_meta(file):
     try:
         xmpfile.put_xmp(xmp)
     except:
+        pass
+    finally:
         xmpfile.close_file()
-        return
-    xmpfile.close_file()
 
 
 def has_pdfa_xmp(file):
@@ -263,6 +274,13 @@ def sanitize_metadata(image_path):
             if hasattr(image, 'getexif'):
                 exif = image.getexif()
                 if exif:
+                    # Exif data is not supported in Piexif for other formats than jpeg and tiff
+                    # if the format is not jpeg or tiff, clear exif data
+                    # PNG support might be coming sometime: https://github.com/hMatoba/Piexif/issues/49
+                    if image.format not in ("JPEG", "TIFF"):
+                        image.save(image_path, image.format, exif=None)
+                        return
+
                     exif_dict = piexif.load(image_path)
 
                     # Remove unneeded metadata to save bytes
@@ -278,22 +296,22 @@ def sanitize_metadata(image_path):
                             # since piexif requires them to be signed and some image files
                             # might contain unsigned values for signed types
                             if tag_info:
-                                type = tag_info['type']
-                                if type == piexif.TYPES.SRational:
+                                tag_type = tag_info['type']
+                                if tag_type == piexif.TYPES.SRational:
                                     if isinstance(value, tuple) and len(value) == 2:
                                         exif_dict[ifd_name][tag] = tuple(unsigned_to_signed(n, 32) for n in value)
-                                elif type == piexif.TYPES.SLong:
+                                elif tag_type == piexif.TYPES.SLong:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 32)
-                                elif type == piexif.TYPES.SShort:
+                                elif tag_type == piexif.TYPES.SShort:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 16)
-                                elif type == piexif.TYPES.SByte:
+                                elif tag_type == piexif.TYPES.SByte:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 8)
 
                             # Correct orientation for mirrored images since img2pdf does not support
-                            # mirrored images so we will change the orientation for these to be not
+                            # mirrored images, so we will change the orientation for these to be not
                             # mirrored instead of failin the conversion. We could also modify the image by
                             # using another library for the mirrored ones to maintain their integrity.
                             # With this implementation, they will be mirrored in a non-natural way
@@ -357,3 +375,94 @@ def heic_to_png(path):
 
 def check_file_path(path):
     return os.path.exists(path)
+
+
+def fill_cmd_param(cmd, param: str, value: str):
+    """
+    Fills parameters in a string, parameters are defined with a $ prefix
+
+    :param cmd: The command with parts separated in an array
+    :param param: The parameter to replace, without the $ prefic
+    :param value: The value to replace the param with
+    """
+    param_with_marker = f"${param}"
+    try:
+        pos = cmd.index(next(filter(lambda x: param_with_marker in x, cmd), None))
+        if pos is not None:
+            cmd[pos] = cmd[pos].replace(param_with_marker, value)
+    except ValueError:
+        # No param found, do not replace anything
+        pass
+
+    return cmd
+
+
+def extract_pdf_attachments(pdf_path, output_pdf_version):
+    """
+    Extracts all attachments in the pdf file found in the path and returns them
+    """
+    if output_pdf_version == "1":
+        # PDF/A-1 does not support attachments
+        return
+
+    with pikepdf.open(pdf_path) as pdf:
+        attachments = {}
+
+        if "/Names" in pdf.Root and "/EmbeddedFiles" in pdf.Root.Names:
+            files = pdf.Root.Names.EmbeddedFiles.Names
+
+            for i in range(0, len(files), 2):
+                name = str(files[i])
+                file_spec = files[i + 1]
+
+                file_bytes = file_spec.EF.F.read_bytes()
+                f_props = file_spec.EF.F.items()
+                del file_spec.EF
+
+                attachments[name] = {
+                    "bytes": file_bytes,
+                    "f_props": dict(f_props),
+                    "file_spec": dict(file_spec),
+                }
+
+    return attachments
+
+
+def attach_pdf_attachments(pdf_path, attachments, output_pdf_version):
+    """
+    Attaches the attachments to the pdf file
+    """
+    if output_pdf_version == "1":
+        # PDF/A-1 does not support attachments
+        return
+
+    if not attachments:
+        return
+
+    with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
+        if "/Names" not in pdf.Root:
+            pdf.Root.Names = pikepdf.Dictionary()
+        if "/EmbeddedFiles" not in pdf.Root.Names:
+            pdf.Root.Names.EmbeddedFiles = pikepdf.Dictionary()
+            pdf.Root.Names.EmbeddedFiles.Names = pikepdf.Array()
+
+        edited = False
+        for name, attachment in attachments.items():
+            if output_pdf_version == "2":
+                mimetype = get_file_mimetype_from_data(attachment["bytes"], name, True)
+                if mimetype != "application/pdf":
+                    # PDF/A-2 does not support other mimetypes than pdf
+                    continue
+
+            file_stream = pikepdf.Stream(pdf, attachment["bytes"], attachment["f_props"])
+            new_file_spec = pikepdf.Dictionary(
+                EF=pikepdf.Dictionary(F=file_stream),
+                **{key.lstrip('/'): value for key, value in attachment["file_spec"].items()}
+            )
+
+            pdf.Root.Names.EmbeddedFiles.Names.append(name)
+            pdf.Root.Names.EmbeddedFiles.Names.append(new_file_spec)
+            edited = True
+
+        if edited:
+            pdf.save(pdf_path)

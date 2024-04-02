@@ -21,11 +21,11 @@ def cleaning_job():
 
     if keys_to_remove:
         db.delete(*keys_to_remove)
-    print("Removed %d entries."%keys_to_remove.__len__())
+    print("Removed %d entries." % keys_to_remove.__len__())
 
     if db.keys('fileId:*') == []:
         media_file_list = os.listdir(app.config["MEDIA_PATH"])
-        print("%d files in media directory for deletion"%media_file_list.__len__())
+        print("%d files in media directory for deletion" % media_file_list.__len__())
         if media_file_list != []:
             for file in media_file_list:
                 file_path = os.path.join(app.config["MEDIA_PATH"], file)
@@ -34,4 +34,3 @@ def cleaning_job():
                         os.remove(file_path)
                 except Exception as e:
                     print('Failed to delete %s. Reason: %s' % (file_path, e))
-

@@ -10,16 +10,14 @@ docker build -t oikeusministerio/common-conversion:test docsbox
 docker-compose up -d
 ```
 
-# Settings
-The service can be configurable through the yml file `docsbox/config/config.yml`. These can be overridden with Docker environment variables. Some examples:
+# Configuration
+The service can be configurable through the yml file `docsbox/config/config.yml`. These can be overridden with environment variables. Some examples:
 
 ```
 REDIS_URL - Redis Server url (default: redis://redis:6379/0)
-
-VIA_URL - VIA service url (default: https://it1.integraatiopalvelu.fi/Tallennuspalvelu)
-VIA_CERT_PATH - Certificate path for VIA connection (default: /home/docsbox/certificate.pem)
-VIA_ALLOWED_USERS - Allowed users for VIA (default: sampotesti)
-
+VIA_URL - VIA service url
+VIA_CERT_PATH - Certificate path for VIA connection
+VIA_ALLOWED_USERS - Allowed users for VIA
 GRAYLOG_HOST - Graylog server (default: localhost)
 GRAYLOG_PORT - Graylog server input port (default: 12001)
 GRAYLOG_PATH - Graylog server input path (default: '/gelf')
@@ -31,192 +29,166 @@ The conversion can be made using VIA or by sending the file appended to the requ
 
 If there is no file appended the conversion service connects with VIA fileservice where requests the file with the given id. To test it will be needed some VIA file id
 
-## Checking File Type
+## File type
+The service will read the file and return information of about it.
+
+If used with VIA, it will respect the `Content-Type` header provided by VIA.
+If it is not provided, the service will scan the file.
 
 ### Request
     POST    /conversion-service/get-file-type/{file_id}
-    
-### Response
-    Content-Type: application/json
-    
+    If used without VIA, set the file_id to 0 and send the file in request body
+
+### Example response
     {
-        convertable: [true, false],
-        fileType: [Unknown/Corrupted, PDF/A, Microsoft Word, ...]
+        convertable: true,
+        fileType: "Microsoft Word 2007/2010 XML",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        pdfVersion: ""
     }
 
-fileType = 'Unknown/Corrupted' when mimetype library cannot identify file type. 
-    
-### Error Responses
-    400 - message: No file has sent nor valid file_id given.
-    404 - message: File id was not found.
-    504 - message: VIA service took too long to respond.
+### Types
+| Type        | Description                                                                                                                                                                 |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| convertable | `boolean` whether or not the service is able to convert the file. Will also be false if the file is already in PDF/A format                                                 |
+| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
+| mimeType    | `string` the file's mimetype                                                                                                                                                |
+| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
 
-### Examples:
-```
-$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/get-file-type/0
-{
-    "fileType": "Microsoft Word",
-    "convertable": true
-}
-```
-```
-$ curl -X POST http://localhost/conversion-service/get-file-type/02127a06-d078-4935-a6f9-b7cbdbff4959
-{
-    "fileType": "Microsoft Word",
-    "convertable": true
-}
-```
-```bash
-$ curl -X POST http://localhost/conversion-service/get-file-type/0123456789
-{
-    "message": "No file has sent nor valid file_id given."
-}
-```
+### Status codes
+| Status | Description                                            |
+|--------|--------------------------------------------------------|
+| 200    | OK                                                     |
+| 400    | No file or valid VIA file id was received              |
+| 404    | File with the specified VIA file id was not found      |
+| 500    | Unhandled server error                                 |
+| 504    | Downloading file from VIA timed out                    |
 
-## Convert File
+## Convert
+The service will queue the specified file to be converted.
 
+If used with VIA, it will respect the `Content-Type` header provided by VIA. If it is not provided and the file is not previously scanned with the `get-file-type` API, the file will be scanned.
 ### Request
     POST    /conversion-service/v2/convert/{file_id}
-    
-    Headers:    Conversion-Format: [pdf, docx, xlsx, pptx, jpeg, png] (default: pdf)
-                Output-Pdf-Version: [1, 2] (default: 1)
-                Via-Allowed-Users: (VIA user allowed to download converted file, only used if using VIA file ID)
-                Content-Disposition: filename (only used if using VIA file ID)
-    
-### Response
-    Content-Type: application/json
-    
+    If used without VIA, set the file_id to 0 and send the file in request body
+
+### Request headers
+You may provide additional settings through headers, all of which are optional. 
+
+| Header               | Description                                                                                                                              | Possible values                                  | Default |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|---------|
+| Conversion-Format    | One of the supported file types                                                                                                          | `["pdf", "docx", "xlsx", "pptx", "jpeg", "png"]` | `pdf`   |
+| Output-Pdf-Version   | The PDF version you wish to receive                                                                                                      | `[1, 2, 3]`                                      | `1`     |
+| Via-Allowed-Users    | If VIA is used, this will be the allowed users provided to VIA for a conversion result. This should be the CN of your client certificate | `example.com`                                    |         |
+| Content-Disposition  | You may provide a filename for conversion service through this header                                                                    | `example.pdf`                                    |         |
+
+### Example response
     {
-        taskId: task_id,
-        status: [queued, started]
+        taskId: "123e4567-e89b-12d3-a456-426614174000",
+        status: "queued"
     }
 
-There is a possibilty that convert request can give status as 'started' if worker is available immediately.
-    
-### Error Responses
-    400 - message: No file has sent nor valid file_id given.
-    404 - message: File id was not found.
-    504 - message: VIA service took too long to respond.
+### Types
+| Type       | Description                                                                                                                                                                  |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| taskId     | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                     |
+| status     | `string` `queued` or `started`                                                                                                                                               |
 
-### Examples:
-```bash
-$ curl -X POST -F "file=@test.doc" http://localhost/conversion-service/v2/convert/0
-{
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
-    "status": "queued"
-}
-```
-```bash
-$ curl -X POST --header "Content-Disposition: filename.doc" http://localhost/conversion-service/v2/convert/02127a06-d078-4935-a6f9-b7cbdbff4959
-{
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
-    "status": "queued"
-}
-```
-```bash
-$ curl -X POST http://localhost/conversion-service/v2/convert/0123456789
-{
-    "message": "No file has sent nor valid file_id given."
-}
-```
-```bash
-$ curl -X POST -H 'Output-Pdf-Version: 2' -F 'file=@"test.doc"' http://localhost/conversion-service/v2/convert/0
-{
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
-    "status": "queued"
-}
-```
+### Status codes
+| Status | Description                                            |
+|--------|--------------------------------------------------------|
+| 200    | OK                                                     |
+| 400    | No file or valid VIA file id was received              |
+| 404    | File with the specified VIA file id was not found      |
+| 500    | Unhandled server error                                 |
+| 504    | Downloading file from VIA timed out                    |
 
-## Task Status
+## Status
+Check the status of a conversion task with the task id.
 
 ### Request
     GET    /conversion-service/status/{task_id}
-    
-### Response
-    Content-Type: application/json
-    
+
+### Example responses
+Successful
+
     {
-        taskId: task_id,
-        status: [queued, started, finished, failed]
-        fileType: [PDF/A, Microsoft Word 2007/2010 XML, ...] (only given if task finished)
+        taskId: "123e4567-e89b-12d3-a456-426614174000",
+        status: "finished",
+        fileType: "PDF/A",
+        mimeType: "application/pdf",
+        pdfVersion: "1A",
     }
-    
-Status request response when conversion fails, will return status as 'failed' and send to graylog the error stacktrace.
 
-### Error Responses
-    404 - message: Unknown task_id.
+Queued
 
-### Example:
-```bash
-$ curl -X GET http://localhost/conversion-service/status/bbf78afd-011c-4815-95da-17b810fa4f5f
-{
-    "fileType": "PDF/A",
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f",
-    "status": "finished"
-}
-```
+    {
+        taskId: "123e4567-e89b-12d3-a456-426614174000",
+        status: "queued",
+    }
 
-## Get Converted File
+### Types
+| Type       | Description                                                                                                                                                                 |
+|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| taskId     | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                    |
+| status     | `string` the status of the conversion, can be `queued`, `started`, `finished`, `failed`, `corrupted`, `non-convertable`                                                     |
+| fileType   | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
+| mimeType   | `string` the file's mimetype                                                                                                                                                |
+| pdfVersion | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
 
-If the conversion service used a VIA file the converted file also will be saved in VIA and returns the new file id.
-If the file was sent directly to the conversion service, the converted file is sent when its requested
+
+### Status codes
+| Status | Description                                  |
+|--------|----------------------------------------------|
+| 200    | OK                                           |
+| 404    | No task with the specified task if was found |
+| 500    | Unhandled server error                       |
+
+## Download
+If the conversion service used with VIA, the converted file will also be saved in VIA will return the VIA file if of the converted file.
+If the file was sent directly to the conversion service, the converted file is sent when it's requested.
 
 ### Request
     GET    /conversion-service/get-converted-file/{task_id}
-    
-### Response
-#### Using VIA
-    Content-Type: application/json
 
+### Response
     {
         convertable: true,
-        fileId: via_file_id,
-        fileName: filename,
-        mimeType: [application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, ...],
-        fileType: [PDF/A, Microsoft Word 2007/2010 XML, ...],
-        status: finished,
-        taskId: task_id
-        fileSize: converted file size in bytes
+        fileId: "0297b05c-5a8e-4c88-a6f2-649e3a971597",
+        fileName: "example.pdf",
+        mimeType: application/pdf,
+        fileType: "PDF/A",
+        pdfVersion: "1A",
+        status: "finished",
+        taskId: "123e4567-e89b-12d3-a456-426614174000",
+        fileSize: 123456
     }
-    
+
 #### Without VIA
-    Content-Type: {file_mimetype}
-    Content-Disposition: attachment; filename={filename}
-    Body: Raw Data
+    Content-Type: application/pdf
+    Content-Disposition: attachment; filename=example.pdf
+    Body: file bytes
 
-### Error Responses
-    404 - message: Unknown task_id.
+### Types
+| Type        | Description                                                                                                                                                                 |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| convertable | `boolean` always `true`                                                                                                                                                     |
+| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
+| mimeType    | `string` the file's mimetype                                                                                                                                                |
+| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
+| fileId      | `string` the file if with which the converted file can be downloaded with from VIA                                                                                          |
+| taskId      | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                    |
+| fileName    | `string` the file name                                                                                                                                                      |
+| pdfVersion  | `string` the PDF version of the converted file, if it was converted into a PDF                                                                                              |
+| fileSize    | `number` the file size in bytes                                                                                                                                             |
+| status      | `string` always `finished`                                                                                                                                                  |
 
-### Examples:
-##### Using VIA file ID for conversion.
-```bash
-$ curl -X GET http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
-{
-    "convertable": true,
-    "fileId": "92180232-5d1a-456f-80d7-2cbc596afb57",
-    "fileName": "filename.pdf",
-    "mimeType": "application/pdf",
-    "fileType": "PDF/A",
-    "status": "finished",
-    "taskId": "bbf78afd-011c-4815-95da-17b810fa4f5f"
-    "fileSize": "80325"
-}
-```
-##### Non VIA conversion
-```bash
-$ curl -X GET -O http://localhost/conversion-service/get-converted-file/bbf78afd-011c-4815-95da-17b810fa4f5f
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   212  100   212    0     0  15142      0 --:--:-- --:--:-- --:--:-- 15142
-```
-
-# Scaling
-Within a single physical server, docsbox can be scaled by docker-compose:
-```bash
-$ docker-compose scale rqworker=8
-```
-In order to scale to multiple hosts, the hosts need a shared disk and a shared redis. The application does not support a redis cluster.
-
+### Status codes
+| Status | Description                                  |
+|--------|----------------------------------------------|
+| 200    | OK                                           |
+| 404    | No task with the specified task if was found |
+| 500    | Unhandled server error                       |
 
 # Run tests
 Tests can be run with VIA or without, if connection to VIA is not possible, TEST_VIA must be set to False when running tests.
@@ -227,11 +199,11 @@ The input files are saved in the /docsbox/docs/tests/inputs and the conversion o
 TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from test
 ```
 
-# Supported filetypes
-| Type           | Format                                              | 
-| ---------------|-----------------------------------------------------|
-| Document       | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt` |
-| Presentation   | `.pptx` `.ppt` `.key` `.sxi` `.odp`                 |
-| Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`             |
-| Images         | `.jpg` `.png` `.tiff` `.webp` `.heif`               |
-| Others         | `.sxd` `.sxg` `.odg`                                |
+# Supported source filetypes
+| Type         | Format                                              | 
+|--------------|-----------------------------------------------------|
+| Document     | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt` |
+| Presentation | `.pptx` `.ppt` `.key` `.sxi` `.odp`                 |
+| Spreadsheet  | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`             |
+| Images       | `.jpg` `.png` `.tiff` `.webp` `.heif` `.heic`       |
+| Others       | `.sxd` `.sxg` `.odg`                                |

@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   test:
-    image: oikeusministerio/common-conversion
+    image: oikeusministerio/common-conversion:test
     depends_on:
       - redis
       - web
