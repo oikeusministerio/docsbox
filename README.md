@@ -233,5 +233,5 @@ TEST_VIA=False docker-compose -f docker-compose.yml -f docker-compose.test.yml u
 | Document       | `.docx` `.doc` `.pages` `.rtf` `.pdf` `.sxw` `.odt` |
 | Presentation   | `.pptx` `.ppt` `.key` `.sxi` `.odp`                 |
 | Spreadsheet    | `.xlsx` `.xls` `.numbers` `.sxc` `.ods`             |
-| Images         | `.jpg` `.png` `.tiff` `.webp` `.heif`               |
+| Images         | `.jpg` `.png` `.tiff` `.webp` `.heif` `.heic`       |
 | Others         | `.sxd` `.sxg` `.odg`                                |

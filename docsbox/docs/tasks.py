@@ -40,15 +40,32 @@ def process_convertion_by_id(file_id, headers):
             filename = headers.get('Content-Disposition')
             mimetype = headers.get('Content-Type')
             via_response = get_file_from_via(file_id)
+            version = ""
             if via_response.status_code == 200:
                 file_path = store_file(via_response, filename, stream=True)
                 if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                    mimetype = get_file_mimetype(file_path)
+                    mimetype, version = get_file_mimetype(file_path)
             else:
                 return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
-            file_info = {"file_id": file_id, "mimetype": mimetype, "filename": filename, "file_path": file_path, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
+            file_info = {
+                "file_id": file_id,
+                "mimetype": mimetype,
+                "filename": filename,
+                "pdf_version": version,
+                "file_path": file_path,
+                "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            }
         db.set('fileId:' + file_id, json.dumps(file_info))
-        return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": file_info["filename"], "mimetype": file_info["mimetype"], "file_id": file_info["file_id"], "save_in_via": True})
+        return process_convertion(
+            file_info["file_path"],
+            set_options(headers, file_info["mimetype"]),
+            {
+                "filename": file_info["filename"],
+                "mimetype": file_info["mimetype"],
+                "pdf_version": file_info["pdf_version"],
+                "file_id": file_info["file_id"],
+                "save_in_via": True
+            })
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
 
@@ -120,11 +137,19 @@ def process_document_convertion(input_path, options, meta, current_task):
     file_name = "{0}.{1}".format(remove_extension(meta["filename"]), options["format"])
     file_size = os.path.getsize(output_path)
     remove_file(input_path)
-    return {"fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": file_size, "has_failed": False}
+
+    return {
+        "fileName": file_name,
+        "mimeType": mimetype,
+        "fileType": filetype,
+        "pdfVersion": "A" + options.get("output_pdf_version", "1"),
+        "fileSize": file_size,
+        "has_failed": False
+    }
 
 
 def process_image_convertion(input_path, options, meta, current_task):
-    if meta["mimetype"] == "image/heif":
+    if meta["mimetype"] == "image/heif" or meta["mimetype"] == "image/heic":
         tmp_path = heic_to_png(input_path)
         remove_file(input_path)
         input_path = tmp_path

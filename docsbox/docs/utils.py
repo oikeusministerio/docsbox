@@ -14,7 +14,7 @@ from PyPDF2 import PdfReader
 from PyPDF2.errors import PyPdfError
 from libxmp import XMPFiles, consts
 from wand.image import Image
-from PIL import Image as PIL_Image, ExifTags
+from PIL import Image as PIL_Image
 from pillow_heif import register_heif_opener
 from tempfile import NamedTemporaryFile
 from docsbox import app, is_worker
@@ -148,9 +148,10 @@ def get_file_mimetype_from_id(file_id, filename=None):
         via_response = get_file_from_via(file_id)
         if via_response.status_code == 200:
             mimetype = via_response.headers.get('Content-Type')
+            version = ""
             if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                mimetype = get_file_mimetype_from_data(via_response, filename, stream=True)
-            return mimetype
+                mimetype, version = get_file_mimetype_from_data(via_response, filename, stream=True)
+            return mimetype, version
         elif via_response.status_code == 404:
             raise VIAException(404, "File id was not found.")
         else:
@@ -168,13 +169,14 @@ def get_file_mimetype_from_data(data, filename, stream=False):
         else:
             data.save(tmp_file)
         tmp_file.flush()
-        mimetype = get_file_mimetype(tmp_file.name)
-    return mimetype
+        mimetype, version = get_file_mimetype(tmp_file.name)
+    return mimetype, version
 
 
 def get_file_mimetype(file):
     try:
         mime_type_file = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
+        version = ""
         if mime_type_file == "application/pdf":
             # Check is PDF/A and Version
             with open(file, mode="rb") as file_data:
@@ -184,7 +186,8 @@ def get_file_mimetype(file):
                     if metadata:
                         pdfa = app.config["PDFA"]
                         nodes = metadata.get_nodes_in_namespace("", pdfa["NAMESPACE"])
-                        if get_pdfa_version(nodes) in pdfa["ACCEPTED_VERSIONS"]:
+                        version = get_pdfa_version(nodes)
+                        if version in pdfa["ACCEPTED_VERSIONS"]:
                             mime_type_file = "application/pdfa"
                 except ExpatError:
                     app.logger.log(logging.WARNING, "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A1 DOCINFO.".format(file))
@@ -201,7 +204,7 @@ def get_file_mimetype(file):
                             mime_type_file = file_mimetype
     except (ValueError, PyPdfError):
         mime_type_file = "Unknown/Corrupted"
-    return mime_type_file
+    return mime_type_file, version
 
 
 def remove_extension(file):
@@ -263,6 +266,13 @@ def sanitize_metadata(image_path):
             if hasattr(image, 'getexif'):
                 exif = image.getexif()
                 if exif:
+                    # Exif data is not supported in Piexif for other formats than jpeg and tiff
+                    # if the format is not jpeg or tiff, clear exif data
+                    # PNG support might be coming sometime: https://github.com/hMatoba/Piexif/issues/49
+                    if image.format not in ("JPEG", "TIFF"):
+                        image.save(image_path, image.format, exif=None)
+                        return
+
                     exif_dict = piexif.load(image_path)
 
                     # Remove unneeded metadata to save bytes
@@ -278,22 +288,22 @@ def sanitize_metadata(image_path):
                             # since piexif requires them to be signed and some image files
                             # might contain unsigned values for signed types
                             if tag_info:
-                                type = tag_info['type']
-                                if type == piexif.TYPES.SRational:
+                                tag_type = tag_info['type']
+                                if tag_type == piexif.TYPES.SRational:
                                     if isinstance(value, tuple) and len(value) == 2:
                                         exif_dict[ifd_name][tag] = tuple(unsigned_to_signed(n, 32) for n in value)
-                                elif type == piexif.TYPES.SLong:
+                                elif tag_type == piexif.TYPES.SLong:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 32)
-                                elif type == piexif.TYPES.SShort:
+                                elif tag_type == piexif.TYPES.SShort:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 16)
-                                elif type == piexif.TYPES.SByte:
+                                elif tag_type == piexif.TYPES.SByte:
                                     if isinstance(value, int):
                                         exif_dict[ifd_name][tag] = unsigned_to_signed(value, 8)
 
                             # Correct orientation for mirrored images since img2pdf does not support
-                            # mirrored images so we will change the orientation for these to be not
+                            # mirrored images, so we will change the orientation for these to be not
                             # mirrored instead of failin the conversion. We could also modify the image by
                             # using another library for the mirrored ones to maintain their integrity.
                             # With this implementation, they will be mirrored in a non-natural way

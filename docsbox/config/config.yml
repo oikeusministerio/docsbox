@@ -127,6 +127,10 @@ CONVERTABLE_MIMETYPES:
     name: HEIC - High Efficiency Image File Format
     formats: IMAGE_EXPORT_FORMATS
     default_options: IMAGE_DEFAULT_OPTIONS
+  image/heic:
+    name: HEIC - High Efficiency Image File Format
+    formats: IMAGE_EXPORT_FORMATS
+    default_options: IMAGE_DEFAULT_OPTIONS
   application/vnd.oasis.opendocument.text: # LibreOffice Word
     name: "OpenDocument Text"
     filter: "writer8"
