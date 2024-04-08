@@ -78,10 +78,10 @@ class DocumentTypeView(Resource):
             else:
                 return abort(400, "No file was sent nor valid file id given", request)
 
-            response["convertable"] = mimetype in app.config["CONVERTABLE_MIMETYPES"]
+            is_pdfa = mimetype == "application/pdf" and version
+            response["convertable"] = not is_pdfa and mimetype in app.config["CONVERTABLE_MIMETYPES"]
             response["mimeType"] = mimetype
             response["pdfVersion"] = version
-            is_pdfa = mimetype == "application/pdf" and version
             if is_pdfa:
                 response["fileType"] = "PDF/A"
             elif response["convertable"]:

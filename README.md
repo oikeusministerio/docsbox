@@ -53,7 +53,7 @@ If it is not provided, the service will scan the file.
 | convertable | `boolean` whether or not the service is able to convert the file. Will also be false if the file is already in PDF/A format                                                 |
 | fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
 | mimeType    | `string` the file's mimetype                                                                                                                                                |
-| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
+| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                         |
 
 ### Status codes
 | Status | Description                                            |
@@ -134,7 +134,7 @@ Queued
 | status     | `string` the status of the conversion, can be `queued`, `started`, `finished`, `failed`, `corrupted`, `non-convertable`                                                     |
 | fileType   | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
 | mimeType   | `string` the file's mimetype                                                                                                                                                |
-| pdfVersion | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
+| pdfVersion | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                         |
 
 
 ### Status codes
