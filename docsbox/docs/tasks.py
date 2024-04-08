@@ -6,7 +6,7 @@ from img2pdf import convert as images_to_pdf
 from tempfile import TemporaryDirectory
 from rq import get_current_job
 from datetime import datetime, timezone
-from docsbox import app, rq, db
+from docsbox import rq, db
 from docsbox.docs.unoconv import UnoConverter
 from docsbox.docs.utils import *
 from docsbox.docs.via_controller import *
@@ -18,10 +18,6 @@ def get_task(task_id):
 
 
 def remove_file(path):
-    """
-    Just removes a file.
-    Used for deleting original files (uploaded by user) and result files (result of converting)
-    """
     return os.remove(path)
 
 
@@ -40,15 +36,53 @@ def process_convertion_by_id(file_id, headers):
             filename = headers.get('Content-Disposition')
             mimetype = headers.get('Content-Type')
             via_response = get_file_from_via(file_id)
+            version = ""
             if via_response.status_code == 200:
                 file_path = store_file(via_response, filename, stream=True)
                 if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                    mimetype = get_file_mimetype(file_path)
+                    mimetype, version = get_file_mimetype(file_path)
             else:
                 return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
-            file_info = {"file_id": file_id, "mimetype": mimetype, "filename": filename, "file_path": file_path, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
+            file_info = {
+                "file_id": file_id,
+                "mimetype": mimetype,
+                "filename": filename,
+                "pdf_version": version,
+                "file_path": file_path,
+                "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            }
+
+        options = set_options(headers, file_info["mimetype"])
+        output_pdf_version = options.get("output_pdf_version", "1")
+        is_pdfa = file_info["mimetype"] == "application/pdf" and file_info["pdf_version"]
+        req_same_version = file_info["mimetype"] == "application/pdf" and file_info["pdf_version"] and file_info["pdf_version"][0] == output_pdf_version
+        if file_info["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
+            return {
+                "status": "corrupted" if file_info["mimetype"] == "Unknown/Corrupted" else "non-convertable",
+                "message": "The file type is not supported or the file is corrupted",
+                "traceback": "",
+                "has_failed": True
+            }
+
+        if file_info["mimetype"] == "application/pdf" and req_same_version:
+            return {
+                "status": "non-convertable",
+                "message": "The file is already in the requested format",
+                "traceback": "",
+                "has_failed": True
+            }
+
         db.set('fileId:' + file_id, json.dumps(file_info))
-        return process_convertion(file_info["file_path"], set_options(headers, file_info["mimetype"]), {"filename": file_info["filename"], "mimetype": file_info["mimetype"], "file_id": file_info["file_id"], "save_in_via": True})
+        return process_convertion(
+            file_info["file_path"],
+            options,
+            {
+                "filename": file_info["filename"],
+                "mimetype": file_info["mimetype"],
+                "pdf_version": file_info["pdf_version"],
+                "file_id": file_info["file_id"],
+                "save_in_via": True
+            })
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
 
@@ -80,10 +114,11 @@ def process_convertion(path, options, meta):
 
 def process_document_convertion(input_path, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
+    output_pdf_version = options.get("output_pdf_version", "1")
     if meta["mimetype"] == "application/pdf":
-        script = app.config["GHOSTSCRIPT_EXEC"]
-        if options.get("output_pdf_version", None) != "1":
-            script[1] = script[1] + "=" + options.get("output_pdf_version", None)
+        attachments = extract_pdf_attachments(input_path, output_pdf_version)
+
+        script = fill_cmd_param(app.config["GHOSTSCRIPT_EXEC"], "pdfVersion", output_pdf_version)
         run(script + ['-sOutputFile=' + output_path, input_path])
 
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
@@ -91,18 +126,20 @@ def process_document_convertion(input_path, options, meta, current_task):
         force_ocr = 0
         while not has_pdfa_xmp(temp_path):
             if force_ocr == 0:
-                script = app.config["OCRMYPDF"]["EXEC"] + [app.config["OCRMYPDF"]["OUT"] + "-" + options.get("output_pdf_version", None)]
+                script = fill_cmd_param(app.config["OCRMYPDF"]["EXEC"], "pdfVersion", output_pdf_version)
             elif force_ocr > 1:
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
             run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
             temp_path = output_path
             force_ocr += 1
+
+        attach_pdf_attachments(output_path, attachments, output_pdf_version)
     else:
         if options["format"] in app.config[app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]]:
             UnoConverter().convert(
                 inpath=input_path,
                 outfilter=options["filter"],
-                pdf_version=options["output_pdf_version"],
+                pdf_version=output_pdf_version,
                 outpath=output_path)
         else:
             raise Exception("File can't be in converted to format provided")
@@ -112,7 +149,7 @@ def process_document_convertion(input_path, options, meta, current_task):
     filetype = output_filetype["name"]
 
     if filetype == "PDF/A":
-        remove_xmp_meta(output_path)
+        remove_xmp_meta(output_path, current_task.id)
 
         if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None):
             output_path, file_name = thumbnail_generator(input_path, options, meta, current_task, None)
@@ -120,11 +157,20 @@ def process_document_convertion(input_path, options, meta, current_task):
     file_name = "{0}.{1}".format(remove_extension(meta["filename"]), options["format"])
     file_size = os.path.getsize(output_path)
     remove_file(input_path)
-    return {"fileName": file_name, "mimeType": mimetype, "fileType": filetype, "fileSize": file_size, "has_failed": False}
+
+    version = read_pdf_version(output_path)
+    return {
+        "fileName": file_name,
+        "mimeType": mimetype,
+        "fileType": filetype,
+        "pdfVersion": version,
+        "fileSize": file_size,
+        "has_failed": False
+    }
 
 
 def process_image_convertion(input_path, options, meta, current_task):
-    if meta["mimetype"] == "image/heif":
+    if meta["mimetype"] == "image/heif" or meta["mimetype"] == "image/heic":
         tmp_path = heic_to_png(input_path)
         remove_file(input_path)
         input_path = tmp_path
