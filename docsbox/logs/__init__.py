@@ -9,8 +9,8 @@ class GraylogLogger(logging.LoggerAdapter):
 
     def __init__(self, logger, config, facility):
         super().__init__(logger)
-        logging_cfg = config["LOGGING"]
-        self.setLevel(logging._checkLevel(logging_cfg["level"]))
+
+        self.setLevel(logging._checkLevel(config["LOGGING_LEVEL"]))
 
         self.logger.addHandler(GelfTCPHandler(
             host=config["GRAYLOG_HOST"],
@@ -18,11 +18,15 @@ class GraylogLogger(logging.LoggerAdapter):
             localname=config["GRAYLOG_SOURCE"],
             facility=facility))
 
-        self.extra = {**logging_cfg["extra"]}
+        self.system = config["LOGGING_SYSTEM"]
+        self.environment = config["LOGGING_ENVIRONMENT"]
 
     def log(self, level, msg, request=None, extra=None, *args, **kwargs):
         if self.isEnabledFor(level):
-            kwargs["extra"] = {**self.extra}
+            kwargs["extra"] = {}
+            kwargs["extra"]["system"] = self.system
+            kwargs["extra"]["environment"] = self.environment
+
             if request:
                 kwargs["extra"]["user"] = '%s - "%s"' % (request.remote_addr, request.user_agent.string)
                 kwargs["extra"]["request"] = '%s - "%s"' % (request.method, request.path)
