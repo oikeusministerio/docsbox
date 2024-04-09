@@ -1,3 +1,4 @@
+import logging
 import sys
 import redis
 import os
@@ -36,15 +37,16 @@ api = Api(app)
 rq = RQ(app)
 is_worker = 'worker' in os.path.basename(sys.argv[1])
 if app.config["GRAYLOG_HOST"]:
-    app.logger = GraylogLogger("docsbox", app.config, os.path.basename(sys.argv[1]) if is_worker else "web")
+    app.logger = GraylogLogger(logging.getLogger("docsbox"), app.config, os.path.basename(sys.argv[1]) if is_worker else "web")
 else:
     app.logger = app.logger
 
-# Creates a default Background Scheduler for file cleaning
-from docsbox.cleaner import cleaning_job
-sched = BackgroundScheduler()
-sched.add_job(cleaning_job, 'interval', seconds=app.config["CLEANER_JOB_INTREVAL"])
-sched.start()
+if not is_worker:
+    # Creates a default Background Scheduler for file cleaning
+    from docsbox.cleaner import cleaning_job
+    sched = BackgroundScheduler()
+    sched.add_job(cleaning_job, 'interval', seconds=app.config["CLEANER_JOB_INTREVAL"])
+    sched.start()
 
 from docsbox.docs.views import \
     DocumentTypeView, \
