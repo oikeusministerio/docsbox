@@ -69,9 +69,9 @@ class GelfTCPHandler(BaseGELFHandler, logging.Handler):
             if attempt == 1:
                 self.__send(data, 2)
             else:
-                raise e
+                print(f"ERROR - Graylog logging, connection issue, log was not sent: {e}")
         except Exception as e:
-            print(f"ERROR - Graylog logging, unexpected error: {e}")
+            print(f"ERROR - Graylog logging, unexpected error, log was not sent: {e}")
             self.__close_socket()
 
     def __create_ssl_context(self, cafile, capath, cadata):
