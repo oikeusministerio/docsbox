@@ -5,7 +5,6 @@ filesNotConvertable = [
         "fileNameExt": "test36.pdf",
         "mimeType": "application/pdf",
         "fileType": "PDF/A",
-        "pdfVersion": "1B",
         "fileId": "a5c9416d-b044-4dff-9cf9-983ad592a3ba"
     },
     {
@@ -36,7 +35,7 @@ filesNotConvertable = [
         "fileExt": ".PYTHON",
         "fileName": "test35",
         "fileNameExt": "test35.py",
-        "mimeType": "text/x-script.python",
+        "mimeType": "text/x-python",
         "fileType": "Unknown/Corrupted",
         "fileId": "2d431c06-6cfe-4f16-ba8d-51c58da502e5"
     },

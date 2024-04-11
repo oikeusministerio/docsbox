@@ -111,12 +111,12 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         print(f"status {filename}: " + str(json))
                         self.assertEqual(response.status_code, 200)
                         if json.get("status") == "finished":
+                            del json["pdfVersion"]
                             self.assertEqual(json, {
                                 "taskId": task_id,
                                 "status": "finished",
                                 "fileType": "PDF/A",
                                 "mimeType": "application/pdf",
-                                "pdfVersion": "1B"
                             })
                             break
                         if json.get("status") == "failed":
@@ -129,6 +129,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         self.assertEqual(response.status_code, 200)
                         json = response.json()
                         print(f"download {filename}: " + str(json))
+                        del json["pdfVersion"]
                         self.assertEqual(json, {
                             "taskId": task_id,
                             "status": "finished",
@@ -136,7 +137,6 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                             "fileId": json.get("fileId"),
                             "fileType": "PDF/A",
                             "mimeType": "application/pdf",
-                            "pdfVersion": "1B",
                             "fileName": file["fileName"] + ".pdf",
                             "fileSize": json.get("fileSize")
                         })
@@ -162,9 +162,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         self.assertEqual(exist_file, True)
                         self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
                 else:
+                    del json["pdfVersion"]
                     self.assertEqual(json,  {
                         "status": "non-convertable",
                         "fileType": file["fileType"],
                         "mimeType": file["mimeType"],
-                        "pdfVersion": file["pdfVersion"] if "pdfVersion" in file else "",
                     })

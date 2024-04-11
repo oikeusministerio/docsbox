@@ -8,7 +8,7 @@ from graypy.handler import BaseGELFHandler
 class GraylogLogger(logging.LoggerAdapter):
 
     def __init__(self, logger, config, facility):
-        super().__init__(logger)
+        super().__init__(logger, extra=None)
 
         self.setLevel(logging._checkLevel(config["LOGGING_LEVEL"]))
 
