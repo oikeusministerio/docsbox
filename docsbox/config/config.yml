@@ -4,7 +4,7 @@ MEDIA_PATH: "/home/docsbox/media/"
 LIBREOFFICE_PATH: "/usr/lib/libreoffice/program/"
 
 REDIS_URL: "redis://redis:6379/0"
-REDIS_JOB_TIMEOUT: 300
+REDIS_JOB_TIMEOUT: 600
 RESULT_FILE_TTL: 86400
 
 CLEANER_JOB_INTREVAL: 900
@@ -227,7 +227,7 @@ LOGGING_LEVEL: 'DEBUG'
 LOGGING_SYSTEM: 'Document Conversion Service'
 LOGGING_ENVIRONMENT: 'DEV'
 
-GHOSTSCRIPT_EXEC: ['gs', '-dPDFA=$pdfVersion', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer']
+GHOSTSCRIPT_EXEC: ['gs', '-dPDFA=$pdfVersion', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer', '-dNumRenderingThreads=8', '-dMaxPatternBitmap=2000000', '-dBufferSpace=2000000000', '-sOutputFile=$outputFile', '-c "100000000 setvmthreshold" -f', '$inputFile']
 OCRMYPDF:
   EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0', '--output-type=pdfa-$pdfVersion']
   FORCE: ['--skip-text', '--force-ocr']
