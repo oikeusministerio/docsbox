@@ -118,8 +118,11 @@ def process_document_convertion(input_path, options, meta, current_task):
     if meta["mimetype"] == "application/pdf":
         attachments = extract_pdf_attachments(input_path, output_pdf_version)
 
-        script = fill_cmd_param(app.config["GHOSTSCRIPT_EXEC"], "pdfVersion", output_pdf_version)
-        run(script + ['-sOutputFile=' + output_path, input_path])
+        script = app.config["GHOSTSCRIPT_EXEC"]
+        script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
+        script = fill_cmd_param(script, "outputFile", output_path)
+        script = fill_cmd_param(script, "inputFile", input_path)
+        run(script)
 
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
 

@@ -20,7 +20,7 @@ PyExifTool==0.5.5
 pypdf==4.1.0
 python-magic==0.4.27
 python-xmp-toolkit==2.0.2
-redis==5.0.3
+redis==4.5.1
 requests==2.31.0
 rq==1.16.1
 ujson==5.9.0
