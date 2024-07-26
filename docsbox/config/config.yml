@@ -223,9 +223,11 @@ GRAYLOG_HOST: localhost
 GRAYLOG_PORT: 12001
 GRAYLOG_PATH: '/gelf'
 GRAYLOG_SOURCE:
-LOGGING_LEVEL: 'DEBUG'
-LOGGING_SYSTEM: 'Document Conversion Service'
-LOGGING_ENVIRONMENT: 'DEV'
+LOGGING:
+  level: 'DEBUG'
+  extra:
+    system: 'Document Conversion Service'
+    environment: 'DEV'
 
 GHOSTSCRIPT_EXEC: ['gs', '-dPDFA=$pdfVersion', '-dBATCH', '-dNOPAUSE', '-sColorConversionStrategy=RGB', '-sProcessColorModel=DeviceRGB', '-sDEVICE=pdfwrite', '-dPDFACompatibilityPolicy=1', '-dPDFSETTINGS=/printer', '-dNumRenderingThreads=8', '-dMaxPatternBitmap=2000000', '-dBufferSpace=2000000000', '-sOutputFile=$outputFile', '-c "100000000 setvmthreshold" -f', '$inputFile']
 OCRMYPDF:

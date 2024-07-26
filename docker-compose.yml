@@ -18,8 +18,9 @@ services:
       - logdev.om.fi:${GRAYLOG_IP:-0.0.0.0}
     environment:
       GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
-      GRAYLOG_PORT: 445
-      GRAYLOG_SOURCE: local
+      GRAYLOG_PORT: 444
+      GRAYLOG_PATH: '/gelf'
+      GRAYLOG_SOURCE: conversion.service.dev
     command: gunicorn --config=docsbox/config/gunicorn.conf docsbox:app
 
   rqworker:
@@ -40,8 +41,9 @@ services:
       - logdev.om.fi:${GRAYLOG_IP:-0.0.0.0}
     environment:
       GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
-      GRAYLOG_PORT: 445
-      GRAYLOG_SOURCE: local
+      GRAYLOG_PORT: 444
+      GRAYLOG_PATH: '/gelf'
+      GRAYLOG_SOURCE: conversion.service.dev
     command: rq worker -c docsbox
  
   nginx:
