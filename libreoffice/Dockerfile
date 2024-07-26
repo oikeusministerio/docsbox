@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 ENV TZ Europe/Helsinki
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
@@ -21,7 +21,7 @@ ENV LANG=en_US.UTF-8 \
 
 # Install Libreoffice
 # Latest "fresh"
-RUN add-apt-repository ppa:libreoffice/ppa
+#RUN add-apt-repository ppa:libreoffice/ppa
 
 # Previous "still"
 #RUN add-apt-repository ppa:libreoffice/libreoffice-still
@@ -31,7 +31,7 @@ RUN add-apt-repository ppa:libreoffice/ppa
 
 # 7.2
 # Requires Ubuntu 20.04
-#RUN add-apt-repository ppa:wasta-linux/libreoffice-7-2
+RUN add-apt-repository ppa:wasta-linux/libreoffice-7-2
 
 # Define fonts
 RUN echo debconf debconf/frontend select Noninteractive | debconf-set-selections \
