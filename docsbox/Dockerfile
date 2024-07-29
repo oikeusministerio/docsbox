@@ -40,7 +40,9 @@ RUN apt-get -qq update \
     && apt-get -qq clean
 
 # Install exif tool
-ARG EXIF_TOOL_VERSION=12.77
+# https://exiftool.org/history.html
+# The most recent production release is Version 12.76
+ARG EXIF_TOOL_VERSION=12.76
 RUN curl --remote-name https://exiftool.org/Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz \
     && gzip -dc Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz | tar -xf - \
     && cd Image-ExifTool-$EXIF_TOOL_VERSION \
