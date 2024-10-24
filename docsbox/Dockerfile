@@ -1,4 +1,4 @@
-FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:24.2
+FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:24.8
 
 # Fetch dependencies
 RUN apt-get -qq update \
@@ -23,7 +23,7 @@ RUN apt-get -qq update \
         ocrmypdf \
         python3-cffi \
         python3-dev \
-        python3-distutils \
+        python3-setuptools \
         python3-magic \
         python3-pip \
         python3-pkg-resources \
@@ -52,7 +52,7 @@ RUN curl --remote-name https://exiftool.org/Image-ExifTool-$EXIF_TOOL_VERSION.ta
 
 # Install dcs
 ADD requirements.txt /home/docsbox/requirements.txt
-RUN pip3 install -r /home/docsbox/requirements.txt
+RUN pip3 install --break-system-packages -r /home/docsbox/requirements.txt
 COPY ./config/registrymodifications.xcu /root/.config/libreoffice/4/user/registrymodifications.xcu
 COPY ./config/msooxml.txt /etc/magic
 ADD . /home/docsbox
