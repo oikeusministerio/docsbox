@@ -33,14 +33,20 @@ class DocumentStatus:
     pdf_version: str
 
     def serialize(self):
-        return jsonify({
+        document_status = {
             "taskId": self.task_id,
-            "status": self.status,
-            "message": self.message,
-            "fileType": self.file_type,
-            "mimeType": self.mimetype,
-            "pdfVersion": self.pdf_version
-        })
+            "status": self.status
+        }
+        if hasattr(self, "message"):
+            document_status["message"] = self.message
+        if hasattr(self, "file_type"):
+            document_status["fileType"] = self.file_type
+        if hasattr(self, "mimetype"):
+            document_status["mimeType"] = self.mimetype
+        if hasattr(self, "pdf_version"):
+            document_status["pdfVersion"] = self.pdf_version
+        return jsonify(document_status)
+
 
 class DocumentStatusView(Resource):
 
@@ -85,13 +91,15 @@ class DocumentType:
     message: str
 
     def serialize(self):
-        return jsonify({
+        document_type = {
             "convertable": self.convertable,
             "mimeType": self.mime_type,
             "pdfVersion": self.pdf_version,
-            "fileType": self.file_type,
-            "message": self.message
-        })
+            "fileType": self.file_type
+        }
+        if hasattr(self, "message"):
+            document_type["message"] = self.message
+        return jsonify(document_type)
 
 class DocumentTypeView(Resource):
 
@@ -139,13 +147,18 @@ class DocumentConvert:
     file_type: str
 
     def serialize(self):
-        return jsonify({
-            "taskId": self.task_id,
-            "status": self.status,
-            "mimeType": self.mime_type,
-            "pdfVersion": self.pdf_version,
-            "fileType": self.file_type
-        })
+        document_convert = {
+            "status": self.status
+        }
+        if hasattr(self, "task_id"):
+            document_convert["taskId"] = self.task_id
+        if hasattr(self, "mime_type"):
+            document_convert["mimeType"] = self.mime_type
+        if hasattr(self, "pdf_version"):
+            document_convert["pdfVersion"] = self.pdf_version
+        if hasattr(self, "file_type"):
+            document_convert["fileType"] = self.file_type
+        return jsonify(document_convert)
 
 class DocumentConvertView(Resource):
 
@@ -224,7 +237,8 @@ class DocumentConvertViewV2(Resource):
                     response.mime_type = mimetype
                     response.pdf_version = version
                     response.file_type = "PDF/A" if is_pdfa else "Unknown/Corrupted"
-                    return response
+                    return response.serialize()
+
 
                 task = process_convertion.queue(file_path, options, {"filename": filename, "mimetype": mimetype, "pdfVersion": version, "save_in_via": False})
                 app.logger.log(logging.INFO, "Queued conversion with task id: %s" % task.id, request,

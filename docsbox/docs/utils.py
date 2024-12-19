@@ -205,7 +205,7 @@ def read_pdf_version(file: str):
             metadata = pdf.xmp_metadata
             if metadata:
                 pdfa_config = app.config["PDFA"]
-                nodes = metadata.get_nodes_in_namespace("", pdfa_config.namespace)
+                nodes = metadata.get_nodes_in_namespace("", pdfa_config["NAMESPACE"])
                 version = get_pdfa_version(nodes)
         except ExpatError:
             app.logger.log(
