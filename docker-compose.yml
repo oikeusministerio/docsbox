@@ -22,7 +22,7 @@ services:
       GRAYLOG_SOURCE: local
     command: gunicorn --config=docsbox/config/gunicorn.conf docsbox:app
 
-  rqworker:
+  celeryworker:
     restart: always
     image: oikeusministerio/common-conversion:test
     init: true
@@ -42,7 +42,7 @@ services:
       GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
       GRAYLOG_PORT: 445
       GRAYLOG_SOURCE: local
-    command: rq worker -c docsbox
+    command: celery -A docsbox.celery worker --loglevel=info
  
   nginx:
     restart: always

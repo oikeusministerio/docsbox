@@ -17,7 +17,7 @@ class BaseTestCase(unittest.TestCase):
     def setUp(self):
         self.app = docsbox.app
         self.app.config["TESTING"] = True
-        self.app.config["RQ_ASYNC"] = False
+        self.app.config["CELERY_ALWAYS_EAGER"] = True
         self.inputs = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), "inputs/"
         )

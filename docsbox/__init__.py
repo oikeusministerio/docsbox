@@ -5,7 +5,7 @@ import os
 import confuse
 
 from flask import Flask
-from flask_rq2 import RQ
+from celery import Celery
 from flask_restful import Api
 from docsbox.logs import GraylogLogger
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -22,7 +22,6 @@ REDIS_URL = app.config["REDIS_URL"]
 
 app.config.update({
     "REDIS_URL": REDIS_URL,
-    "RQ_REDIS_URL": REDIS_URL,
     "VIA_URL": app.config["VIA_URL"],
     "VIA_CERT_PATH": app.config["VIA_CERT_PATH"],
     "VIA_ALLOWED_USERS": app.config["VIA_ALLOWED_USERS"],
@@ -34,7 +33,10 @@ app.config.update({
 
 db = redis.Redis.from_url(REDIS_URL)
 api = Api(app)
-rq = RQ(app)
+
+celery = Celery(app.name, backend=REDIS_URL, broker=REDIS_URL)
+celery.conf.update(app.config)
+
 is_worker = 'worker' in os.path.basename(sys.argv[1])
 if app.config["GRAYLOG_HOST"]:
     app.logger = GraylogLogger(logging.getLogger("docsbox"), app.config, os.path.basename(sys.argv[1]) if is_worker else "web")

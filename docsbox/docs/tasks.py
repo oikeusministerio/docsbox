@@ -4,25 +4,20 @@ import json
 from subprocess import run
 from img2pdf import convert as images_to_pdf
 from tempfile import TemporaryDirectory
-from rq import get_current_job
 from datetime import datetime, timezone
-from docsbox import rq, db
+from docsbox import db, celery
 from docsbox.docs.unoconv import UnoConverter
 from docsbox.docs.utils import *
 from docsbox.docs.via_controller import *
-
-
-def get_task(task_id):
-    queue = rq.get_queue()
-    return queue.fetch_job(task_id)
 
 
 def remove_file(path):
     return os.remove(path)
 
 
-@rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
-def process_convertion_by_id(file_id, headers):
+@celery.task(timeout=app.config["REDIS_JOB_TIMEOUT"], bind=True)
+def process_convertion_by_id(self, file_id, headers):
+    started_at = datetime.now(timezone.utc)
     try:
         if db.exists('fileId:' + file_id) != 0:
             file_info = json.loads(db.get('fileId:' + file_id))
@@ -73,7 +68,7 @@ def process_convertion_by_id(file_id, headers):
             }
 
         db.set('fileId:' + file_id, json.dumps(file_info))
-        return process_convertion(
+        return process_convertion(self,
             file_info["file_path"],
             options,
             {
@@ -82,19 +77,21 @@ def process_convertion_by_id(file_id, headers):
                 "pdf_version": file_info["pdf_version"],
                 "file_id": file_info["file_id"],
                 "save_in_via": True
-            })
+            },
+            started_at)
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
 
 
-@rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
-def process_convertion(path, options, meta):
+@celery.task(timeout=app.config["REDIS_JOB_TIMEOUT"], bind=True)
+def process_convertion(self, path, options, meta, started_at=None):
+    started_at = started_at if started_at else datetime.now(timezone.utc)
     if meta["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
         status = "corrupted" if meta["mimetype"] == "Unknown/Corrupted" else "non-convertable"
         message = "Conversion is not possible for filetype " + meta["mimetype"]
         return {"has_failed": True, "status": status, "message": message, "traceback": ""}
     try:
-        current_task = get_current_job()
+        current_task = self.request
         export_format_type = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
         if export_format_type in app.config["DOCUMENT_CONVERTION_FORMATS"]:
             result = process_document_convertion(path, options, meta, current_task)
@@ -106,7 +103,7 @@ def process_convertion(path, options, meta):
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
             result['fileId'] = r.headers.get("Document-id")
-        log_task_completion(current_task, result, meta)
+        log_task_completion(current_task, result, meta, started_at)
         return result
     except Exception as e:
         return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
@@ -208,8 +205,8 @@ def thumbnail_generator(input_path, options, meta, current_task, original_docume
         return make_zip_archive(current_task.id, tmp_dir)
 
 
-def log_task_completion(task, result, meta):
-    task_time = datetime.now(timezone.utc) - task.started_at.replace(tzinfo=timezone.utc)
+def log_task_completion(task, result, meta, started_at: datetime):
+    task_time = datetime.now(timezone.utc) - started_at
     extra = {
         "task_id": task.id,
         "converted_file_size": str(result["fileSize"]),
