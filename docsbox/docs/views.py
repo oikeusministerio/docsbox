@@ -2,6 +2,7 @@ import json
 import traceback
 import logging
 
+from enum import Enum
 from datetime import datetime
 from flask import request, send_from_directory, jsonify
 from flask_restful import Resource
@@ -11,6 +12,22 @@ from docsbox.docs.utils import get_file_mimetype_from_data, is_valid_uuid, store
     store_file_from_id, get_file_mimetype_from_id
 from docsbox.docs.via_controller import VIAException
 
+class CeleryStatus(Enum):
+    SUCCESS = "finished"
+    PENDING = "queued"
+    FAILURE = "failed"
+
+def status_message(status: str):
+    match status:
+        case CeleryStatus.SUCCESS.name:
+            status_message = CeleryStatus.SUCCESS.value
+        case CeleryStatus.PENDING.name:
+            status_message = CeleryStatus.PENDING.value
+        case CeleryStatus.FAILURE.name:
+            status_message = CeleryStatus.FAILURE.value
+        case _:
+            status_message = status.lower()
+    return status_message
 
 def abort(status_code, message, request=None, extras={}, traceback=None):
     if status_code >= 500:
@@ -45,12 +62,12 @@ class DocumentStatusView(Resource):
                         response["message"] = task.result["message"]
                         app.logger.log(logging.ERROR, 'Error: %s %s' % (task.result["message"], task.result["traceback"]), extra={"response": response, "request": request, "status": str(500)})
                     else:
-                        response["status"] = task.status
+                        response["status"] = status_message(task.status)
                         response["fileType"] = task.result["fileType"]
                         response["mimeType"] = task.result["mimeType"]
                         response["pdfVersion"] = task.result["pdfVersion"]
                 else:
-                    response["status"] = task.status
+                    response["status"] = status_message(task.status)
             else:
                 return abort(404, "Unknown task", request, extras={"task_id": task_id})
         except Exception as e:
@@ -188,7 +205,7 @@ class DocumentConvertViewV2(Resource):
                                extra={"original_file_id": file_id, "original_filename": request.headers.get('Content-Disposition'), "original_mimetype": request.headers.get('Content-Type')})
             else:
                 return abort(400, "No file has sent nor valid file_id given.", request)
-            response = {"taskId": task.id, "status": task.status}
+            response = {"taskId": task.id, "status": status_message(task.status)}
         except ValueError as err:
             return abort(400, err.args[0], request)
         except VIAException as viaEr:
@@ -210,7 +227,7 @@ class DocumentDownloadView(Resource):
         try:
             task = celery.AsyncResult(task_id)
             if task:
-                if task.status == "finished":
+                if task.status == CeleryStatus.SUCCESS.name:
                     if task.result:
                         if not isinstance(task.result, dict):
                             return abort(404, "Task result not dictionary: " + str(task.result), request, extras={"task_id": task_id})
@@ -219,7 +236,7 @@ class DocumentDownloadView(Resource):
                         elif "fileId" in task.result:
                             response = { 
                                 "taskId": task.id,
-                                "status": task.status,
+                                "status": status_message(task.status),
                                 "convertable": True,
                                 "fileId": task.result["fileId"],
                                 "fileType": task.result["fileType"],

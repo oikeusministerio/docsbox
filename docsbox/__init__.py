@@ -37,7 +37,7 @@ api = Api(app)
 celery = Celery(app.name, backend=REDIS_URL, broker=REDIS_URL)
 celery.conf.update(app.config)
 
-is_worker = 'worker' in os.path.basename(sys.argv[1])
+is_worker = 'celery' in os.path.basename(sys.argv[0])
 if app.config["GRAYLOG_HOST"]:
     app.logger = GraylogLogger(logging.getLogger("docsbox"), app.config, os.path.basename(sys.argv[1]) if is_worker else "web")
 else:

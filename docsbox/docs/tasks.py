@@ -49,7 +49,6 @@ def process_convertion_by_id(self, file_id, headers):
 
         options = set_options(headers, file_info["mimetype"])
         output_pdf_version = options.get("output_pdf_version", "1")
-        is_pdfa = file_info["mimetype"] == "application/pdf" and file_info["pdf_version"]
         req_same_version = file_info["mimetype"] == "application/pdf" and file_info["pdf_version"] and file_info["pdf_version"][0] == output_pdf_version
         if file_info["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
             return {
