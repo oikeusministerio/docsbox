@@ -1,0 +1,12 @@
+{
+	"name": "DCS",
+	"image": "dcs-dev-container",
+	"forwardPorts": [8000, 6379, 2002],
+	"portsAttributes": {
+	  "8000": {
+		"label": "DCS",
+		"onAutoForward": "notify"
+	  }
+	},
+	"postCreateCommand": "pip3 install --break-system-packages -r /docsbox/requirements.txt"
+}
