@@ -31,9 +31,9 @@ You can find dev container definition on .devcontainer folder.
 To prepare local development
 1. Initiate the redis container that it is defined on the docker-compose file
 2. Install "Dev Containers" extension for VS Code or something similar
-3. Build the image to use for local development with `docker build -t dcs-dev-container .` after going to the .devcontainer folder.
+3. Go to the .devcontainer folder and build the image to use for local development with `docker build -t dcs-dev-container .`.
 4. Initiate the dev container with the devcontainer.json definition file
-5. Python packages will be installed automatically when initiating, but if packages are changed in some way you can execute `pip3 install --break-system-packages -r /docsbox/requirements.txt` to update them
+5. Python packages will be installed automatically when initiating, but if packages are changed in some way you can execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to update them
 6. Before starting the rq worker and the Flask app you need to change some config.yml variables, in particular these:
     a. MEDIA_PATH: "/workspaces/docsbox/media/"
     b. REDIS_URL: "redis://host.docker.internal:6379/0"
