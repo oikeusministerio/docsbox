@@ -29,12 +29,11 @@ For local devolpment we use dev containers since libreoffice features that we us
 You can find dev container definition on .devcontainer folder.
 
 To prepare local development
-1. Initiate the redis container that it is defined on the docker-compose file
-2. Install "Dev Containers" extension for VS Code or something similar
-3. Go to the .devcontainer folder and build the image to use for local development with `docker build -t dcs-dev-container .`.
-4. Initiate the dev container with the devcontainer.json definition file and go into the dev container
-5. Python packages will be installed automatically when initiating, but if packages are changed in some way you can execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to update them
-6. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app
+1. Install "Dev Containers" extension for VS Code or something similar.
+2. Build the image to use for local development with `docker build -t oikeusministerio/common-conversion:test docsbox`.
+3. Go to the .devcontainer folder and initiate the dev environment with `docker-compose up -d`.
+4. You can find the source code inside of the '/home/docsbox' folder where you can modify how you want.
+5. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app, both commands are executed on the go '/home' folder.
 
 You can now repeat the seventh step on any modification you do in the code to represent the changes made and test.
 
