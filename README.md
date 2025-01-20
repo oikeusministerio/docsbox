@@ -25,20 +25,16 @@ GRAYLOG_SOURCE - Graylog name for the logger Host
 ```
 
 # Local Development
-For local devolpment we use dev containers since libreoffice features that we use for document conversion is very linux dependent.
+For local devolpment we use dev containers since libreoffice features that we use for document conversion are very linux dependent.
 You can find dev container definition on .devcontainer folder.
 
 To prepare local development
 1. Initiate the redis container that it is defined on the docker-compose file
 2. Install "Dev Containers" extension for VS Code or something similar
 3. Go to the .devcontainer folder and build the image to use for local development with `docker build -t dcs-dev-container .`.
-4. Initiate the dev container with the devcontainer.json definition file
+4. Initiate the dev container with the devcontainer.json definition file and go into the dev container
 5. Python packages will be installed automatically when initiating, but if packages are changed in some way you can execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to update them
-6. Before starting the rq worker and the Flask app you need to change some config.yml variables, in particular these:
-    a. MEDIA_PATH: "/workspaces/docsbox/media/"
-    b. REDIS_URL: "redis://host.docker.internal:6379/0"
-    c. VIA_CERT_PATH: /workspaces/docsbox/certificate.pem
-7. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app
+6. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app
 
 You can now repeat the seventh step on any modification you do in the code to represent the changes made and test.
 
