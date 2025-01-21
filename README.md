@@ -30,10 +30,11 @@ You can find dev container definition on .devcontainer folder.
 
 To prepare local development
 1. Install "Dev Containers" extension for VS Code or something similar.
-2. Build the image to use for local development with `docker build -t oikeusministerio/common-conversion:test docsbox`.
-3. Go to the .devcontainer folder and initiate the dev environment with `docker-compose up -d`.
-4. You can find the source code inside of the '/home/docsbox' folder where you can modify how you want.
-5. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app, both commands are executed on the go '/home' folder.
+2. Build the image to use for local development with `docker build -t oikeusministerio/common-conversion:test docsbox`, if not already done.
+3. Reopen folder in a dev container with the .devcontainer/devcontainer.json file. It will automatically start a redis container for that dev container to user with.
+4. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app.
+5. Whatever modifications you make inside a container to the files will automatically reflect in your local project's folder.
+6. If packages are added/removed or versions changed then execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to reflect the new changes.
 
 You can now repeat the seventh step on any modification you do in the code to represent the changes made and test.
 
