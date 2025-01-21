@@ -13,9 +13,10 @@ services:
       - redis
     ports:
       - "8000:8000"
+    volumes:
+      - ..:/workspace:cached
 
   redis:
-    restart: always
     image: redis:latest
     networks:
       - conversion-network-dev
