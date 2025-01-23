@@ -32,7 +32,7 @@ To prepare local development
 1. Install "Dev Containers" extension for VS Code or something similar.
 2. Build the image to use for local development with `docker build -t oikeusministerio/common-conversion:test docsbox`, if not already done.
 3. Reopen folder in a dev container with the .devcontainer/devcontainer.json file. It will automatically start a redis container for that dev container to user with.
-4. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app.
+4. Open 2 consoles, initiate in one the rq worker by entering the command `celery -A docsbox.celery worker` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app.
 5. Whatever modifications you make inside a container to the files will automatically reflect in your local project's folder.
 6. If packages are added/removed or versions changed then execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to reflect the new changes.
 

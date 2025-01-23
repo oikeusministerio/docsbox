@@ -42,7 +42,7 @@ services:
       GRAYLOG_HOST: ${GRAYLOG_HOST:-nowhere}
       GRAYLOG_PORT: 445
       GRAYLOG_SOURCE: local
-    command: celery -A docsbox.celery worker --loglevel=info
+    command: celery -A docsbox.celery worker
  
   nginx:
     restart: always
