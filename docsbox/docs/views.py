@@ -4,9 +4,11 @@ import logging
 
 from datetime import datetime
 from flask import request, send_from_directory, jsonify, Request
+from docsbox.docs.classes.document import *
+from docsbox.docs.classes.file import FileInfo
 from flask_restful import Resource
 from docsbox import app, db
-from docsbox.docs.tasks import get_task, process_convertion, process_convertion_by_id, remove_file, FileInfo
+from docsbox.docs.tasks import get_task, process_convertion, process_convertion_by_id, remove_file
 from docsbox.docs.utils import get_file_mimetype_from_data, is_valid_uuid, store_file, get_file_mimetype, set_options, \
     store_file_from_id, get_file_mimetype_from_id
 from docsbox.docs.via_controller import VIAException
@@ -22,30 +24,6 @@ def abort(status_code: int, message: Exception | str, request: Request =None, ex
     response.status_code = status_code
     response.content_type = "application/json"
     return response
-
-
-class DocumentStatus:
-    task_id: str
-    status: str
-    message: str
-    file_type: str
-    mimetype: str
-    pdf_version: str
-
-    def serialize(self):
-        document_status = {
-            "taskId": self.task_id,
-            "status": self.status
-        }
-        if hasattr(self, "message"):
-            document_status["message"] = self.message
-        if hasattr(self, "file_type"):
-            document_status["fileType"] = self.file_type
-        if hasattr(self, "mimetype"):
-            document_status["mimeType"] = self.mimetype
-        if hasattr(self, "pdf_version"):
-            document_status["pdfVersion"] = self.pdf_version
-        return jsonify(document_status)
 
 
 class DocumentStatusView(Resource):
@@ -82,24 +60,6 @@ class DocumentStatusView(Resource):
 
         return response.serialize()
 
-
-class DocumentType:
-    convertable: bool
-    mime_type: str
-    pdf_version: str
-    file_type: str
-    message: str
-
-    def serialize(self):
-        document_type = {
-            "convertable": self.convertable,
-            "mimeType": self.mime_type,
-            "pdfVersion": self.pdf_version,
-            "fileType": self.file_type
-        }
-        if hasattr(self, "message"):
-            document_type["message"] = self.message
-        return jsonify(document_type)
 
 class DocumentTypeView(Resource):
 
@@ -138,27 +98,6 @@ class DocumentTypeView(Resource):
 
         return response.serialize()
 
-
-class DocumentConvert:
-    task_id: str
-    status: str
-    mime_type: str
-    pdf_version: str
-    file_type: str
-
-    def serialize(self):
-        document_convert = {
-            "status": self.status
-        }
-        if hasattr(self, "task_id"):
-            document_convert["taskId"] = self.task_id
-        if hasattr(self, "mime_type"):
-            document_convert["mimeType"] = self.mime_type
-        if hasattr(self, "pdf_version"):
-            document_convert["pdfVersion"] = self.pdf_version
-        if hasattr(self, "file_type"):
-            document_convert["fileType"] = self.file_type
-        return jsonify(document_convert)
 
 class DocumentConvertView(Resource):
 
@@ -260,30 +199,6 @@ class DocumentConvertViewV2(Resource):
 
         return response.serialize()
 
-
-class DocumentDownload:
-    task_id: str
-    status: str
-    convertable: bool
-    file_id: str
-    file_type: str
-    mime_type: str
-    pdf_version: str
-    file_name: str
-    file_size: str
-
-    def serialize(self):
-        return jsonify({
-            "taskId": self.task_id,
-            "status": self.status,
-            "convertable": self.convertable,
-            "fileId": self.file_id,
-            "fileType": self.file_type,
-            "mimeType": self.mime_type,
-            "pdfVersion": self.pdf_version,
-            "fileName": self.file_name,
-            "fileSize": self.file_size
-        })
 
 class DocumentDownloadView(Resource):
 

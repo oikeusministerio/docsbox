@@ -1,7 +1,7 @@
 import os
 import json
 from docsbox import app, db
-from docsbox.docs.tasks import FileInfo
+from docsbox.docs.classes.file.file_info import FileInfo
 from docsbox.docs.utils import check_file_path
 from datetime import datetime, timedelta
 

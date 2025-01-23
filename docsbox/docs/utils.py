@@ -2,6 +2,7 @@ import os
 import zipfile
 from typing import Any
 
+from docsbox.docs.classes.attachment import Attachment
 import pikepdf
 import ujson
 import itertools
@@ -396,11 +397,6 @@ def fill_cmd_param(cmd: list[str], param: str, value: str):
 
     return cmd
 
-class Attachment:
-    bytes: Any
-    f_props: dict
-    file_spec: dict
-
 def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
     """
     Extracts all attachments in the pdf file found in the path and returns them
@@ -423,12 +419,7 @@ def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
                 f_props = file_spec.EF.F.items()
                 del file_spec.EF
 
-                attachment = Attachment()
-                attachment.bytes = file_bytes
-                attachment.f_props = dict(f_props)
-                attachment.file_spec = dict(file_spec)
-
-                attachments[name] = attachment
+                attachments[name] = Attachment(file_bytes, dict(f_props), dict(file_spec))
 
     return attachments
 
