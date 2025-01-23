@@ -1,6 +1,8 @@
 import os
 import zipfile
+from typing import Any
 
+from docsbox.docs.classes.attachment import Attachment
 import pikepdf
 import ujson
 import itertools
@@ -26,7 +28,7 @@ if is_worker:
     register_heif_opener()
 
 
-def make_zip_archive(uuid, tmp_dir):
+def make_zip_archive(uuid: str, tmp_dir: str):
     """
     Creates ZIP archive from given @tmp_dir.
     """
@@ -41,7 +43,7 @@ def make_zip_archive(uuid, tmp_dir):
     return result_path, zipname
 
 
-def set_options(headers, mimetype):
+def set_options(headers: dict, mimetype:str) -> dict:
     """
     Validates options
     """
@@ -92,7 +94,7 @@ def set_options(headers, mimetype):
     return options
 
 
-def make_thumbnails(image, tmp_dir, size):
+def make_thumbnails(image, tmp_dir: str, size):
     """ 
     This method is not called while THUMBNAILS_GENERATE in settings.py is false
     """
@@ -121,7 +123,7 @@ def get_pdfa_version(nodes):
     return part + conformance
 
 
-def store_file_from_id(file_id, filename):
+def store_file_from_id(file_id: str, filename: str):
     try:
         via_response = get_file_from_via(file_id)
         if via_response.status_code == 200:
@@ -134,7 +136,7 @@ def store_file_from_id(file_id, filename):
         raise VIAException(504, "VIA service took too long to respond.")
 
 
-def store_file(data, filename, stream=False):
+def store_file(data, filename: str, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(delete=False, dir=app.config["MEDIA_PATH"], suffix=suffix) as tmp_file:
         if stream:
@@ -145,7 +147,7 @@ def store_file(data, filename, stream=False):
     return tmp_file.name
 
 
-def get_file_mimetype_from_id(file_id, filename=None):
+def get_file_mimetype_from_id(file_id: str, filename: str=None):
     try:
         via_response = get_file_from_via(file_id)
         if via_response.status_code == 200:
@@ -162,7 +164,7 @@ def get_file_mimetype_from_id(file_id, filename=None):
         raise VIAException(504, "VIA service took too long to respond.")
 
 
-def get_file_mimetype_from_data(data, filename, stream=False):
+def get_file_mimetype_from_data(data, filename: str, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(suffix=suffix) as tmp_file:
         if stream:
@@ -175,18 +177,18 @@ def get_file_mimetype_from_data(data, filename, stream=False):
     return mimetype, version
 
 
-def get_file_mimetype(file):
+def get_file_mimetype(file: str):
     version = ""
     try:
-        mime_type_file = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
+        mime_type_file: str = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
         if mime_type_file == "application/pdf":
             version = read_pdf_version(file)
 
         elif mime_type_file in app.config["GENERIC_MIMETYPES"]:
-            mime_type_file = magic.from_file(file, mime=True)
+            mime_type_file: str = magic.from_file(file, mime=True)
             if mime_type_file in app.config["GENERIC_MIMETYPES"]:
                 with open(file, mode="rb") as file_data:
-                    document_type_file = magic.from_buffer(file_data.read(2048))
+                    document_type_file: str = magic.from_buffer(file_data.read(2048))
                     for file_mimetype, file_format in itertools.zip_longest(
                             app.config["FILEMIMETYPES"],
                             app.config["FILEFORMATS"]):
@@ -196,8 +198,7 @@ def get_file_mimetype(file):
         mime_type_file = "Unknown/Corrupted"
     return mime_type_file, version
 
-
-def read_pdf_version(file):
+def read_pdf_version(file: str):
     version = ""
     with open(file, mode="rb") as file_data:
         pdf = PdfReader(file_data, strict=False)
@@ -215,15 +216,15 @@ def read_pdf_version(file):
     return version
 
 
-def remove_extension(file):
+def remove_extension(file: str):
     return os.path.splitext(file)[0]
 
 
-def is_valid_uuid(uuid):
+def is_valid_uuid(uuid: str):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
 
 
-def remove_xmp_meta(file, task_id):
+def remove_xmp_meta(file: str, task_id: str):
     xmpfile = XMPFiles(file_path=file, open_forupdate=True)
     xmp = xmpfile.get_xmp()
     if xmp:
@@ -242,7 +243,7 @@ def remove_xmp_meta(file, task_id):
         xmpfile.close_file()
 
 
-def has_pdfa_xmp(file):
+def has_pdfa_xmp(file: str):
     try:
         with open(file, mode="rb") as fileData:
             reader = PdfReader(fileData, strict=False)
@@ -268,7 +269,7 @@ def remove_alpha(image_path):
             bg.save(image_path, image.format)
 
 
-def sanitize_metadata(image_path):
+def sanitize_metadata(image_path: str):
     try:
         with PIL_Image.open(image_path) as image:
             if hasattr(image, 'getexif'):
@@ -350,7 +351,7 @@ def unsigned_to_signed(value, bit_count):
         return value
 
 
-def check_file_content(original, converted):
+def check_file_content(original: str, converted: str):
     original_page_num = 0
     converted_page_num = 0
     has_content = False
@@ -366,18 +367,18 @@ def check_file_content(original, converted):
     return has_content and original_page_num != 0 and converted_page_num != 0 and original_page_num == converted_page_num
 
 
-def heic_to_png(path):
-    tmp_file = app.config["MEDIA_PATH"] + "tmp"
+def heic_to_png(path: str):
+    tmp_file: str = app.config["MEDIA_PATH"] + "tmp"
     with PIL_Image.open(path) as image:
         image.save(tmp_file, "png")
     return tmp_file
 
 
-def check_file_path(path):
+def check_file_path(path: str):
     return os.path.exists(path)
 
 
-def fill_cmd_param(cmd, param: str, value: str):
+def fill_cmd_param(cmd: list[str], param: str, value: str):
     """
     Fills parameters in a string, parameters are defined with a $ prefix
 
@@ -396,8 +397,7 @@ def fill_cmd_param(cmd, param: str, value: str):
 
     return cmd
 
-
-def extract_pdf_attachments(pdf_path, output_pdf_version):
+def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
     """
     Extracts all attachments in the pdf file found in the path and returns them
     """
@@ -406,7 +406,7 @@ def extract_pdf_attachments(pdf_path, output_pdf_version):
         return
 
     with pikepdf.open(pdf_path) as pdf:
-        attachments = {}
+        attachments = dict()
 
         if "/Names" in pdf.Root and "/EmbeddedFiles" in pdf.Root.Names:
             files = pdf.Root.Names.EmbeddedFiles.Names
@@ -419,16 +419,12 @@ def extract_pdf_attachments(pdf_path, output_pdf_version):
                 f_props = file_spec.EF.F.items()
                 del file_spec.EF
 
-                attachments[name] = {
-                    "bytes": file_bytes,
-                    "f_props": dict(f_props),
-                    "file_spec": dict(file_spec),
-                }
+                attachments[name] = Attachment(file_bytes, dict(f_props), dict(file_spec))
 
     return attachments
 
 
-def attach_pdf_attachments(pdf_path, attachments, output_pdf_version):
+def attach_pdf_attachments(pdf_path: str, attachments: dict[str, Attachment], output_pdf_version: str):
     """
     Attaches the attachments to the pdf file
     """
@@ -449,15 +445,15 @@ def attach_pdf_attachments(pdf_path, attachments, output_pdf_version):
         edited = False
         for name, attachment in attachments.items():
             if output_pdf_version == "2":
-                mimetype = get_file_mimetype_from_data(attachment["bytes"], name, True)
+                mimetype = get_file_mimetype_from_data(attachment.bytes, name, True)
                 if mimetype != "application/pdf":
                     # PDF/A-2 does not support other mimetypes than pdf
                     continue
 
-            file_stream = pikepdf.Stream(pdf, attachment["bytes"], attachment["f_props"])
+            file_stream = pikepdf.Stream(pdf, attachment.bytes, attachment.f_props)
             new_file_spec = pikepdf.Dictionary(
                 EF=pikepdf.Dictionary(F=file_stream),
-                **{key.lstrip('/'): value for key, value in attachment["file_spec"].items()}
+                **{key.lstrip('/'): value for key, value in attachment.file_spec.items()}
             )
 
             pdf.Root.Names.EmbeddedFiles.Names.append(name)

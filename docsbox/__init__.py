@@ -18,7 +18,7 @@ config.set_file(os.path.join('docsbox', 'config', 'config.yml'))
 app.config.update(config.get())
 app.config.update(os.environ)
 
-REDIS_URL = app.config["REDIS_URL"]
+REDIS_URL: str = app.config["REDIS_URL"]
 
 app.config.update({
     "REDIS_URL": REDIS_URL,
