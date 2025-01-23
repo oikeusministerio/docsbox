@@ -1,0 +1,6 @@
+{
+	"name": "Document Conversion Service",
+	"service": "dcs",
+	"dockerComposeFile": "./docker-compose.yml",
+	"workspaceFolder": "/workspace"
+}

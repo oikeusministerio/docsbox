@@ -2,6 +2,7 @@ import traceback
 import json
 
 from subprocess import run
+from docsbox.docs.classes.file import *
 from img2pdf import convert as images_to_pdf
 from tempfile import TemporaryDirectory
 from datetime import datetime, timezone
@@ -11,22 +12,23 @@ from docsbox.docs.utils import *
 from docsbox.docs.via_controller import *
 
 
-def remove_file(path):
+def remove_file(path: str):
     return os.remove(path)
 
 
 @celery.task(timeout=app.config["REDIS_JOB_TIMEOUT"], bind=True)
-def process_convertion_by_id(self, file_id, headers):
+def process_convertion_by_id(self, file_id: str, headers: dict):
     started_at = datetime.now(timezone.utc)
     try:
         if db.exists('fileId:' + file_id) != 0:
-            file_info = json.loads(db.get('fileId:' + file_id))
-            if "file_path" not in file_info:
+            file_info: FileInfo = json.loads(db.get('fileId:' + file_id))
+            if not file_info.file_path:
                 via_response = get_file_from_via(file_id)
                 if via_response.status_code == 200:
-                    file_info["file_path"] = store_file(via_response, file_info["filename"], stream=True)
+                    file_info.file_path = store_file(via_response, file_info.filename, stream=True)
                 else:
-                    return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
+                    message = "VIAException code: 404, message: File id was not found."
+                    return FileInfoException(message, "").__dict__
         else:
             filename = headers.get('Content-Disposition')
             mimetype = headers.get('Content-Type')
@@ -37,58 +39,46 @@ def process_convertion_by_id(self, file_id, headers):
                 if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                     mimetype, version = get_file_mimetype(file_path)
             else:
-                return {"has_failed": True, "message": "VIAException code: 404, message: File id was not found.", "traceback": ""}
-            file_info = {
-                "file_id": file_id,
-                "mimetype": mimetype,
-                "filename": filename,
-                "pdf_version": version,
-                "file_path": file_path,
-                "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-            }
+                message = "VIAException code: 404, message: File id was not found."
+                return FileInfoException(message, "").__dict__
+            file_info = FileInfo(file_path, filename, file_id, mimetype, version, datetime.now().strftime('%Y/%m/%d-%H:%M:%S'))
 
-        options = set_options(headers, file_info["mimetype"])
+        options = set_options(headers, file_info.mimetype)
         output_pdf_version = options.get("output_pdf_version", "1")
-        req_same_version = file_info["mimetype"] == "application/pdf" and file_info["pdf_version"] and file_info["pdf_version"][0] == output_pdf_version
-        if file_info["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
-            return {
-                "status": "corrupted" if file_info["mimetype"] == "Unknown/Corrupted" else "non-convertable",
-                "message": "The file type is not supported or the file is corrupted",
-                "traceback": "",
-                "has_failed": True
-            }
+        req_same_version = file_info.mimetype == "application/pdf" and file_info.pdf_version and file_info.pdf_version[0] == output_pdf_version
+        if file_info.mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+            status = "corrupted" if file_info.mimetype == "Unknown/Corrupted" else "non-convertable"
+            message = "The file type is not supported or the file is corrupted"
+            return FileInfoException(message, "", status).__dict__
 
-        if file_info["mimetype"] == "application/pdf" and req_same_version:
-            return {
-                "status": "non-convertable",
-                "message": "The file is already in the requested format",
-                "traceback": "",
-                "has_failed": True
-            }
+        if file_info.mimetype == "application/pdf" and req_same_version:
+            status = "non-convertable"
+            message = "The file is already in the requested format"
+            return FileInfoException(message, "", status).__dict__
 
         db.set('fileId:' + file_id, json.dumps(file_info))
         return process_convertion(self,
-            file_info["file_path"],
+            file_info.file_path,
             options,
             {
-                "filename": file_info["filename"],
-                "mimetype": file_info["mimetype"],
-                "pdf_version": file_info["pdf_version"],
-                "file_id": file_info["file_id"],
+                "filename": file_info.filename,
+                "mimetype": file_info.mimetype,
+                "pdf_version": file_info.pdf_version,
+                "file_id": file_info.file_id,
                 "save_in_via": True
             },
             started_at)
     except Exception as e:
-        return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
+        return FileInfoException(str(e), traceback.format_exc()).__dict__
 
 
 @celery.task(timeout=app.config["REDIS_JOB_TIMEOUT"], bind=True)
-def process_convertion(self, path, options, meta, started_at=None):
+def process_convertion(self, path: str, options: dict, meta, started_at=None):
     started_at = started_at if started_at else datetime.now(timezone.utc)
     if meta["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
         status = "corrupted" if meta["mimetype"] == "Unknown/Corrupted" else "non-convertable"
         message = "Conversion is not possible for filetype " + meta["mimetype"]
-        return {"has_failed": True, "status": status, "message": message, "traceback": ""}
+        return FileInfoException(message, "", status).__dict__
     try:
         current_task = self.request
         export_format_type = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
@@ -97,7 +87,8 @@ def process_convertion(self, path, options, meta, started_at=None):
         elif export_format_type == "IMAGE_EXPORT_FORMATS":
             result = process_image_convertion(path, options, meta, current_task)
         else:
-            return {"has_failed": True, "message": "Conversion for {0} is not supported".format(export_format_type)}
+            message = "Conversion for {0} is not supported".format(export_format_type)
+            return FileInfoException(message, None).__dict__
         if meta["save_in_via"] is True:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
@@ -105,10 +96,10 @@ def process_convertion(self, path, options, meta, started_at=None):
         log_task_completion(current_task, result, meta, started_at)
         return result
     except Exception as e:
-        return {"has_failed": True, "message": str(e), "traceback": traceback.format_exc()}
+        return FileInfoException(str(e), traceback.format_exc()).__dict__
 
 
-def process_document_convertion(input_path, options, meta, current_task):
+def process_document_convertion(input_path: str, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
     output_pdf_version = options.get("output_pdf_version", "1")
     if meta["mimetype"] == "application/pdf":
@@ -118,7 +109,7 @@ def process_document_convertion(input_path, options, meta, current_task):
         script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
         script = fill_cmd_param(script, "outputFile", output_path)
         script = fill_cmd_param(script, "inputFile", input_path)
-        run(script)
+        run(script, timeout=app.config["REDIS_JOB_TIMEOUT"])
 
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
 
@@ -128,7 +119,7 @@ def process_document_convertion(input_path, options, meta, current_task):
                 script = fill_cmd_param(app.config["OCRMYPDF"]["EXEC"], "pdfVersion", output_pdf_version)
             elif force_ocr > 1:
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
+            run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path], timeout=app.config["REDIS_JOB_TIMEOUT"])
             temp_path = output_path
             force_ocr += 1
 
@@ -151,24 +142,17 @@ def process_document_convertion(input_path, options, meta, current_task):
         remove_xmp_meta(output_path, current_task.id)
 
         if app.config["THUMBNAILS_GENERATE"] and options.get("thumbnails", None):
-            output_path, file_name = thumbnail_generator(input_path, options, meta, current_task, None)
+            output_path, file_name = thumbnail_generator(input_path, options, meta, current_task)
 
     file_name = "{0}.{1}".format(remove_extension(meta["filename"]), options["format"])
     file_size = os.path.getsize(output_path)
     remove_file(input_path)
 
     version = read_pdf_version(output_path)
-    return {
-        "fileName": file_name,
-        "mimeType": mimetype,
-        "fileType": filetype,
-        "pdfVersion": version,
-        "fileSize": file_size,
-        "has_failed": False
-    }
+    return FileConversion(file_name, mimetype, filetype, version, file_size).__dict__
 
 
-def process_image_convertion(input_path, options, meta, current_task):
+def process_image_convertion(input_path: str, options, meta, current_task):
     if meta["mimetype"] == "image/heif" or meta["mimetype"] == "image/heic":
         tmp_path = heic_to_png(input_path)
         remove_file(input_path)
@@ -185,7 +169,7 @@ def process_image_convertion(input_path, options, meta, current_task):
     return process_document_convertion(tmp_file.name, options, new_metadata, current_task)
 
 
-def thumbnail_generator(input_path, options, meta, current_task, original_document):
+def thumbnail_generator(input_path: str, options, meta, current_task):
     with TemporaryDirectory() as tmp_dir:
         is_created = False
         if meta["mimetype"] == "application/pdf":
@@ -195,7 +179,6 @@ def thumbnail_generator(input_path, options, meta, current_task, original_docume
         else:
             pdf_tmp_file = NamedTemporaryFile()
             pdf_path = pdf_tmp_file.name
-            original_document.saveAs(pdf_tmp_file.name, fmt="pdf")
             is_created = True
         image = Image(filename=pdf_path, resolution=app.config["THUMBNAILS_DPI"])
         if is_created:

@@ -24,6 +24,20 @@ GRAYLOG_PATH - Graylog server input path (default: '/gelf')
 GRAYLOG_SOURCE - Graylog name for the logger Host
 ```
 
+# Local Development
+For local devolpment we use dev containers since libreoffice features that we use for document conversion are very linux dependent.
+You can find dev container definition on .devcontainer folder.
+
+To prepare local development
+1. Install "Dev Containers" extension for VS Code or something similar.
+2. Build the image to use for local development with `docker build -t oikeusministerio/common-conversion:test docsbox`, if not already done.
+3. Reopen folder in a dev container with the .devcontainer/devcontainer.json file. It will automatically start a redis container for that dev container to user with.
+4. Open 2 consoles, initiate in one the rq worker by entering the command `rq worker -c docsbox` and in the other you can enter the command `gunicorn --config=docsbox/config/gunicorn.conf docsbox:app` to initiate the Flask app.
+5. Whatever modifications you make inside a container to the files will automatically reflect in your local project's folder.
+6. If packages are added/removed or versions changed then execute `pip3 install --break-system-packages -r docsbox/requirements.txt` to reflect the new changes.
+
+You can now repeat the seventh step on any modification you do in the code to represent the changes made and test.
+
 # REST API
 The conversion can be made using VIA or by sending the file appended to the request.
 
