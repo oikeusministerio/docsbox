@@ -164,7 +164,7 @@ def process_document_convertion(input_path: str, options, meta, current_task):
         script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
         script = fill_cmd_param(script, "outputFile", output_path)
         script = fill_cmd_param(script, "inputFile", input_path)
-        run(script)
+        run(script, timeout=app.config["REDIS_JOB_TIMEOUT"])
 
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
 
@@ -174,7 +174,7 @@ def process_document_convertion(input_path: str, options, meta, current_task):
                 script = fill_cmd_param(app.config["OCRMYPDF"]["EXEC"], "pdfVersion", output_pdf_version)
             elif force_ocr > 1:
                 raise Exception('It was not possible to convert file ' + meta["filename"] + ' to PDF/A.')
-            run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path])
+            run(script + [app.config["OCRMYPDF"]["FORCE"][force_ocr], temp_path, output_path], timeout=app.config["REDIS_JOB_TIMEOUT"])
             temp_path = output_path
             force_ocr += 1
 

@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  dcs:
+    image: "oikeusministerio/common-conversion:test"
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    environment:
+      REDIS_URL: redis://host.docker.internal:10442/0
+    networks:
+      - conversion-network-dev
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/workspace:cached
+
+  redis:
+    image: redis:latest
+    networks:
+      - conversion-network-dev
+    ports:
+      - "10442:6379"
+    volumes:
+      - redisdata-dev:/data
+
+volumes:
+  redisdata-dev:
+
+networks:
+  conversion-network-dev:
