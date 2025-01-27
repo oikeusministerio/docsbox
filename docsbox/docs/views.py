@@ -256,7 +256,7 @@ def get_file_info(file_id: str, filename="", save_file=False):
             file_info.mimetype, file_info.pdf_version = get_file_mimetype(file_info.file_path)
         else:
             file_info.mimetype, file_info.pdf_version = get_file_mimetype_from_id(file_id, filename)
-        db.set('fileId:' + file_id, json.dumps(file_info))
+        db.set('fileId:' + file_id, json.dumps(file_info.__dict__))
     else:
         file_info = json.loads(db.get('fileId:' + file_id))
         updated = False
@@ -271,5 +271,5 @@ def get_file_info(file_id: str, filename="", save_file=False):
 
         if updated:
             file_info.datetime = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-            db.set('fileId:' + file_id, json.dumps(file_info))
-    return file_info
+            db.set('fileId:' + file_id, json.dumps(file_info.__dict__))
+    return file_info.__dict__
