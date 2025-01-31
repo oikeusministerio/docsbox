@@ -245,31 +245,29 @@ class DocumentDownloadView(Resource):
 
 
 def get_file_info(file_id: str, filename="", save_file=False):
-    file_info = FileInfo()
     if db.exists('fileId:' + file_id) == 0:
-        file_info.file_id = file_id
-        file_info.mimetype = ""
-        file_info.filename = filename
-        file_info.datetime = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+        file_info = FileInfo(None, filename, file_id, "", None, datetime.now().strftime('%Y/%m/%d-%H:%M:%S'))
         if save_file:
             file_info.file_path = store_file_from_id(file_id, filename)
             file_info.mimetype, file_info.pdf_version = get_file_mimetype(file_info.file_path)
         else:
             file_info.mimetype, file_info.pdf_version = get_file_mimetype_from_id(file_id, filename)
-        db.set('fileId:' + file_id, json.dumps(file_info.__dict__))
+        file_info_dict = file_info.__dict__
+        db.set('fileId:' + file_id, json.dumps(file_info_dict))
+        return file_info_dict
     else:
         file_info = json.loads(db.get('fileId:' + file_id))
         updated = False
 
-        if file_info.filename is None and filename:
-            file_info.filename = filename
+        if file_info["filename"] is None and filename:
+            file_info["filename"] = filename
             updated = True
 
         if save_file and "file_path" not in file_info:
-            file_info.file_path = store_file_from_id(file_id, filename)
+            file_info["file_path"] = store_file_from_id(file_id, filename)
             updated = True
 
         if updated:
-            file_info.datetime = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-            db.set('fileId:' + file_id, json.dumps(file_info.__dict__))
-    return file_info.__dict__
+            file_info["datetime"] = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            db.set('fileId:' + file_id, json.dumps(file_info))
+        return file_info
