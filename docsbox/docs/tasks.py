@@ -32,7 +32,7 @@ def process_convertion_by_id(file_id: str, headers: dict):
                     file_info["file_path"] = store_file(via_response, file_info["filename"], stream=True)
                 else:
                     message = "VIAException code: 404, message: File id was not found."
-                    return FileInfoException(message, "").serialize()
+                    return FileInfoException(message, "").to_dict()
         else:
             filename = headers.get('Content-Disposition')
             mimetype = headers.get('Content-Type')
@@ -44,7 +44,7 @@ def process_convertion_by_id(file_id: str, headers: dict):
                     mimetype, version = get_file_mimetype(file_path)
             else:
                 message = "VIAException code: 404, message: File id was not found."
-                return FileInfoException(message, "").serialize()
+                return FileInfoException(message, "").to_dict()
             file_info = FileInfo(file_path, filename, file_id, mimetype, version, datetime.now().strftime('%Y/%m/%d-%H:%M:%S')).__dict__
 
         options = set_options(headers, file_info["mimetype"])
@@ -53,12 +53,12 @@ def process_convertion_by_id(file_id: str, headers: dict):
         if file_info["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
             status = "corrupted" if file_info["mimetype"] == "Unknown/Corrupted" else "non-convertable"
             message = "The file type is not supported or the file is corrupted"
-            return FileInfoException(message, "", status).serialize()
+            return FileInfoException(message, "", status).to_dict()
 
         if file_info["mimetype"] == "application/pdf" and req_same_version:
             status = "non-convertable"
             message = "The file is already in the requested format"
-            return FileInfoException(message, "", status).serialize()
+            return FileInfoException(message, "", status).to_dict()
 
         db.set('fileId:' + file_id, json.dumps(file_info))
         return process_convertion(
@@ -72,7 +72,7 @@ def process_convertion_by_id(file_id: str, headers: dict):
                 "save_in_via": True
             })
     except Exception as e:
-        return FileInfoException(str(e), traceback.format_exc()).serialize()
+        return FileInfoException(str(e), traceback.format_exc()).to_dict()
 
 
 @rq.job(timeout=app.config["REDIS_JOB_TIMEOUT"])
@@ -80,7 +80,7 @@ def process_convertion(path: str, options: dict, meta):
     if meta["mimetype"] not in app.config["CONVERTABLE_MIMETYPES"]:
         status = "corrupted" if meta["mimetype"] == "Unknown/Corrupted" else "non-convertable"
         message = "Conversion is not possible for filetype " + meta["mimetype"]
-        return FileInfoException(message, "", status).serialize()
+        return FileInfoException(message, "", status).to_dict()
     try:
         current_task = get_current_job()
         export_format_type = app.config["CONVERTABLE_MIMETYPES"][meta["mimetype"]]["formats"]
@@ -90,7 +90,7 @@ def process_convertion(path: str, options: dict, meta):
             result = process_image_convertion(path, options, meta, current_task)
         else:
             message = "Conversion for {0} is not supported".format(export_format_type)
-            return FileInfoException(message, None).serialize()
+            return FileInfoException(message, None).to_dict()
         if meta["save_in_via"] is True:
             r = save_file_on_via(app.config["MEDIA_PATH"] + current_task.id, result["mimeType"], options["via_allowed_users"])
             remove_file(app.config["MEDIA_PATH"] + current_task.id)
@@ -98,7 +98,7 @@ def process_convertion(path: str, options: dict, meta):
         log_task_completion(current_task, result, meta)
         return result
     except Exception as e:
-        return FileInfoException(str(e), traceback.format_exc()).serialize()
+        return FileInfoException(str(e), traceback.format_exc()).to_dict()
 
 
 def process_document_convertion(input_path: str, options, meta, current_task):
