@@ -279,7 +279,7 @@ def sanitize_metadata(image_path: str):
                     # if the format is not jpeg or tiff, clear exif data
                     # PNG support might be coming sometime: https://github.com/hMatoba/Piexif/issues/49
                     if image.format not in ("JPEG", "TIFF"):
-                        image.save(image_path, image.format, exif=None)
+                        image.save(image_path, image.format)
                         return
 
                     exif_dict = piexif.load(image_path)
