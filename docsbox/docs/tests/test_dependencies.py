@@ -60,6 +60,14 @@ filesNotConvertable = [
 
 filesConvertable = [
     {
+        "fileExt": ".JPG",
+        "fileName": "test37",
+        "fileNameExt": "test37.jpg",
+        "mimeType": "image/jpeg",
+        "fileType": "JPEG - Joint Photographic Experts Group",
+        "fileId": "a407845a-75bd-4289-a964-ca0010879ab8"
+    },
+    {
         "fileExt": ".SXW",
         "fileName": "test26",
         "fileNameExt": "test26.sxw",

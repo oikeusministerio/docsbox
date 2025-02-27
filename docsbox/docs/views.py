@@ -263,7 +263,7 @@ def get_file_info(file_id: str, filename="", save_file=False):
             file_info["filename"] = filename
             updated = True
 
-        if save_file and "file_path" not in file_info:
+        if save_file and ("file_path" not in file_info or file_info["file_path"] is None):
             file_info["file_path"] = store_file_from_id(file_id, filename)
             updated = True
 
