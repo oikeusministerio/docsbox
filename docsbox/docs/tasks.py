@@ -26,7 +26,7 @@ def process_convertion_by_id(file_id: str, headers: dict):
     try:
         if db.exists('fileId:' + file_id) != 0:
             file_info = json.loads(db.get('fileId:' + file_id))
-            if "file_path" not in file_info:
+            if "file_path" not in file_info or file_info["file_path"] is None:
                 via_response = get_file_from_via(file_id)
                 if via_response.status_code == 200:
                     file_info["file_path"] = store_file(via_response, file_info["filename"], stream=True)
