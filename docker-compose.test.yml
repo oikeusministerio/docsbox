@@ -6,7 +6,7 @@ services:
       - redis
       - web
       - nginx
-      - rqworker
+      - celeryworker
     volumes:
       - ./docsbox:/home/docsbox
       - ./media:/home/docsbox/media

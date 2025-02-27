@@ -2,17 +2,34 @@ import json
 import traceback
 import logging
 
+from enum import Enum
 from datetime import datetime
 from flask import request, send_from_directory, jsonify, Request
 from docsbox.docs.classes.document import *
 from docsbox.docs.classes.file import FileInfo
 from flask_restful import Resource
-from docsbox import app, db
-from docsbox.docs.tasks import get_task, process_convertion, process_convertion_by_id, remove_file
+from docsbox import app, db, celery
+from docsbox.docs.tasks import process_convertion, process_convertion_by_id, remove_file
 from docsbox.docs.utils import get_file_mimetype_from_data, is_valid_uuid, store_file, get_file_mimetype, set_options, \
     store_file_from_id, get_file_mimetype_from_id
 from docsbox.docs.via_controller import VIAException
 
+class CeleryStatus(Enum):
+    SUCCESS = "finished"
+    PENDING = "queued"
+    FAILURE = "failed"
+
+def status_message(status: str):
+    match status:
+        case CeleryStatus.SUCCESS.name:
+            status_message = CeleryStatus.SUCCESS.value
+        case CeleryStatus.PENDING.name:
+            status_message = CeleryStatus.PENDING.value
+        case CeleryStatus.FAILURE.name:
+            status_message = CeleryStatus.FAILURE.value
+        case _:
+            status_message = status.lower()
+    return status_message
 
 def abort(status_code: int, message: Exception | str, request: Request =None, extras: dict={}, traceback: str=None):
     if status_code >= 500:
@@ -35,7 +52,7 @@ class DocumentStatusView(Resource):
         """
         response = DocumentStatus()
         try:
-            task = get_task(task_id)
+            task = celery.AsyncResult(task_id)
             if task:
                 response.task_id = task.id
                 if task.result:
@@ -47,12 +64,12 @@ class DocumentStatusView(Resource):
                         response.message = task.result["message"]
                         app.logger.log(logging.ERROR, 'Error: %s %s' % (task.result["message"], task.result["traceback"]), extra={"response": response, "request": request, "status": str(500)})
                     else:
-                        response.status = task.get_status()
+                        response.status = status_message(task.status)
                         response.file_type = task.result["fileType"]
                         response.mimetype = task.result["mimeType"]
                         response.pdf_version = task.result["pdfVersion"]
                 else:
-                    response.status = task.get_status()
+                    response.status = status_message(task.status)
             else:
                 return abort(404, "Unknown task", request, extras={"task_id": task_id})
         except Exception as e:
@@ -134,7 +151,7 @@ class DocumentConvertView(Resource):
                 response.pdf_version = version
                 response.file_type = "PDF/A" if is_pdfa else "Unknown/Corrupted"
             else:
-                task = process_convertion.queue(file_path, options, {"filename": filename, "mimetype": mimetype, "file_id": file_id, "save_in_via": save_in_via})
+                task = process_convertion.delay(file_path, options, {"filename": filename, "mimetype": mimetype, "file_id": file_id, "save_in_via": save_in_via})
                 response.task_id = task.id
                 response.status = task.get_status()
                 response.mime_type = mimetype
@@ -179,17 +196,17 @@ class DocumentConvertViewV2(Resource):
                     return response.serialize()
 
 
-                task = process_convertion.queue(file_path, options, {"filename": filename, "mimetype": mimetype, "pdfVersion": version, "save_in_via": False})
+                task = process_convertion.delay(file_path, options, {"filename": filename, "mimetype": mimetype, "pdfVersion": version, "save_in_via": False})
                 app.logger.log(logging.INFO, "Queued conversion with task id: %s" % task.id, request,
                                extra={"original_filename": filename, "original_mimetype": mimetype})
             elif file_id and is_valid_uuid(file_id):
-                task = process_convertion_by_id.queue(file_id, dict(request.headers))
+                task = process_convertion_by_id.delay(file_id, dict(request.headers))
                 app.logger.log(logging.INFO, "Queued conversion with task id: %s" % task.id, request,
                                extra={"original_file_id": file_id, "original_filename": request.headers.get('Content-Disposition'), "original_mimetype": request.headers.get('Content-Type')})
             else:
                 return abort(400, "No file has sent nor valid file_id given.", request)
             response.task_id = task.id
-            response.status = task.get_status()
+            response.status = status_message(task.status)
         except ValueError as err:
             return abort(400, err.args[0], request)
         except VIAException as viaEr:
@@ -210,9 +227,9 @@ class DocumentDownloadView(Resource):
         """
         response = DocumentDownload()
         try:
-            task = get_task(task_id)
+            task = celery.AsyncResult(task_id)
             if task:
-                if task.get_status() == "finished":
+                if task.status == CeleryStatus.SUCCESS.name:
                     if task.result:
                         if not isinstance(task.result, dict):
                             return abort(404, "Task result not dictionary: " + str(task.result), request, extras={"task_id": task_id})
@@ -220,7 +237,7 @@ class DocumentDownloadView(Resource):
                             return abort(404, "Task has failed: " + task.result["message"], request, extras={"task_id": task_id})
                         elif "fileId" in task.result:
                             response.task_id = task.id
-                            response.status = task.get_status()
+                            response.status = status_message(task.status)
                             response.convertable = True
                             response.file_id = task.result["fileId"]
                             response.file_type = task.result["fileType"]
