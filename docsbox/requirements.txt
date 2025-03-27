@@ -1,8 +1,8 @@
 APScheduler==3.10.4
+celery==5.4.0
 confuse==2.0.1
 coverage==7.6.4
 Flask-RESTful==0.3.10
-Flask-RQ2==18.3
 Flask==3.0.3
 ghostscript==0.7
 graypy==2.1.0
@@ -18,7 +18,6 @@ python-magic==0.4.27
 python-xmp-toolkit==2.0.2
 redis==5.1.1
 requests==2.32.3
-rq==1.16.2
 ujson==5.10.0
 wand==0.6.13
 Werkzeug==3.0.4
