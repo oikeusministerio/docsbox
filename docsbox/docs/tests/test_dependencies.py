@@ -188,6 +188,22 @@ filesConvertable = [
         "fileId": "bf25fa1b-bf1c-4ca4-b098-0f3a81ef2ad6"
     },
     {
+        "fileExt": ".JPG",
+        "fileName": "test17",
+        "fileNameExt": "test17.jpg",
+        "mimeType": "image/jpeg",
+        "fileType": "JPEG - Joint Photographic Experts Group",
+        "fileId": "31ace984-fe0c-4447-b441-f91c58c47591"
+    },
+    {
+        "fileExt": ".PNG",
+        "fileName": "test9",
+        "fileNameExt": "test9.png",
+        "mimeType": "image/png",
+        "fileType": "PNG - Portable Network Graphics",
+        "fileId": "a8cd8a1e-ec68-4ede-821b-4c8df4944cee"
+    },
+    {
         "fileExt": ".ODT",
         "fileName": "test6",
         "fileNameExt": "test6.odt",
