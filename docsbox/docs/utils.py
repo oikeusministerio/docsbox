@@ -52,6 +52,9 @@ def set_options(headers: dict, mimetype:str) -> dict:
     else:
         options = app.config["PDF_DEFAULT_OPTIONS"]
     if headers:
+        # Lower case keys for header names
+        headers = {k.lower(): v for k, v in headers.items()}
+
         if 'conversion-format' in headers:
             conversion_format = headers["conversion-format"]
             if mimetype in app.config["CONVERTABLE_MIMETYPES"] and conversion_format in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]]:
@@ -65,10 +68,10 @@ def set_options(headers: dict, mimetype:str) -> dict:
             if output_pdf_version in ["1", "2", "3"]:
                 options["output_pdf_version"] = output_pdf_version
             else:
-                raise ValueError("Invalid 'output_pdf_version' value")
+                raise ValueError("Invalid 'output_pdf_version' value. Allowed are 1, 2 and 3")
 
-        if 'Via-Allowed-Users' in headers:
-            options["via_allowed_users"] = headers['Via-Allowed-Users']
+        if 'via-allowed-users' in headers:
+            options["via_allowed_users"] = headers['via-allowed-users']
         else:
             options["via_allowed_users"] = app.config["VIA_ALLOWED_USERS"]
 
