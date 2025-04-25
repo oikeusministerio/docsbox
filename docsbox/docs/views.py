@@ -7,8 +7,7 @@ from flask import request, send_from_directory, jsonify
 from flask_restful import Resource
 from docsbox import app, db
 from docsbox.docs.tasks import get_task, process_convertion, process_convertion_by_id, remove_file
-from docsbox.docs.utils import get_file_mimetype_from_data, is_valid_uuid, store_file, get_file_mimetype, set_options, \
-    store_file_from_id, get_file_mimetype_from_id
+from docsbox.docs.utils import get_file_mimetype_from_data, is_valid_uuid, store_file, get_file_mimetype, set_options, store_file_from_id
 from docsbox.docs.via_controller import VIAException
 
 
@@ -86,6 +85,9 @@ class DocumentTypeView(Resource):
                 response["fileType"] = "PDF/A"
             elif response["convertable"]:
                 response["fileType"] = app.config["CONVERTABLE_MIMETYPES"][mimetype]["name"]
+            elif mimetype == "password-protected-partial" or mimetype == "password-protected":
+                response["fileType"] = mimetype
+                response["message"] = "The file is password protected"
             else:
                 response["fileType"] = "Unknown/Corrupted"
                 response["message"] = "The file type is not supported or the file is corrupted"
@@ -112,7 +114,7 @@ class DocumentConvertView(Resource):
                 mimetype, version = get_file_mimetype(file_path)
                 save_in_via = False
             elif file_id and is_valid_uuid(file_id):
-                file_info = get_file_info(file_id, request.headers.get('Content-Disposition'), save_file=True)
+                file_info = get_file_info(file_id, request.headers.get('Content-Disposition'))
                 filename = file_info["filename"]
                 mimetype = file_info["mimetype"]
                 file_path = file_info["file_path"]
@@ -243,14 +245,11 @@ class DocumentDownloadView(Resource):
         return response
 
 
-def get_file_info(file_id, filename="", save_file=False):
+def get_file_info(file_id, filename=""):
     if db.exists('fileId:' + file_id) == 0:
         file_info = {"file_id": file_id, "mimetype": "", "filename": filename, "datetime": datetime.now().strftime('%Y/%m/%d-%H:%M:%S')}
-        if save_file:
-            file_info["file_path"] = store_file_from_id(file_id, filename)
-            file_info["mimetype"], file_info["pdf_version"] = get_file_mimetype(file_info["file_path"])
-        else:
-            file_info["mimetype"], file_info["pdf_version"] = get_file_mimetype_from_id(file_id, filename)
+        file_info["file_path"], file_info["mimetype"] = store_file_from_id(file_id, filename)
+        file_info["mimetype"], file_info["pdf_version"] = get_file_mimetype(file_info["file_path"], file_info["mimetype"])
         db.set('fileId:' + file_id, json.dumps(file_info))
     else:
         file_info = json.loads(db.get('fileId:' + file_id))
@@ -260,8 +259,8 @@ def get_file_info(file_id, filename="", save_file=False):
            file_info["filename"] = filename
            updated = True
 
-        if save_file and "file_path" not in file_info:
-            file_info["file_path"] = store_file_from_id(file_id, filename)
+        if "file_path" not in file_info:
+            file_info["file_path"], file_info["mimetype"] = store_file_from_id(file_id, filename)
             updated = True
 
         if updated:
