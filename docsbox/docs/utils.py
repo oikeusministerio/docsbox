@@ -15,7 +15,7 @@ from piexif import InvalidImageDataError
 from requests import exceptions
 from xml.parsers.expat import ExpatError
 from pypdf import PdfReader
-from pypdf.errors import PyPdfError
+from pypdf.errors import PyPdfError, PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image
@@ -52,6 +52,9 @@ def set_options(headers: dict, mimetype:str) -> dict:
     else:
         options = app.config["PDF_DEFAULT_OPTIONS"]
     if headers:
+        # Lower case keys for header names
+        headers = {k.lower(): v for k, v in headers.items()}
+
         if 'conversion-format' in headers:
             conversion_format = headers["conversion-format"]
             if mimetype in app.config["CONVERTABLE_MIMETYPES"] and conversion_format in app.config[app.config["CONVERTABLE_MIMETYPES"][mimetype]["formats"]]:
@@ -65,10 +68,10 @@ def set_options(headers: dict, mimetype:str) -> dict:
             if output_pdf_version in ["1", "2", "3"]:
                 options["output_pdf_version"] = output_pdf_version
             else:
-                raise ValueError("Invalid 'output_pdf_version' value")
+                raise ValueError("Invalid 'output_pdf_version' value. Allowed are 1, 2 and 3")
 
-        if 'Via-Allowed-Users' in headers:
-            options["via_allowed_users"] = headers['Via-Allowed-Users']
+        if 'via-allowed-users' in headers:
+            options["via_allowed_users"] = headers['via-allowed-users']
         else:
             options["via_allowed_users"] = app.config["VIA_ALLOWED_USERS"]
 
@@ -127,7 +130,8 @@ def store_file_from_id(file_id: str, filename: str):
     try:
         via_response = get_file_from_via(file_id)
         if via_response.status_code == 200:
-            return store_file(via_response, filename, True)
+            mimetype = via_response.headers.get('Content-Type')
+            return store_file(via_response, filename, True), mimetype
         elif via_response.status_code == 404:
             raise VIAException(404, "File id was not found.")
         else:
@@ -147,23 +151,6 @@ def store_file(data, filename: str, stream=False):
     return tmp_file.name
 
 
-def get_file_mimetype_from_id(file_id: str, filename: str=None):
-    try:
-        via_response = get_file_from_via(file_id)
-        if via_response.status_code == 200:
-            mimetype = via_response.headers.get('Content-Type')
-            version = ""
-            if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
-                mimetype, version = get_file_mimetype_from_data(via_response, filename, stream=True)
-            return mimetype, version
-        elif via_response.status_code == 404:
-            raise VIAException(404, "File id was not found.")
-        else:
-            raise VIAException(via_response.status_code, via_response)
-    except exceptions.Timeout:
-        raise VIAException(504, "VIA service took too long to respond.")
-
-
 def get_file_mimetype_from_data(data, filename: str, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(suffix=suffix) as tmp_file:
@@ -177,26 +164,34 @@ def get_file_mimetype_from_data(data, filename: str, stream=False):
     return mimetype, version
 
 
-def get_file_mimetype(file: str):
+def get_file_mimetype(file: str, req_mimetype: str=None):
     version = ""
-    try:
-        mime_type_file: str = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
-        if mime_type_file == "application/pdf":
-            version = read_pdf_version(file)
+    if req_mimetype is None or req_mimetype == "application/pdf" or req_mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+        try:
+            mime_type_file: str = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
+            if mime_type_file == "application/pdf":
+                protection_status = pdf_protection_status(file)
+                if protection_status:
+                    mime_type_file = protection_status
+                    return mime_type_file, version
+                version = read_pdf_version(file)
 
-        elif mime_type_file in app.config["GENERIC_MIMETYPES"]:
-            mime_type_file: str = magic.from_file(file, mime=True)
-            if mime_type_file in app.config["GENERIC_MIMETYPES"]:
-                with open(file, mode="rb") as file_data:
-                    document_type_file: str = magic.from_buffer(file_data.read(2048))
-                    for file_mimetype, file_format in itertools.zip_longest(
-                            app.config["FILEMIMETYPES"],
-                            app.config["FILEFORMATS"]):
-                        if document_type_file in file_format:
-                            mime_type_file = file_mimetype
-    except (ValueError, PyPdfError):
-        mime_type_file = "Unknown/Corrupted"
+            elif mime_type_file in app.config["GENERIC_MIMETYPES"]:
+                mime_type_file: str = magic.from_file(file, mime=True)
+                if mime_type_file in app.config["GENERIC_MIMETYPES"]:
+                    with open(file, mode="rb") as file_data:
+                        document_type_file: str = magic.from_buffer(file_data.read(2048))
+                        for file_mimetype, file_format in itertools.zip_longest(
+                                app.config["FILEMIMETYPES"],
+                                app.config["FILEFORMATS"]):
+                            if document_type_file in file_format:
+                                mime_type_file = file_mimetype
+        except (ValueError, PyPdfError):
+            mime_type_file = "Unknown/Corrupted"
+    else:
+        mime_type_file = req_mimetype
     return mime_type_file, version
+
 
 def read_pdf_version(file: str):
     version = ""
@@ -214,6 +209,24 @@ def read_pdf_version(file: str):
                 "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A DOCINFO.".format(file))
 
     return version
+
+
+def pdf_protection_status(path: str):
+    try:
+        reader = PdfReader(path, strict=False)
+    except (PdfReadError, OSError):
+        return None
+
+    if reader.is_encrypted:
+        # Try the owner-password shortcut – empty string.
+        # decrypt() returns:
+        #   1 → user password accepted
+        #   2 → owner password accepted
+        #   0 → password wrong
+        if reader.decrypt("") in (1, 2):
+            return "password-protected-partial"
+        return "password-protected"
+    return None
 
 
 def remove_extension(file: str):

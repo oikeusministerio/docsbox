@@ -40,6 +40,8 @@ def process_convertion_by_id(file_id: str, headers: dict):
             version = ""
             if via_response.status_code == 200:
                 file_path = store_file(via_response, filename, stream=True)
+                if mimetype is None:
+                    mimetype = via_response.headers.get('Content-Type')
                 if mimetype is None or mimetype == "application/pdf" or mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
                     mimetype, version = get_file_mimetype(file_path)
             else:
