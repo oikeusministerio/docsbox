@@ -48,12 +48,12 @@ If it is not provided, the service will scan the file.
     }
 
 ### Types
-| Type        | Description                                                                                                                                                                 |
-|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| convertable | `boolean` whether or not the service is able to convert the file. Will also be false if the file is already in PDF/A format                                                 |
-| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
-| mimeType    | `string` the file's mimetype                                                                                                                                                |
-| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                         |
+| Type        | Description                                                                                                                                                                                                                                                                                          |
+|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| convertable | `boolean` whether or not the service is able to convert the file. Will also be false if the file is already in PDF/A format                                                                                                                                                                          |
+| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted". If the file is a PDF and is password protected, will return one of 'password-protected-partial' or 'password-protected' | 
+| mimeType    | `string` the file's mimetype                                                                                                                                                                                                                                                                         |
+| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                                                                                                                                                  |
 
 ### Status codes
 | Status | Description                                            |
@@ -128,13 +128,13 @@ Queued
     }
 
 ### Types
-| Type       | Description                                                                                                                                                                 |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| taskId     | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                    |
-| status     | `string` the status of the conversion, can be `queued`, `started`, `finished`, `failed`, `corrupted`, `non-convertable`                                                     |
-| fileType   | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
-| mimeType   | `string` the file's mimetype                                                                                                                                                |
-| pdfVersion | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                         |
+| Type       | Description                                                                                                                                                                                                                                                                                          |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| taskId     | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                                                                                                                                             |
+| status     | `string` the status of the conversion, can be `queued`, `started`, `finished`, `failed`, `corrupted`, `non-convertable`                                                                                                                                                                              |
+| fileType   | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted". If the file is a PDF and is password protected, will return one of 'password-protected-partial' or 'password-protected' | 
+| mimeType   | `string` the file's mimetype                                                                                                                                                                                                                                                                         |
+| pdfVersion | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file.                                                                                                                                                                  |
 
 
 ### Status codes
@@ -170,18 +170,18 @@ If the file was sent directly to the conversion service, the converted file is s
     Body: file bytes
 
 ### Types
-| Type        | Description                                                                                                                                                                 |
-|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| convertable | `boolean` always `true`                                                                                                                                                     |
-| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted" | 
-| mimeType    | `string` the file's mimetype                                                                                                                                                |
-| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                            |
-| fileId      | `string` the file if with which the converted file can be downloaded with from VIA                                                                                          |
-| taskId      | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                    |
-| fileName    | `string` the file name                                                                                                                                                      |
-| pdfVersion  | `string` the PDF version of the converted file, if it was converted into a PDF                                                                                              |
-| fileSize    | `number` the file size in bytes                                                                                                                                             |
-| status      | `string` always `finished`                                                                                                                                                  |
+| Type        | Description                                                                                                                                                                                                                                                                                          |
+|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| convertable | `boolean` always `true`                                                                                                                                                                                                                                                                              |
+| fileType    | `string` a human-readable representation of the file's mimetype. Will be returned only if the file is convertable by the service, otherwise will return "Unknown/Corrupted". If the file is a PDF and is password protected, will return one of 'password-protected-partial' or 'password-protected' | 
+| mimeType    | `string` the file's mimetype                                                                                                                                                                                                                                                                         |
+| pdfVersion  | `string` PDF version, if the mimetype is `application/pdf`, otherwise empty. Will only be returned if the service scanned the file, meaning that                                                                                                                                                     |
+| fileId      | `string` the file if with which the converted file can be downloaded with from VIA                                                                                                                                                                                                                   |
+| taskId      | `string` UUID specific for this task, use this when polling the status of the conversion                                                                                                                                                                                                             |
+| fileName    | `string` the file name                                                                                                                                                                                                                                                                               |
+| pdfVersion  | `string` the PDF version of the converted file, if it was converted into a PDF                                                                                                                                                                                                                       |
+| fileSize    | `number` the file size in bytes                                                                                                                                                                                                                                                                      |
+| status      | `string` always `finished`                                                                                                                                                                                                                                                                           |
 
 ### Status codes
 | Status | Description                                  |
