@@ -1,6 +1,5 @@
 import os
 import zipfile
-from typing import Any
 
 from docsbox.docs.classes.attachment import Attachment
 import pikepdf
@@ -21,7 +20,7 @@ from wand.image import Image
 from PIL import Image as PIL_Image
 from pillow_heif import register_heif_opener
 from tempfile import NamedTemporaryFile
-from docsbox import app, is_worker
+from docsbox import is_worker
 from docsbox.docs.via_controller import *
 
 if is_worker:
