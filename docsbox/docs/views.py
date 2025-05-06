@@ -250,7 +250,7 @@ def get_file_info(file_id: str, filename=""):
     if db.exists('fileId:' + file_id) == 0:
         file_info = FileInfo(None, filename, file_id, "", None, datetime.now().strftime('%Y/%m/%d-%H:%M:%S'))
         file_info.file_path, file_info.mimetype = store_file_from_id(file_id, filename)
-        file_info.mimetype, file_info.pdf_version = get_file_mimetype(file_info["file_path"], file_info["mimetype"])
+        file_info.mimetype, file_info.pdf_version = get_file_mimetype(file_info.file_path, file_info.mimetype)
         file_info_dict = file_info.__dict__
         db.set('fileId:' + file_id, json.dumps(file_info_dict))
         return file_info_dict

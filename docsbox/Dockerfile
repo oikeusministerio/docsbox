@@ -41,8 +41,8 @@ RUN apt-get -qq update \
 
 # Install exif tool
 # https://exiftool.org/history.html
-# The most recent production release is Version 12.76
-ARG EXIF_TOOL_VERSION=12.76
+# The most recent production release is Version 13.25
+ARG EXIF_TOOL_VERSION=13.25
 RUN curl --remote-name https://exiftool.org/Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz \
     && gzip -dc Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz | tar -xf - \
     && cd Image-ExifTool-$EXIF_TOOL_VERSION \
