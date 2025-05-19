@@ -12,9 +12,9 @@ def cleaning_job():
 
     print("Starting file cleaning scheduled job.")
 
-    keys_to_remove=[]
-    for key in keys :
-        file_info: FileInfo = json.loads(db.get(key))
+    keys_to_remove = []
+    for key in keys:
+        file_info = FileInfo(**json.loads(db.get(key)))
         if datetime.strptime(file_info.datetime, '%Y/%m/%d-%H:%M:%S') < file_ttl:
             if file_info.file_path and check_file_path(file_info.file_path):
                 os.remove(file_info.file_path)

@@ -14,7 +14,7 @@ from piexif import InvalidImageDataError
 from requests import exceptions
 from xml.parsers.expat import ExpatError
 from pypdf import PdfReader
-from pypdf.errors import PyPdfError, PdfReadError
+from pypdf.errors import PdfReadError
 from libxmp import XMPFiles, consts
 from wand.image import Image
 from PIL import Image as PIL_Image
@@ -154,42 +154,70 @@ def get_file_mimetype_from_data(data, filename: str, stream=False):
     suffix = os.path.splitext(filename)[1] if filename else ""
     with NamedTemporaryFile(suffix=suffix) as tmp_file:
         if stream:
-            for chunk in data.iter_content(chunk_size=8192):
-                tmp_file.write(chunk)
+            if hasattr(data, "iter_content"):
+                for chunk in data.iter_content(chunk_size=8192):
+                    tmp_file.write(chunk)
+            elif hasattr(data, "read"):
+                for chunk in iter(lambda: data.read(8192), b""):
+                    tmp_file.write(chunk)
+            else:
+                tmp_file.write(data)
         else:
-            data.save(tmp_file)
+            if isinstance(data, (bytes, bytearray)):
+                tmp_file.write(data)
+            elif hasattr(data, "save"):
+                data.save(tmp_file)
+            elif hasattr(data, "read"):
+                for chunk in iter(lambda: data.read(8192), b""):
+                    tmp_file.write(chunk)
         tmp_file.flush()
+        os.fsync(tmp_file.fileno())
         mimetype, version = get_file_mimetype(tmp_file.name)
     return mimetype, version
 
 
-def get_file_mimetype(file: str, req_mimetype: str=None):
-    version = ""
+def get_file_mimetype(file: str, req_mimetype: str = None):
     if req_mimetype is None or req_mimetype == "application/pdf" or req_mimetype not in app.config["CONVERTABLE_MIMETYPES"]:
+        mime_type_file: str = ""
         try:
-            mime_type_file: str = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
-            if mime_type_file == "application/pdf":
-                protection_status = pdf_protection_status(file)
-                if protection_status:
-                    mime_type_file = protection_status
-                    return mime_type_file, version
-                version = read_pdf_version(file)
+            mime_type_file = exiftool.ExifToolHelper().get_metadata(file)[0]["File:MIMEType"]
+        except Exception:
+            app.logger.log(logging.WARNING, f"Error checking mimetype using ExifTool, falling back to libmagic", exc_info=True)
+            pass
 
-            elif mime_type_file in app.config["GENERIC_MIMETYPES"]:
-                mime_type_file: str = magic.from_file(file, mime=True)
-                if mime_type_file in app.config["GENERIC_MIMETYPES"]:
-                    with open(file, mode="rb") as file_data:
-                        document_type_file: str = magic.from_buffer(file_data.read(2048))
-                        for file_mimetype, file_format in itertools.zip_longest(
-                                app.config["FILEMIMETYPES"],
-                                app.config["FILEFORMATS"]):
-                            if document_type_file in file_format:
-                                mime_type_file = file_mimetype
-        except (ValueError, PyPdfError):
+        if not mime_type_file or mime_type_file in app.config["GENERIC_MIMETYPES"]:
+            try:
+                mime_type_file = magic.from_file(file, mime=True)
+            except Exception:
+                app.logger.log(logging.WARNING, f"Error checking mimetype using libmagic, falling back to signature table", exc_info=True)
+                pass
+
+        if not mime_type_file or mime_type_file in app.config["GENERIC_MIMETYPES"]:
+            try:
+                with open(file, mode="rb") as file_data:
+                    document_type_file: str = magic.from_buffer(file_data.read(2048))
+                    for file_mimetype, file_format in itertools.zip_longest(
+                            app.config["FILEMIMETYPES"],
+                            app.config["FILEFORMATS"]):
+                        if document_type_file in file_format:
+                            mime_type_file = file_mimetype
+            except Exception:
+                app.logger.exception(f"Error checking mimetype using signature table")
+                pass
+
+        if not mime_type_file:
             mime_type_file = "Unknown/Corrupted"
+
+        if mime_type_file == "application/pdf":
+            protection_status = pdf_protection_status(file)
+            if protection_status:
+                mime_type_file = protection_status
+                return mime_type_file, ""
+            return mime_type_file, read_pdf_version(file)
     else:
         mime_type_file = req_mimetype
-    return mime_type_file, version
+
+    return mime_type_file, ""
 
 
 def read_pdf_version(file: str):
@@ -409,6 +437,7 @@ def fill_cmd_param(cmd: list[str], param: str, value: str):
 
     return cmd
 
+
 def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
     """
     Extracts all attachments in the pdf file found in the path and returns them
@@ -417,28 +446,25 @@ def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
         # PDF/A-1 does not support attachments
         return
 
+    attachments = dict()
     with pikepdf.open(pdf_path) as pdf:
-        attachments = dict()
 
-        if "/Names" in pdf.Root and "/EmbeddedFiles" in pdf.Root.Names:
-            files = pdf.Root.Names.EmbeddedFiles.Names
+        for name, filespec in pdf.attachments.items():
+            file_bytes = filespec.get_file().read_bytes()
 
-            for i in range(0, len(files), 2):
-                name = str(files[i])
-                file_spec = files[i + 1]
+            f_props = dict(filespec.get_file().obj.items())
 
-                file_bytes = file_spec.EF.F.read_bytes()
-                f_props = file_spec.EF.F.items()
-                del file_spec.EF
+            meta_dict = dict(filespec.obj)
+            meta_dict.pop('/EF', None)
 
-                attachments[name] = Attachment(file_bytes, dict(f_props), dict(file_spec))
+            attachments[name] = Attachment(file_bytes, f_props, meta_dict)
 
     return attachments
 
 
 def attach_pdf_attachments(pdf_path: str, attachments: dict[str, Attachment], output_pdf_version: str):
     """
-    Attaches the attachments to the pdf file
+    Attaches the attachments to the pdf file, if the output PDF version supports them
     """
     if output_pdf_version == "1":
         # PDF/A-1 does not support attachments
@@ -448,29 +474,44 @@ def attach_pdf_attachments(pdf_path: str, attachments: dict[str, Attachment], ou
         return
 
     with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
-        if "/Names" not in pdf.Root:
-            pdf.Root.Names = pikepdf.Dictionary()
-        if "/EmbeddedFiles" not in pdf.Root.Names:
-            pdf.Root.Names.EmbeddedFiles = pikepdf.Dictionary()
-            pdf.Root.Names.EmbeddedFiles.Names = pikepdf.Array()
-
         edited = False
         for name, attachment in attachments.items():
-            if output_pdf_version == "2":
-                mimetype = get_file_mimetype_from_data(attachment.bytes, name, True)
-                if mimetype != "application/pdf":
-                    # PDF/A-2 does not support other mimetypes than pdf
-                    continue
+            file_mimetype, _ = get_file_mimetype_from_data(attachment.bytes, name, False)
+            if output_pdf_version == "2" and file_mimetype != "application/pdf":
+                continue
 
-            file_stream = pikepdf.Stream(pdf, attachment.bytes, attachment.f_props)
-            new_file_spec = pikepdf.Dictionary(
-                EF=pikepdf.Dictionary(F=file_stream),
-                **{key.lstrip('/'): value for key, value in attachment.file_spec.items()}
+            # Create the filespec for the file, add the supported args right away
+            filespec = pikepdf.AttachedFileSpec(
+                pdf,
+                attachment.bytes,
+                filename=name,
+                mime_type=file_mimetype,
+                description=_pdfstr_to_str(attachment.file_spec.get('/Desc', '')),
+                creation_date=_pdfstr_to_str(attachment.file_spec.get('/CreationDate', '')),
+                mod_date=_pdfstr_to_str(attachment.file_spec.get('/ModDate', '')),
             )
+            pdf.attachments[name] = filespec
 
-            pdf.Root.Names.EmbeddedFiles.Names.append(name)
-            pdf.Root.Names.EmbeddedFiles.Names.append(new_file_spec)
+            # Add the rest of the file metadata which were not supported by the constructor
+            extra = {k: v for k, v in attachment.file_spec.items()
+                     if k not in {'/Desc', '/CreationDate', '/ModDate', '/AFRelationship'}}
+
+            if '/AFRelationship' in attachment.file_spec:
+                extra['/AFRelationship'] = pikepdf.Name(attachment.file_spec['/AFRelationship'].lstrip('/'))
+
+            for k, v in extra.items():
+                filespec.obj[k] = v
+
             edited = True
 
         if edited:
             pdf.save(pdf_path)
+
+
+def _pdfstr_to_str(value):
+    """Return *value* as a plain Python str."""
+    if isinstance(value, str):
+        return value
+    if value is None:
+        return ''
+    return str(value)
