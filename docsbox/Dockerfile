@@ -1,4 +1,4 @@
-FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:latest
+FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:26.1
 
 # Fetch dependencies
 RUN apt-get -qq update \
