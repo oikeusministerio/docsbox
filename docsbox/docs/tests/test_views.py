@@ -4,6 +4,7 @@ import docsbox
 import time
 import test_dependencies as dep
 from requests import get, post
+from subprocess import run, PIPE
 
 # Hack to work with Python 3.10
 import collections
@@ -66,6 +67,20 @@ class BaseTestCase(unittest.TestCase):
             headers = {"VIA_ALLOWED_USERS": self.app.config["VIA_ALLOWED_USERS"], "Content-type": mime_type}
             response = post(url=self.app.config["VIA_URL"], cert=cert, data=data, headers=headers, timeout=60)
         return response
+    
+    def extract_text(self, path):
+        result = run(["pdftotext", "-enc", "UTF-8", path, "-"], stdout=PIPE, check=True)
+        return result.stdout.decode("utf-8")
+
+    def assert_text(self, filename, file_dir, expected):
+        text = self.extract_text(file_dir)
+        print(f"extracted {filename}: {text!r}")
+        for snippet in expected:
+            self.assertIn(
+                snippet, text,
+                f"Expected text {snippet!r} missing from converted {filename} "
+                f"- likely a CJK font substitution regression",
+            )
 
 
 # Test to tests all process, detect, convert and retrieve file for output folder
@@ -151,6 +166,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         exist_file = os.path.exists(file_dir)
                         self.assertEqual(exist_file, True)
                         self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                        expected = file.get("expectedText")
+                        if expected:
+                            self.assert_text(filename, file_dir, expected)
                     else:
                         base_dir = os.path.abspath(os.path.dirname(__file__) + "/outputs")
                         file_dir = os.path.join(base_dir, file["fileName"] + ".pdf")
@@ -161,6 +179,9 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         exist_file = os.path.exists(file_dir)
                         self.assertEqual(exist_file, True)
                         self.assertIn(os.path.split(file_dir)[1], os.listdir(base_dir))
+                        expected = file.get("expectedText")
+                        if expected:
+                            self.assert_text(filename, file_dir, expected)
                 else:
                     self.assertEqual(json,  {
                         "status": "non-convertable",

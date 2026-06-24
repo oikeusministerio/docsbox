@@ -55,6 +55,9 @@ RUN apt-get -qq update \
         fonts-lyx \
         fonts-opensymbol \
         fonts-sil-gentium \
+        fonts-noto-cjk \
+        fonts-ipafont-mincho \
+        fonts-ipafont-gothic \
         hyphen-de \
         hyphen-en-us \
         hyphen-fi \
@@ -70,6 +73,6 @@ RUN apt-get -qq update \
         texlive-latex-extra \
         texlive-plain-generic \
         ttf-mscorefonts-installer \
-    && RUN curl -sL https://gist.github.com/maxwelleite/10774746/raw/ttf-vista-fonts-installer.sh | bash \
+    && curl -sL https://gist.github.com/maxwelleite/10774746/raw/ttf-vista-fonts-installer.sh | bash \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get -qq clean

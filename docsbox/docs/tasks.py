@@ -109,6 +109,11 @@ def process_document_convertion(input_path: str, options, meta, current_task):
     if meta["mimetype"] == "application/pdf":
         attachments = extract_pdf_attachments(input_path, output_pdf_version)
 
+        if has_non_embedded_cid_font(input_path):
+            embedded_path = embed_pdf_fonts(input_path)
+            remove_file(input_path)
+            input_path = embedded_path
+
         script = app.config["GHOSTSCRIPT_EXEC"]
         script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
         script = fill_cmd_param(script, "outputFile", output_path)
@@ -189,7 +194,6 @@ def thumbnail_generator(input_path: str, options, meta, current_task):
             pdf_tmp_file.close()
         make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
         return make_zip_archive(current_task.id, tmp_dir)
-
 
 def log_task_completion(task, result, meta):
     task_time = datetime.now(timezone.utc) - task.started_at.replace(tzinfo=timezone.utc)

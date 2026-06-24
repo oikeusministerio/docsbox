@@ -1,6 +1,7 @@
 import os
 import zipfile
 
+from subprocess import run
 from docsbox.docs.classes.attachment import Attachment
 import pikepdf
 import ujson
@@ -436,6 +437,58 @@ def fill_cmd_param(cmd: list[str], param: str, value: str):
         pass
 
     return cmd
+
+
+def has_non_embedded_cid_font(pdf_path: str) -> bool:
+    """
+    Returns True if the PDF references a Type0 (CID) font that is not embedded.
+    Ghostscript's pdfwrite flattens such fonts into a simple font, corrupting
+    CJK text, so they must be embedded before the PDF/A conversion.
+    """
+    with pikepdf.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            resources = page.get("/Resources")
+            if resources is None:
+                continue
+            fonts = resources.get("/Font")
+            if fonts is None:
+                continue
+            for key in fonts:
+                font = fonts[key]
+                if font.get("/Subtype") != "/Type0":
+                    continue
+                for descendant in font.get("/DescendantFonts", []):
+                    descriptor = descendant.get("/FontDescriptor")
+                    if descriptor is None:
+                        return True
+                    if not any(key in descriptor for key in ("/FontFile", "/FontFile2", "/FontFile3")):
+                        return True
+    return False
+
+
+def embed_pdf_fonts(input_path: str):
+    """
+    Re-emits the PDF with all fonts embedded while preserving the text layer.
+    MuPDF normalizes the CID font and its CMap, then Cairo embeds the substitute
+    fonts. Ghostscript can then produce PDF/A from the result without the font
+    flattening that corrupts non-embedded CID fonts. Returns the path to the
+    re-emitted PDF.
+    """
+    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False, suffix=".pdf") as normalized:
+        normalized_path = normalized.name
+    with NamedTemporaryFile(dir=app.config["MEDIA_PATH"], delete=False, suffix=".pdf") as embedded:
+        embedded_path = embedded.name
+
+    mutool_cmd = fill_cmd_param(list(app.config["MUTOOL_CONVERT_EXEC"]), "outputFile", normalized_path)
+    mutool_cmd = fill_cmd_param(mutool_cmd, "inputFile", input_path)
+    run(mutool_cmd, timeout=app.config["REDIS_JOB_TIMEOUT"], check=True)
+
+    cairo_cmd = fill_cmd_param(list(app.config["PDFTOCAIRO_EXEC"]), "inputFile", normalized_path)
+    cairo_cmd = fill_cmd_param(cairo_cmd, "outputFile", embedded_path)
+    run(cairo_cmd, timeout=app.config["REDIS_JOB_TIMEOUT"], check=True)
+
+    os.remove(normalized_path)
+    return embedded_path
 
 
 def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):

@@ -1,4 +1,4 @@
-FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:24.8
+FROM 10.188.13.135:5000/ork/sampo/dcs-libreoffice:latest
 
 # Fetch dependencies
 RUN apt-get -qq update \
@@ -19,8 +19,11 @@ RUN apt-get -qq update \
         libmagickwand-dev \
         libtool \
         libxml2 \
+        mupdf-tools \
         pngquant \
         ocrmypdf \
+        poppler-data \
+        poppler-utils \
         python3-cffi \
         python3-dev \
         python3-setuptools \
@@ -40,21 +43,31 @@ RUN apt-get -qq update \
     && apt-get -qq clean
 
 # Install exif tool
-# https://exiftool.org/history.html
-# The most recent production release is Version 13.25
-ARG EXIF_TOOL_VERSION=13.25
-RUN curl --remote-name https://exiftool.org/Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz \
-    && gzip -dc Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz | tar -xf - \
-    && cd Image-ExifTool-$EXIF_TOOL_VERSION \
+# https://exiftool.sourceforge.net/history.html
+# The most recent production release is Version 13.59
+# curl -L https://sourceforge.net/projects/exiftool/files/Image-ExifTool-13.59.tar.gz/download -o Image-ExifTool-13.59.tar.gz
+ARG EXIFTOOL_VERSION=13.59
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+WORKDIR /tmp
+COPY ./Image-ExifTool-$EXIFTOOL_VERSION.tar.gz .
+RUN gzip -dc Image-ExifTool-$EXIFTOOL_VERSION.tar.gz | tar -xf - \
+    && cd Image-ExifTool-$EXIFTOOL_VERSION \
     && perl Makefile.PL && make install \
     && cd .. \
-    && rm Image-ExifTool-$EXIF_TOOL_VERSION.tar.gz
+    && rm Image-ExifTool-$EXIFTOOL_VERSION.tar.gz
 
 # Install dcs
-ADD requirements.txt /home/docsbox/requirements.txt
+COPY requirements.txt /home/docsbox/requirements.txt
 RUN pip3 install --break-system-packages -r /home/docsbox/requirements.txt
 COPY ./config/registrymodifications.xcu /root/.config/libreoffice/4/user/registrymodifications.xcu
 COPY ./config/msooxml.txt /etc/magic
-ADD . /home/docsbox
+COPY ./config/cidfmap /tmp/cidfmap
+RUN GHOSTSCRIPT_VERSION=$(ghostscript -v | grep -Po "\d+\.\d+\.\d+") && \
+    cp /tmp/cidfmap /usr/share/ghostscript/$GHOSTSCRIPT_VERSION/Resource/Init/cidfmap
+COPY __init__.py /home/docsbox/
+COPY ./logs /home/docsbox/logs
+COPY ./docs /home/docsbox/docs
+COPY ./config /home/docsbox/config
+COPY ./cleaner /home/docsbox/cleaner
 
 WORKDIR /home

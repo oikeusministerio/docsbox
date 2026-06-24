@@ -1,0 +1,14 @@
+/HeiseiMin-W3 <<
+  /FileType /TrueType
+  /Path (/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc)
+  /SubfontID 2
+  /CSI [(Japan1) 7]
+>> ;
+/HeiseiKakuGo-W5 <<
+  /FileType /TrueType
+  /Path (/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc)
+  /SubfontID 2
+  /CSI [(Japan1) 7]
+>> ;
+/Mincho /HeiseiMin-W3 ;
+/Gothic /HeiseiKakuGo-W5 ;

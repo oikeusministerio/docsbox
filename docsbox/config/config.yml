@@ -231,3 +231,5 @@ GHOSTSCRIPT_EXEC: ['gs', '-dPDFA=$pdfVersion', '-dBATCH', '-dNOPAUSE', '-sColorC
 OCRMYPDF:
   EXEC: ['ocrmypdf', '--tesseract-timeout=0', '--optimize=0', '--output-type=pdfa-$pdfVersion', '--skip-big=500', '--invalidate-digital-signatures']
   FORCE: ['--skip-text', '--force-ocr']
+MUTOOL_CONVERT_EXEC: ['mutool', 'convert', '-o', '$outputFile', '$inputFile']
+PDFTOCAIRO_EXEC: ['pdftocairo', '-pdf', '$inputFile', '$outputFile']
