@@ -1,14 +1,89 @@
-/HeiseiMin-W3 <<
-  /FileType /TrueType
-  /Path (/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc)
-  /SubfontID 2
-  /CSI [(Japan1) 7]
->> ;
-/HeiseiKakuGo-W5 <<
-  /FileType /TrueType
-  /Path (/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc)
-  /SubfontID 2
-  /CSI [(Japan1) 7]
->> ;
-/Mincho /HeiseiMin-W3 ;
-/Gothic /HeiseiKakuGo-W5 ;
+%% ---------------------------------------------------------------------------
+%% cidfmap — substitutes for common non-embedded Adobe system CIDFonts.
+%%
+%% Pass this dir to Ghostscript with -I, e.g.:
+%%   gs -I/etc/ghostscript-cidfmap -dPDFA=2 -dBATCH -dNOPAUSE -dSAFER \
+%%      -sDEVICE=pdfwrite -sColorConversionStrategy=UseDeviceIndependentColor \
+%%      -dPDFACompatibilityPolicy=1 -o out.pdf in.pdf
+%%
+%% RULES (from Ghostscript docs):
+%%   - The /Path file-substitution form emulates CIDFontType2 ONLY, so the
+%%     target MUST be a TrueType-outline font (.ttf, or .ttc + /SubfontID).
+%%     CFF/OTF (e.g. Noto *.otf) does NOT work in this record form.
+%%   - /CSI [(Ordering) Supplement] MUST match the substitute font's collection.
+%%     You cannot cross collections (no JP font for a KR resource, etc.).
+%%   - Each record MUST end with a space then a semicolon:  >> ;
+%%   - Only enable records for names you actually see via: mutool info -F file.pdf
+%% ---------------------------------------------------------------------------
+
+
+%% ===========================================================================
+%% JAPANESE  —  Adobe-Japan1
+%% Packages:
+%%   sudo apt-get install fonts-ipaexfont-mincho fonts-ipaexfont-gothic
+%% Paths after install:
+%%   /usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf   (Mincho / serif)
+%%   /usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf   (Gothic / sans)
+%% ===========================================================================
+
+%% --- Mincho (serif) faces -> IPAex Mincho ---
+/HeiseiMin-W3        << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+/Ryumin-Light        << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+/KozMinPr6N-Regular  << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+/KozMinProVI-Regular << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+/MS-Mincho           << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+/MS-PMincho          << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-mincho/ipaexm.ttf) /CSI [(Japan1) 7] >> ;
+
+%% --- Gothic (sans) faces -> IPAex Gothic ---
+/HeiseiKakuGo-W5     << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+/GothicBBB-Medium    << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+/KozGoPr6N-Medium    << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+/KozGoPro-Medium     << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+/MS-Gothic           << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+/MS-PGothic          << /FileType /TrueType /Path (/usr/share/fonts/opentype/ipaexfont-gothic/ipaexg.ttf) /CSI [(Japan1) 7] >> ;
+
+
+%% ===========================================================================
+%% SIMPLIFIED CHINESE  —  Adobe-GB1
+%% Package:  sudo apt-get install fonts-arphic-uming fonts-arphic-ukai
+%% Path:     /usr/share/fonts/truetype/arphic/uming.ttc  (a .ttc — needs /SubfontID)
+%% NOTE: uming.ttc is a collection. Find the GB/SC face index first:
+%%       fc-scan /usr/share/fonts/truetype/arphic/uming.ttc | grep -i 'index\|family'
+%% then set /SubfontID to that index below (0 is a starting guess, VERIFY it).
+%% Uncomment once confirmed:
+%% ===========================================================================
+
+/STSong-Light          << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/uming.ttc) /SubfontID 0 /CSI [(GB1) 5] >> ;
+/STHeiti-Regular       << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/ukai.ttc)  /SubfontID 0 /CSI [(GB1) 5] >> ;
+/STHeiti-Light         << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/ukai.ttc)  /SubfontID 0 /CSI [(GB1) 5] >> ;
+/AdobeSongStd-Light    << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/uming.ttc) /SubfontID 0 /CSI [(GB1) 5] >> ;
+/AdobeHeitiStd-Regular << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/ukai.ttc)  /SubfontID 0 /CSI [(GB1) 5] >> ;
+
+
+%% ===========================================================================
+%% TRADITIONAL CHINESE  —  Adobe-CNS1
+%% Package:  sudo apt-get install fonts-arphic-uming fonts-arphic-ukai
+%% Path:     /usr/share/fonts/truetype/arphic/uming.ttc  (.ttc — needs /SubfontID)
+%% Find the TW/CNS face index with fc-scan as above, then VERIFY /SubfontID.
+%% Uncomment once confirmed:
+%% ===========================================================================
+
+/MSung-Light          << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/uming.ttc) /SubfontID 1 /CSI [(CNS1) 6] >> ;
+/MHei-Medium          << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/ukai.ttc)  /SubfontID 1 /CSI [(CNS1) 6] >> ;
+/AdobeMingStd-Light   << /FileType /TrueType /Path (/usr/share/fonts/truetype/arphic/uming.ttc) /SubfontID 1 /CSI [(CNS1) 6] >> ;
+
+
+%% ===========================================================================
+%% KOREAN  —  Adobe-Korea1 / Adobe-KR
+%% Package:  sudo apt-get install fonts-nanum
+%% Paths:    /usr/share/fonts/truetype/nanum/NanumMyeongjo.ttf  (serif)
+%%           /usr/share/fonts/truetype/nanum/NanumGothic.ttf    (sans)
+%% These are single .ttf files — no /SubfontID needed.
+%% Uncomment once confirmed present in corpus:
+%% ===========================================================================
+
+/HYSMyeongJo-Medium      << /FileType /TrueType /Path (/usr/share/fonts/truetype/nanum/NanumMyeongjo.ttf) /CSI [(Korea1) 2] >> ;
+/HYSMyeongJoStd-Medium   << /FileType /TrueType /Path (/usr/share/fonts/truetype/nanum/NanumMyeongjo.ttf) /CSI [(Korea1) 2] >> ;
+/AdobeMyungjoStd-Medium  << /FileType /TrueType /Path (/usr/share/fonts/truetype/nanum/NanumMyeongjo.ttf) /CSI [(Korea1) 2] >> ;
+/HYGothic-Medium         << /FileType /TrueType /Path (/usr/share/fonts/truetype/nanum/NanumGothic.ttf)   /CSI [(Korea1) 2] >> ;
+

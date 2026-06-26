@@ -58,6 +58,11 @@ RUN apt-get -qq update \
         fonts-noto-cjk \
         fonts-ipafont-mincho \
         fonts-ipafont-gothic \
+        fonts-ipaexfont-mincho \
+        fonts-ipaexfont-gothic \
+        fonts-arphic-uming \
+        fonts-arphic-ukai \
+        fonts-nanum \
         hyphen-de \
         hyphen-en-us \
         hyphen-fi \

@@ -109,11 +109,6 @@ def process_document_convertion(input_path: str, options, meta, current_task):
     if meta["mimetype"] == "application/pdf":
         attachments = extract_pdf_attachments(input_path, output_pdf_version)
 
-        if has_non_embedded_cid_font(input_path):
-            embedded_path = embed_pdf_fonts(input_path)
-            remove_file(input_path)
-            input_path = embedded_path
-
         script = app.config["GHOSTSCRIPT_EXEC"]
         script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
         script = fill_cmd_param(script, "outputFile", output_path)

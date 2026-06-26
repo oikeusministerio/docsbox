@@ -19,11 +19,8 @@ RUN apt-get -qq update \
         libmagickwand-dev \
         libtool \
         libxml2 \
-        mupdf-tools \
         pngquant \
         ocrmypdf \
-        poppler-data \
-        poppler-utils \
         python3-cffi \
         python3-dev \
         python3-setuptools \
