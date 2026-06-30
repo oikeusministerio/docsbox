@@ -190,7 +190,6 @@ def thumbnail_generator(input_path: str, options, meta, current_task):
         make_thumbnails(image, tmp_dir, options["thumbnails"]["size"])
         return make_zip_archive(current_task.id, tmp_dir)
 
-
 def log_task_completion(task, result, meta):
     task_time = datetime.now(timezone.utc) - task.started_at.replace(tzinfo=timezone.utc)
     extra = {

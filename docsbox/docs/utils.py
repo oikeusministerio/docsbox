@@ -437,7 +437,6 @@ def fill_cmd_param(cmd: list[str], param: str, value: str):
 
     return cmd
 
-
 def extract_pdf_attachments(pdf_path: str, output_pdf_version: str):
     """
     Extracts all attachments in the pdf file found in the path and returns them

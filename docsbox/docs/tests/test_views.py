@@ -67,7 +67,6 @@ class BaseTestCase(unittest.TestCase):
             response = post(url=self.app.config["VIA_URL"], cert=cert, data=data, headers=headers, timeout=60)
         return response
 
-
 # Test to tests all process, detect, convert and retrieve file for output folder
 class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
     def test_detect_convert_retrieve_file(self):
