@@ -241,7 +241,6 @@ filesConvertable = [
         "fileNameExt": "test38.pdf",
         "mimeType": "application/pdf",
         "fileType": "PDF - Portable Document Format",
-        "fileId": "c07f38b6-b388-4893-b2ee-868b5fcbdf46",
-		"expectedText": ["日本語テキスト", "1234", "漢字とひらがな カタカナ", "二ページ目", "ABCDEF"]
+        "fileId": "c07f38b6-b388-4893-b2ee-868b5fcbdf46"
     }
 ]

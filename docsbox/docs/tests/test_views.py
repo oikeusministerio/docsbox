@@ -4,7 +4,6 @@ import docsbox
 import time
 import test_dependencies as dep
 from requests import get, post
-from subprocess import run, PIPE
 
 # Hack to work with Python 3.10
 import collections

@@ -1,7 +1,6 @@
 import os
 import zipfile
 
-from subprocess import run
 from docsbox.docs.classes.attachment import Attachment
 import pikepdf
 import ujson
