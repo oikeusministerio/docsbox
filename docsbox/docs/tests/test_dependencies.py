@@ -244,3 +244,15 @@ filesConvertable = [
         "fileId": "c07f38b6-b388-4893-b2ee-868b5fcbdf46"
     }
 ]
+
+filesFailedConversion = [
+    {
+        "fileExt": ".PDF",
+        "fileName": "test39",
+        "fileNameExt": "test39.pdf",
+        "mimeType": "application/pdf",
+        "fileType": "PDF - Portable Document Format",
+        "expectedMessage": "out-of-range coordinates",
+        "fileId": "b1f2c3d4-0000-4a5b-9c6d-000000000051"
+    }
+]

@@ -100,7 +100,7 @@ def process_convertion(path: str, options: dict, meta):
         log_task_completion(current_task, result, meta)
         return result
     except Exception as e:
-        return FileInfoException(str(e), traceback.format_exc()).to_dict()
+        return FileInfoException(str(e), traceback.format_exc(), "failed").to_dict()
 
 
 def process_document_convertion(input_path: str, options, meta, current_task):
@@ -113,7 +113,17 @@ def process_document_convertion(input_path: str, options, meta, current_task):
         script = fill_cmd_param(script, "pdfVersion", output_pdf_version)
         script = fill_cmd_param(script, "outputFile", output_path)
         script = fill_cmd_param(script, "inputFile", input_path)
-        run(script, timeout=app.config["REDIS_JOB_TIMEOUT"])
+        result = run(
+            script,
+            timeout=app.config["REDIS_JOB_TIMEOUT"],
+            capture_output=True,
+            text=True
+        )
+        if "outside valid range for PDF/A" in result.stderr and output_pdf_version == "1":
+            raise Exception(
+                "PDF/A conversion produced out-of-range coordinates. "
+                "Please try again with Output-Pdf-Version set to 2 or 3"
+            )
 
         temp_path = input_path if not check_file_content(input_path, output_path) else output_path
 
