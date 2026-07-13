@@ -98,7 +98,7 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
             json = response.json()
             print(f"convert {filename}: " + str(json))
             if response.status_code == 200:
-                if json.get("status") in ["queued", "started"]:
+                if json.get("status") in ["queued", "started", "finished"]:
                     task_id = json.get("taskId")
                     self.assertTrue(task_id)
 
@@ -167,3 +167,43 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
                         "mimeType": file["mimeType"],
                         "pdfVersion": file["pdfVersion"] if "pdfVersion" in file else "",
                     })
+
+class DocumentFailedConversionTestCase(BaseTestCase):
+    def test_convert_out_of_range_pdf_fails(self):
+        for file in dep.filesFailedConversion:
+            filename = file["fileName"]
+            print("")
+            print(f"--- TEST {filename} (expected failed) ---")
+            print("")
+
+            if self.via_run == "True":
+                via_response = self.save_file_to_VIA(file["fileNameExt"], file["mimeType"])
+                if via_response.status_code == 415:
+                    continue
+                self.assertEqual(via_response.status_code, 201)
+                file["fileId"] = via_response.headers.get("Document-id")
+                response = self.convert_file_via(file["fileId"], file["fileNameExt"])
+            else:
+                response = self.convert_file_n_via(file["fileNameExt"])
+
+            json = response.json()
+            print(f"convert {filename}: " + str(json))
+            self.assertEqual(response.status_code, 200)
+            task_id = json.get("taskId")
+            self.assertTrue(task_id)
+
+            status = None
+            ttl = 25
+            while ttl > 0:
+                time.sleep(1)
+                response = self.status_file(task_id)
+                json = response.json()
+                print(f"status {filename}: " + str(json))
+                self.assertEqual(response.status_code, 200)
+                status = json.get("status")
+                if status in ("failed", "finished"):
+                    break
+                ttl -= 1
+
+            self.assertEqual(status, "failed")
+            self.assertIn(file["expectedMessage"], json.get("message", ""))
