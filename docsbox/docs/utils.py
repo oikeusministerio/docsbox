@@ -12,6 +12,7 @@ import exiftool
 from piexif import InvalidImageDataError
 
 from requests import exceptions
+from xml.parsers import expat
 from xml.parsers.expat import ExpatError
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
@@ -234,6 +235,10 @@ def read_pdf_version(file: str):
             app.logger.log(
                 logging.WARNING,
                 "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A DOCINFO.".format(file))
+        except PdfReadError as e:
+            app.logger.log(
+                logging.WARNING,
+                "File {0} has not well-formed XMP data, could not verify if application/pdf has PDF/A DOCINFO.\n{1}".format(file, e))
 
     return version
 
@@ -262,6 +267,41 @@ def remove_extension(file: str):
 
 def is_valid_uuid(uuid: str):
     return bool(re.match(r"([0-f]{8}-[0-f]{4}-[0-f]{4}-[0-f]{4}-[0-f]{12})", uuid))
+
+
+def is_wellformed_xmp(raw: bytes) -> bool:
+    """
+    Returns True if the given XMP packet bytes are well-formed XML with a valid
+    encoding. expat auto-detects the encoding from the XML declaration / BOM,
+    so this also catches streams that contain bytes which are not valid for
+    their declared encoding.
+    """
+    try:
+        expat.ParserCreate().Parse(raw, True)
+        return True
+    except ExpatError:
+        return False
+
+
+def sanitize_pdf_xmp(pdf_path: str):
+    """
+    Detects malformed XMP metadata in a PDF and removes the corrupt metadata
+    stream. Ghostscript aborts (and emits undecodable bytes) when it encounters
+    invalid XMP, and the PDF/A pipeline regenerates valid XMP afterwards, so
+    dropping an unparseable stream is safe.
+    """
+    try:
+        with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
+            metadata = pdf.Root.get("/Metadata")
+            if metadata is None:
+                return
+            if is_wellformed_xmp(bytes(metadata.read_bytes())):
+                return
+            del pdf.Root.Metadata
+            pdf.save(pdf_path)
+            app.logger.log(logging.WARNING, "Removed corrupt XMP metadata from %s" % pdf_path)
+    except Exception as e:
+        app.logger.log(logging.ERROR, "Failed to sanitize XMP metadata for %s: %s" % (pdf_path, repr(e)))
 
 
 def remove_xmp_meta(file: str, task_id: str):

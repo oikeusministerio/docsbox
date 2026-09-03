@@ -107,6 +107,7 @@ def process_document_convertion(input_path: str, options, meta, current_task):
     output_path = os.path.join(app.config["MEDIA_PATH"], current_task.id)
     output_pdf_version = options.get("output_pdf_version", "1")
     if meta["mimetype"] == "application/pdf":
+        sanitize_pdf_xmp(input_path)
         attachments = extract_pdf_attachments(input_path, output_pdf_version)
 
         script = app.config["GHOSTSCRIPT_EXEC"]
