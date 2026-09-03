@@ -242,6 +242,14 @@ filesConvertable = [
         "mimeType": "application/pdf",
         "fileType": "PDF - Portable Document Format",
         "fileId": "c07f38b6-b388-4893-b2ee-868b5fcbdf46"
+    },
+    {
+        "fileExt": ".PDF",
+        "fileName": "test40",
+        "fileNameExt": "test40.pdf",
+        "mimeType": "application/pdf",
+        "fileType": "PDF - Portable Document Format",
+        "fileId": "85b6f88e-999e-4a81-9b2d-2856e25352cc"
     }
 ]
 
