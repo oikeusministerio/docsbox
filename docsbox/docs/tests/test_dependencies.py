@@ -260,7 +260,26 @@ filesFailedConversion = [
         "fileNameExt": "test39.pdf",
         "mimeType": "application/pdf",
         "fileType": "PDF - Portable Document Format",
+        "outputPdfVersion": "1",
         "expectedMessage": "out-of-range coordinates",
         "fileId": "b1f2c3d4-0000-4a5b-9c6d-000000000051"
+    }
+]
+
+# PDFs carrying an embedded attachment whose file specification includes an
+# "/AFRelationship" entry. These must be converted with "outputPdfVersion" 2 or
+# 3 (PDF/A-1 drops attachments), which exercises attach_pdf_attachments and the
+# /AFRelationship branch that previously crashed with
+# "pikepdf.Object is not a Dictionary or Stream".
+filesWithAttachments = [
+    {
+        "fileExt": ".PDF",
+        "fileName": "test41",
+        "fileNameExt": "test41.pdf",
+        "mimeType": "application/pdf",
+        "fileType": "PDF - Portable Document Format",
+        "outputPdfVersion": "3",
+        "expectedPdfVersion": "3B",
+        "fileId": "c2f3d4e5-0000-4b6c-9d7e-000000000052"
     }
 ]
