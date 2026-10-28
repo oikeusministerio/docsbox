@@ -118,7 +118,8 @@ def process_document_convertion(input_path: str, options, meta, current_task):
             script,
             timeout=app.config["REDIS_JOB_TIMEOUT"],
             capture_output=True,
-            text=True
+            text=True,
+            errors="replace"
         )
         if "outside valid range for PDF/A" in result.stderr and output_pdf_version == "1":
             raise Exception(

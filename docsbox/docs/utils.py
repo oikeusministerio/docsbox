@@ -536,7 +536,8 @@ def attach_pdf_attachments(pdf_path: str, attachments: dict[str, Attachment], ou
                      if k not in {'/Desc', '/CreationDate', '/ModDate', '/AFRelationship'}}
 
             if '/AFRelationship' in attachment.file_spec:
-                extra['/AFRelationship'] = pikepdf.Name(attachment.file_spec['/AFRelationship'].lstrip('/'))
+                # Value is a pikepdf.Name; str() yields the leading-slash form (e.g. "/Data")
+                extra['/AFRelationship'] = pikepdf.Name(str(attachment.file_spec['/AFRelationship']))
 
             for k, v in extra.items():
                 filespec.obj[k] = v

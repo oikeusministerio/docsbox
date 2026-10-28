@@ -91,10 +91,15 @@ class DocumentDetectConvertAndRetrieveTestCase(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(json["mimeType"], file["mimeType"])
 
+            headers = {
+                "Content-Disposition": file["fileNameExt"],
+                "Via-Allowed-Users": "test",
+                "Output-Pdf-Version": "1",
+            }
             if self.via_run == "True":
-                response = self.convert_file_via(file["fileId"], file["fileNameExt"])
+                response = self.convert_file_with_options_via(file["fileNameExt"], headers)
             else:
-                response = self.convert_file_n_via(file["fileNameExt"])
+                response = self.convert_file_with_options_n_via(file["fileNameExt"], headers)
             json = response.json()
             print(f"convert {filename}: " + str(json))
             if response.status_code == 200:
@@ -176,15 +181,21 @@ class DocumentFailedConversionTestCase(BaseTestCase):
             print(f"--- TEST {filename} (expected failed) ---")
             print("")
 
+            headers = {
+                "Content-Disposition": file["fileNameExt"],
+                "Via-Allowed-Users": "test",
+                "Output-Pdf-Version": file["outputPdfVersion"],
+            }
+
             if self.via_run == "True":
                 via_response = self.save_file_to_VIA(file["fileNameExt"], file["mimeType"])
                 if via_response.status_code == 415:
                     continue
                 self.assertEqual(via_response.status_code, 201)
                 file["fileId"] = via_response.headers.get("Document-id")
-                response = self.convert_file_via(file["fileId"], file["fileNameExt"])
+                response = self.convert_file_with_options_via(file["fileNameExt"], headers)
             else:
-                response = self.convert_file_n_via(file["fileNameExt"])
+                response = self.convert_file_with_options_n_via(file["fileNameExt"], headers)
 
             json = response.json()
             print(f"convert {filename}: " + str(json))
@@ -205,5 +216,59 @@ class DocumentFailedConversionTestCase(BaseTestCase):
                     break
                 ttl -= 1
 
-            self.assertEqual(status, "failed")
             self.assertIn(file["expectedMessage"], json.get("message", ""))
+            self.assertEqual(status, "failed")
+
+
+class DocumentAttachmentConversionTestCase(BaseTestCase):
+    # Regression test: a PDF whose embedded attachment carries an
+    # "/AFRelationship" entry must convert to PDF/A-2/3 without crashing in
+    # attach_pdf_attachments (previously raised "pikepdf.Object is not a
+    # Dictionary or Stream").
+    def test_convert_pdf_with_af_relationship_attachment(self):
+        for file in dep.filesWithAttachments:
+            filename = file["fileName"]
+            print("")
+            print(f"--- TEST {filename} (attachment /AFRelationship) ---")
+            print("")
+
+            headers = {
+                "Content-Disposition": file["fileNameExt"],
+                "Via-Allowed-Users": "test",
+                "Output-Pdf-Version": file["outputPdfVersion"],
+            }
+
+            response = self.convert_file_with_options_n_via(file["fileNameExt"], headers)
+
+            json = response.json()
+            print(f"convert {filename}: " + str(json))
+            self.assertEqual(response.status_code, 200)
+            task_id = json.get("taskId")
+            self.assertTrue(task_id)
+
+            status = None
+            ttl = 25
+            while ttl > 0:
+                time.sleep(1)
+                response = self.status_file(task_id)
+                json = response.json()
+                print(f"status {filename}: " + str(json))
+                self.assertEqual(response.status_code, 200)
+                status = json.get("status")
+                if status in ("failed", "finished"):
+                    break
+                ttl -= 1
+
+            if status == "failed":
+                self.fail("status failed - " + json.get("message", ""))
+            response = self.download_file(task_id)
+            self.assertEqual(response.status_code, 200)
+            base_dir = os.path.abspath(os.path.dirname(__file__) + "/outputs")
+            file_dir = os.path.join(base_dir, file["fileName"] + ".pdf")
+            with open(file_dir, "wb") as f:
+                f.write(response.content)
+            self.assertEqual(status, "finished")
+            self.assertEqual(json.get("fileType"), "PDF/A")
+            self.assertEqual(json.get("mimeType"), "application/pdf")
+            self.assertEqual(json.get("pdfVersion"), file["expectedPdfVersion"])
+
